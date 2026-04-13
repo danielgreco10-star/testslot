@@ -122,14 +122,14 @@ function findClusters(){
   return rawClusters.filter(cl=>cl.sz>=S.minCl);
 }
 
-function calcPay(clusters){let total=0;for(const cl of clusters){const pt=PAYTABLE[cl.sym];if(!pt)continue;const idx=Math.min(cl.sz,pt.length-1);const basePay=pt[idx];if(basePay<=0)continue;/* Wild multiplier: product of ALL wild cellMults in the cluster (each wild multiplies) */let wildMult=1;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]==='wild'&&S.cellMult[r][c]>1)wildMult*=S.cellMult[r][c];});/* Cascade multiplier: average of non-wild cell multipliers */let cascMult=0;let normCount=0;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]!=='wild'){cascMult+=S.cellMult[r][c];normCount++;}});const avgCasc=normCount>0?cascMult/normCount:1;const rawPay=basePay*S.bet*avgCasc*wildMult;const finalPay=Math.max(1,Math.round(rawPay));dLog(`  → ${cl.sym} ×${cl.sz}: base=${basePay} wild=×${wildMult} casc=×${avgCasc.toFixed(1)} = ${finalPay}`,'info');total+=finalPay;}return total;}
+function calcPay(clusters){let total=0;for(const cl of clusters){const pt=PAYTABLE[cl.sym];if(!pt)continue;const idx=Math.min(cl.sz,pt.length-1);const basePay=pt[idx];if(basePay<=0)continue;/* Wild multiplier: product of ALL wild cellMults in the cluster (each wild multiplies) */let wildMult=1;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]==='wild'&&S.cellMult[r][c]>1)wildMult*=S.cellMult[r][c];});/* Cascade multiplier: average of non-wild cell multipliers */let cascMult=0;let normCount=0;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]!=='wild'){cascMult+=S.cellMult[r][c];normCount++;}});const avgCasc=normCount>0?cascMult/normCount:1;const rawPay=basePay*S.bet*avgCasc*wildMult;const finalPay=Math.round(rawPay*100)/100;dLog(`  → ${cl.sym} ×${cl.sz}: base=${basePay} wild=×${wildMult} casc=×${avgCasc.toFixed(1)} = ${finalPay}`,'info');total+=finalPay;}return Math.round(total*100)/100;}
 
 const dly=ms=>new Promise(r=>setTimeout(r,Math.max(10,ms/S.speedMult)));
-const fmt=n=>n.toLocaleString('it-IT');
+const fmt=n=>{const r=Math.round(n*100)/100;return r%1===0?r.toLocaleString('it-IT'):r.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});};
 function updBal(){
   const el=document.getElementById('balance');
-  const oldVal=parseInt(el.textContent.replace(/\./g,''))||0;
-  const newVal=Math.round(S.bal);
+  const oldVal=parseFloat(el.textContent.replace(/\./g,'').replace(',','.'))||0;
+  const newVal=Math.round(S.bal*100)/100;
   el.textContent=fmt(newVal);
   if(newVal>oldVal){el.classList.add('val-up');setTimeout(()=>el.classList.remove('val-up'),400);}
   else if(newVal<oldVal){el.classList.add('val-down');setTimeout(()=>el.classList.remove('val-down'),400);}
@@ -139,7 +139,7 @@ function updBal(){
 function updSpinWinPanel(val){
   const el=document.getElementById('spinWinPanelAmount');
   if(!el)return;
-  const v=Math.round(typeof val==='number'?val:S.spinWin);
+  const v=Math.round((typeof val==='number'?val:S.spinWin)*100)/100;
   el.textContent=v>0?fmt(v):'0';
   /* Pulse animation on update */
   if(v>0){el.style.animation='none';void el.offsetHeight;el.style.animation='winCountPulse 0.15s ease-in-out 3 alternate';}
@@ -286,14 +286,14 @@ function showBigWinPopup(title,amount){
     particlesEl.appendChild(spark);
   }
   /* Count-up animation */
-  const target=Math.round(amount);
+  const target=Math.round(amount*100)/100;
   const duration=1500;
   const startTime=performance.now();
   function countUp(now){
     const elapsed=now-startTime;
     const progress=Math.min(elapsed/duration,1);
     const eased=1-Math.pow(1-progress,3);
-    amountEl.textContent=fmt(Math.round(target*eased));
+    amountEl.textContent=fmt(Math.round(target*eased*100)/100);
     if(progress<1)requestAnimationFrame(countUp);
   }
   requestAnimationFrame(countUp);
@@ -477,7 +477,7 @@ function renderBsHistory(){
   empty.style.display='none';
   body.innerHTML=bsState.history.slice(0,50).map(h=>{
     const cls=h.win>0?'win-row':'loss-row';
-    return `<tr class="${cls}"><td>${h.n}</td><td>${fmt(h.bet)}</td><td>${h.win>0?'+'+fmt(Math.round(h.win)):'-'}</td><td>${h.casc}</td></tr>`;
+    return `<tr class="${cls}"><td>${h.n}</td><td>${fmt(h.bet)}</td><td>${h.win>0?'+'+fmt(Math.round(h.win*100)/100):'-'}</td><td>${h.casc}</td></tr>`;
   }).join('');
 }
 
@@ -485,9 +485,9 @@ function updateBsStats(){
   const el=id=>document.getElementById(id);
   el('bsStatSpins').textContent=fmt(S.spins);
   el('bsStatHits').textContent=fmt(S.hits);
-  el('bsStatWon').textContent=fmt(Math.round(S.won));
-  el('bsStatWagered').textContent=fmt(Math.round(S.wagered));
-  el('bsStatMaxWin').textContent=fmt(Math.round(S.maxW));
+  el('bsStatWon').textContent=fmt(Math.round(S.won*100)/100);
+  el('bsStatWagered').textContent=fmt(Math.round(S.wagered*100)/100);
+  el('bsStatMaxWin').textContent=fmt(Math.round(S.maxW*100)/100);
   el('bsStatMaxCasc').textContent=S.maxC;
   el('bsStatRtp').textContent=S.wagered>0?((S.won/S.wagered)*100).toFixed(1)+'%':'0%';
   el('bsStatHitRate').textContent=S.spins>0?((S.hits/S.spins)*100).toFixed(1)+'%':'0%';
@@ -771,7 +771,7 @@ async function triggerTesseract(){
         const tok=pickToken();
         if(tok.type==='coin'){
           const prevMult=Math.random()<0.03?MAX_WIN_MULT:COIN_MULTS[Math.floor(Math.random()*COIN_MULTS.length)];
-          const rVal=Math.max(1,Math.round(S.bet*prevMult));
+          const rVal=Math.round(S.bet*prevMult*100)/100;
           const prevIsMax=prevMult===MAX_WIN_MULT;
           if(prevIsMax){
             sw.innerHTML=`<div class="tess-inline-coin tess-maxwin"><div class="tess-coin">💎</div><div class="tess-inline-val">${fmt(rVal)}</div></div>`;
@@ -791,7 +791,7 @@ async function triggerTesseract(){
       const teaseCell=emptyCells[Math.floor(Math.random()*emptyCells.length)];
       clearInterval(teaseCell._spinIv);
       const teaseSw=teaseCell.el.querySelector('.sw');
-      const teaseVal=fmt(Math.max(1,Math.round(S.bet*MAX_WIN_MULT)));
+      const teaseVal=fmt(Math.round(S.bet*MAX_WIN_MULT*100)/100);
       /* Show max win in slow motion */
       SFX.tessNearMiss();
       teaseSw.innerHTML=`<div class="tess-inline-coin tess-maxwin"><div class="tess-coin" style="color:#ff4444;font-size:clamp(14px,1.8vw,22px)">💎</div><div class="tess-inline-val" style="color:#ff4444;font-size:clamp(12px,1.5vw,18px)">${teaseVal}</div></div>`;
@@ -811,7 +811,7 @@ async function triggerTesseract(){
       teaseCell._spinIv=setInterval(()=>{
         const tok=pickToken();
         if(tok.type==='coin'){
-          const rVal=Math.max(1,Math.round(S.bet*COIN_MULTS[Math.floor(Math.random()*COIN_MULTS.length)]));
+          const rVal=Math.round(S.bet*COIN_MULTS[Math.floor(Math.random()*COIN_MULTS.length)]*100)/100;
           teaseSw.innerHTML=`<div class="tess-inline-coin tess-token-coin"><div class="tess-coin">${tok.icon}</div><div class="tess-inline-val">${fmt(rVal)}</div></div>`;
         }else{
           teaseSw.innerHTML=`<div class="tess-inline-coin tess-token-${tok.type}"><div class="tess-coin">${tok.icon}</div></div>`;
@@ -839,7 +839,7 @@ async function triggerTesseract(){
         if(tok.type==='coin'){
           const isMaxWin=S.forceMaxWin?((S.forceMaxWin=false),true):(Math.random()<MAX_WIN_CHANCE);
           const mult=isMaxWin?MAX_WIN_MULT:COIN_MULTS[Math.floor(Math.random()*COIN_MULTS.length)];
-          const coinVal=Math.max(1,Math.round(S.bet*mult));
+          const coinVal=Math.round(S.bet*mult*100)/100;
           tc.value=coinVal;
           tessTotal+=coinVal;
           if(isMaxWin){
@@ -1303,9 +1303,9 @@ async function triggerFreeSpins(numSpins){
       });
       S.spinWin+=pay;
       S.freeSpinTotal+=pay;
-      document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin));
+      document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin*100)/100);
       updSpinWinPanel(S.spinWin);
-      {const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin));};
+      {const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin*100)/100);};
       dLog(`Free Spin Cascata: +${basePay.toFixed(0)} ×${fsMult} = +${pay.toFixed(0)}`,'casc');
       await highlightWins(clusters);
       await destroyClusters(clusters);
@@ -1328,9 +1328,9 @@ async function triggerFreeSpins(numSpins){
   document.getElementById('fsMult').classList.remove('visible');
   S.superBonusActive=false;
   S.jackpotMode=false;
-  dLog(`Free Spin terminati! Totale: +${fmt(Math.round(S.freeSpinTotal))}`,'win');
+  dLog(`Free Spin terminati! Totale: +${fmt(Math.round(S.freeSpinTotal*100)/100)}`,'win');
   if(S.freeSpinTotal>0){
-    showWin(`FREE SPIN!\n+${fmt(Math.round(S.freeSpinTotal))}`);
+    showWin(`FREE SPIN!\n+${fmt(Math.round(S.freeSpinTotal*100)/100)}`);
     await dly(2000);
   }
 }
@@ -1921,14 +1921,14 @@ async function runFeatureCascadeLoop(fsMult){
         dLog(`Polvere +${dustGain} (${cl.sym}${cascMult>1?' ×'+cascMult+'casc':''}${symBonus>1?' ×'+symBonus+'sym':''})`,'info');
       }
     });
-    document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin));
+    document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin*100)/100);
     document.getElementById('winAmount').parentElement.classList.add('win-counting');
     updSpinWinPanel(S.spinWin);
     document.getElementById('cascadeOverlay').textContent='Cascata '+(S.cascLvl+1);
     document.getElementById('cascadeOverlay').classList.add('visible');
     const cnEl=document.getElementById('cascadeNum');
     if(cnEl)cnEl.textContent=S.cascLvl+1;
-    {const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin));}
+    {const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin*100)/100);}
     if(typeof updateMultiplierStats==='function')updateMultiplierStats();
     dLog('Cascata '+(S.cascLvl+1)+': +'+pay.toFixed(0),'casc');
     SFX.cascadeStart(S.cascLvl);
@@ -1945,7 +1945,7 @@ async function runFeatureCascadeLoop(fsMult){
 
 function genForceExtra(sym){S.grid=[];S.cellMult=[];for(let r=0;r<ROWS;r++){S.grid[r]=[];S.cellMult[r]=[];for(let c=0;c<COLS;c++){S.grid[r][c]=null;S.cellMult[r][c]=1;}}let er,ec;if(sym==='buco_nero'||sym==='tesseract'){er=Math.floor(ROWS/2);ec=Math.floor(COLS/2);}else{er=Math.floor(Math.random()*ROWS);ec=Math.floor(Math.random()*COLS);}S.grid[er][ec]=sym;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(S.grid[r][c]===null)S.grid[r][c]=rndSym();}S.extraSpawned=true;renderFullGrid(true);}
 
-async function spin(){if(S.spinning)return;const ripple=document.createElement('div');ripple.className='spin-ripple';document.getElementById('spinBtn').appendChild(ripple);setTimeout(()=>ripple.remove(),800);if(S.spinMagg>0)SFX.spinMagg();else SFX.spinStart();const tb=S.bet;const isBonusSpin=S.bonusSpin;S.bonusSpin=false;const maggiMult=S.spinMagg>0?S.spinMagg:1;const realCost=Math.round(tb*maggiMult);if(!isBonusSpin&&S.bal<realCost){showWin('CREDITO\nINSUFFICIENTE');setTimeout(hideWin,1500);S.spinMagg=0;return;}S.spinning=true;document.getElementById('spinBtn').classList.add('is-spinning');S.spinWin=0;S.cascLvl=0;setGridState('spinning');document.getElementById('spinBtn').disabled=true;document.getElementById('winAmount').textContent='0';updSpinWinPanel(0);hideWin();document.getElementById('cascadeOverlay').classList.remove('visible');if(!isBonusSpin){S.bal-=realCost;S.wagered+=realCost;}/* Spin maggiorato: increase bonus/scatter chance */if(S.spinMagg>0&&!S.forceExtra&&!S.forceScatter){const bInfo=BOOST_MULTS.find(b=>b.mult===S.activeBoostMult);const bonusChance=bInfo?bInfo.bonusChance:0.15;if(Math.random()<bonusChance){const bonuses=['buco_nero','supernova','antigravita','tesseract'];S.forceExtra=bonuses[Math.floor(Math.random()*bonuses.length)];}}S.spinMagg=0;S.activeBoostMult=0;S.spins++;updBal();updateBoostPanel();if(S.gridPreloaded){S.gridPreloaded=false;shuffleReveal();}else if(S.forceBH){genForcedBlackHole();S.forceBH=false;}else if(S.forceW){genForceWin();S.forceW=false;}else if(S.forceExtra){genForceExtra(S.forceExtra);S.forceExtra=null;}else{fillGrid(true);}await dly(S.speedMult>1?2200:3500);/* Check scatters */const scRes=countScatters();if(scRes.count>=3){for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.add('scatter-hl');}await dly(800);for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.remove('scatter-hl');}renderFullGrid(false);const fsCount=scRes.count>=5?15:10;SFX.freeSpinStart();await triggerFreeSpins(fsCount);}else{/* Scatters stay in grid as permanent symbols */}let hasBH=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='buco_nero')hasBH=true;if(hasBH){setGridState('bonus');SFX.bucoNero();showToast('Bonus Attivato!','bonus',3500);await triggerBlackHole();await cascadeGrid();await runFeatureCascadeLoop();}let hasSN=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='supernova')hasSN=true;if(hasSN){setGridState('bonus');SFX.supernova();await triggerSupernova();await cascadeGrid();await runFeatureCascadeLoop();S.bannedSym=null;S.snSlowCascade=false;}let hasAnti=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='antigravita')hasAnti=true;if(hasAnti){setGridState('bonus');SFX.antigravita();await triggerAntigravita();await cascadeGrid();await runFeatureCascadeLoop();}let hasTess=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='tesseract')hasTess=true;if(hasTess){setGridState('bonus');SFX.tesseractOpen();await triggerTesseract();await cascadeGrid();await runFeatureCascadeLoop();}while(true){const clusters=findClusters();if(!clusters.length)break;const pay=calcPay(clusters);S.spinWin+=pay;clusters.forEach(cl=>{cl.cells.forEach(([r,c])=>{S.cellMult[r][c]++;});const dv=DUST_VALUES[cl.sym]||0;if(dv>0){const cascMult=Math.max(1,S.cascLvl);const symBonus=(cl.sym==='astronauta'?3:cl.sym==='alieno'?2:1);const dustGain=Math.max(1,Math.round(dv*cl.sz*0.5*cascMult*symBonus));spawnDustParticles(cl.cells,Math.min(dustGain,8));updDust(dustGain);dLog(`Polvere +${dustGain} (${cl.sym}${cascMult>1?' ×'+cascMult+'casc':''}${symBonus>1?' ×'+symBonus+'sym':''})`,'info');}});document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin));document.getElementById('winAmount').parentElement.classList.add('win-counting');updSpinWinPanel(S.spinWin);document.getElementById('cascadeOverlay').textContent=`Cascata ${S.cascLvl+1}`;document.getElementById('cascadeOverlay').classList.add('visible');const cnEl=document.getElementById('cascadeNum');if(cnEl)cnEl.textContent=S.cascLvl+1;{const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin));};updateMultiplierStats();dLog(`Cascata ${S.cascLvl+1}: +${pay.toFixed(0)}`,'casc');SFX.cascadeStart(S.cascLvl);triggerBgFlash('cascade-flash');SFX.clusterWin(clusters.reduce((s,c)=>s+c.sz,0));await highlightWins(clusters);await destroyClusters(clusters);await cascadeGrid();S.cascLvl++;showToast('Cascata Livello '+S.cascLvl+'!','cascade',2500);await dly(150);}/* Clean up any wild/tesseract cells remaining after cascades */for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(S.grid[r][c]==='wild'||S.grid[r][c]==='tesseract'){S.grid[r][c]=rndSym();S.cellMult[r][c]=1;}}renderFullGrid(false);document.getElementById('cascadeOverlay').classList.remove('visible');if(S.spinWin>0){S.bal+=S.spinWin;S.won+=S.spinWin;S.hits++;if(S.spinWin>S.maxW)S.maxW=S.spinWin;updBal();const wr=S.spinWin/tb;setGridState('winning');spawnWinCoins(document.getElementById('winAmount'),Math.min(Math.ceil(wr),15));if(wr>=50){SFX.megaWin();showBigWinPopup('MEGA WIN!',S.spinWin);triggerBgFlash('mega-flash');triggerBgShift('mega');}else if(wr>=20){SFX.bigWin();showBigWinPopup('BIG WIN!',S.spinWin);triggerBgFlash('win-flash');triggerBgShift('big');}else if(wr>=8){SFX.smallWin();showWin('GRANDE!\n'+fmt(Math.round(S.spinWin)));triggerBgFlash('win-flash');triggerBgShift('small');}else{SFX.smallWin();}dLog(`Spin #${S.spins}: +${S.spinWin.toFixed(0)} (${wr.toFixed(1)}x)`,'win');addHistory(S.spins,tb,S.spinWin,S.cascLvl);}else{SFX.noWin();dLog(`Spin #${S.spins}: nessuna vincita`,'info');addHistory(S.spins,tb,0,S.cascLvl);}if(S.cascLvl>S.maxC)S.maxC=S.cascLvl;S.totC+=S.cascLvl;updDev();document.getElementById('winAmount').parentElement.classList.remove('win-counting');S.spinning=false;S.superBonusActive=false;S.jackpotMode=false;S.gridPreloaded=false;document.getElementById('spinBtn').classList.remove('is-spinning');setGridState('idle');document.getElementById('spinBtn').disabled=false;updateBonusBtns();updateBoostPanel();if(S.auto&&S.bal>=S.bet*COLS&&!checkAutoplayStop()){await dly(S.turbo?200:500);hideWin();spin();}else{S.auto=false;bsState.autoRemaining=0;document.getElementById('btnAuto').classList.remove('active');setTimeout(hideWin,2000);}}
+async function spin(){if(S.spinning)return;const ripple=document.createElement('div');ripple.className='spin-ripple';document.getElementById('spinBtn').appendChild(ripple);setTimeout(()=>ripple.remove(),800);if(S.spinMagg>0)SFX.spinMagg();else SFX.spinStart();const tb=S.bet;const isBonusSpin=S.bonusSpin;S.bonusSpin=false;const maggiMult=S.spinMagg>0?S.spinMagg:1;const realCost=Math.round(tb*maggiMult*100)/100;if(!isBonusSpin&&S.bal<realCost){showWin('CREDITO\nINSUFFICIENTE');setTimeout(hideWin,1500);S.spinMagg=0;return;}S.spinning=true;document.getElementById('spinBtn').classList.add('is-spinning');S.spinWin=0;S.cascLvl=0;setGridState('spinning');document.getElementById('spinBtn').disabled=true;document.getElementById('winAmount').textContent='0';updSpinWinPanel(0);hideWin();document.getElementById('cascadeOverlay').classList.remove('visible');if(!isBonusSpin){S.bal-=realCost;S.wagered+=realCost;}/* Spin maggiorato: increase bonus/scatter chance */if(S.spinMagg>0&&!S.forceExtra&&!S.forceScatter){const bInfo=BOOST_MULTS.find(b=>b.mult===S.activeBoostMult);const bonusChance=bInfo?bInfo.bonusChance:0.15;if(Math.random()<bonusChance){const bonuses=['buco_nero','supernova','antigravita','tesseract'];S.forceExtra=bonuses[Math.floor(Math.random()*bonuses.length)];}}S.spinMagg=0;S.activeBoostMult=0;S.spins++;updBal();updateBoostPanel();if(S.gridPreloaded){S.gridPreloaded=false;shuffleReveal();}else if(S.forceBH){genForcedBlackHole();S.forceBH=false;}else if(S.forceW){genForceWin();S.forceW=false;}else if(S.forceExtra){genForceExtra(S.forceExtra);S.forceExtra=null;}else{fillGrid(true);}await dly(S.speedMult>1?2200:3500);/* Check scatters */const scRes=countScatters();if(scRes.count>=3){for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.add('scatter-hl');}await dly(800);for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.remove('scatter-hl');}renderFullGrid(false);const fsCount=scRes.count>=5?15:10;SFX.freeSpinStart();await triggerFreeSpins(fsCount);}else{/* Scatters stay in grid as permanent symbols */}let hasBH=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='buco_nero')hasBH=true;if(hasBH){setGridState('bonus');SFX.bucoNero();showToast('Bonus Attivato!','bonus',3500);await triggerBlackHole();await cascadeGrid();await runFeatureCascadeLoop();}let hasSN=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='supernova')hasSN=true;if(hasSN){setGridState('bonus');SFX.supernova();await triggerSupernova();await cascadeGrid();await runFeatureCascadeLoop();S.bannedSym=null;S.snSlowCascade=false;}let hasAnti=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='antigravita')hasAnti=true;if(hasAnti){setGridState('bonus');SFX.antigravita();await triggerAntigravita();await cascadeGrid();await runFeatureCascadeLoop();}let hasTess=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='tesseract')hasTess=true;if(hasTess){setGridState('bonus');SFX.tesseractOpen();await triggerTesseract();await cascadeGrid();await runFeatureCascadeLoop();}while(true){const clusters=findClusters();if(!clusters.length)break;const pay=calcPay(clusters);S.spinWin+=pay;clusters.forEach(cl=>{cl.cells.forEach(([r,c])=>{S.cellMult[r][c]++;});const dv=DUST_VALUES[cl.sym]||0;if(dv>0){const cascMult=Math.max(1,S.cascLvl);const symBonus=(cl.sym==='astronauta'?3:cl.sym==='alieno'?2:1);const dustGain=Math.max(1,Math.round(dv*cl.sz*0.5*cascMult*symBonus));spawnDustParticles(cl.cells,Math.min(dustGain,8));updDust(dustGain);dLog(`Polvere +${dustGain} (${cl.sym}${cascMult>1?' ×'+cascMult+'casc':''}${symBonus>1?' ×'+symBonus+'sym':''})`,'info');}});document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin*100)/100);document.getElementById('winAmount').parentElement.classList.add('win-counting');updSpinWinPanel(S.spinWin);document.getElementById('cascadeOverlay').textContent=`Cascata ${S.cascLvl+1}`;document.getElementById('cascadeOverlay').classList.add('visible');const cnEl=document.getElementById('cascadeNum');if(cnEl)cnEl.textContent=S.cascLvl+1;{const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin*100)/100);};updateMultiplierStats();dLog(`Cascata ${S.cascLvl+1}: +${pay.toFixed(0)}`,'casc');SFX.cascadeStart(S.cascLvl);triggerBgFlash('cascade-flash');SFX.clusterWin(clusters.reduce((s,c)=>s+c.sz,0));await highlightWins(clusters);await destroyClusters(clusters);await cascadeGrid();S.cascLvl++;showToast('Cascata Livello '+S.cascLvl+'!','cascade',2500);await dly(150);}/* Clean up any wild/tesseract cells remaining after cascades */for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(S.grid[r][c]==='wild'||S.grid[r][c]==='tesseract'){S.grid[r][c]=rndSym();S.cellMult[r][c]=1;}}renderFullGrid(false);document.getElementById('cascadeOverlay').classList.remove('visible');if(S.spinWin>0){S.bal+=S.spinWin;S.won+=S.spinWin;S.hits++;if(S.spinWin>S.maxW)S.maxW=S.spinWin;updBal();const wr=S.spinWin/tb;setGridState('winning');spawnWinCoins(document.getElementById('winAmount'),Math.min(Math.ceil(wr),15));if(wr>=50){SFX.megaWin();showBigWinPopup('MEGA WIN!',S.spinWin);triggerBgFlash('mega-flash');triggerBgShift('mega');}else if(wr>=20){SFX.bigWin();showBigWinPopup('BIG WIN!',S.spinWin);triggerBgFlash('win-flash');triggerBgShift('big');}else if(wr>=8){SFX.smallWin();showWin('GRANDE!\n'+fmt(Math.round(S.spinWin*100)/100));triggerBgFlash('win-flash');triggerBgShift('small');}else{SFX.smallWin();}dLog(`Spin #${S.spins}: +${S.spinWin.toFixed(0)} (${wr.toFixed(1)}x)`,'win');addHistory(S.spins,tb,S.spinWin,S.cascLvl);}else{SFX.noWin();dLog(`Spin #${S.spins}: nessuna vincita`,'info');addHistory(S.spins,tb,0,S.cascLvl);}if(S.cascLvl>S.maxC)S.maxC=S.cascLvl;S.totC+=S.cascLvl;updDev();document.getElementById('winAmount').parentElement.classList.remove('win-counting');S.spinning=false;S.superBonusActive=false;S.jackpotMode=false;S.gridPreloaded=false;document.getElementById('spinBtn').classList.remove('is-spinning');setGridState('idle');document.getElementById('spinBtn').disabled=false;updateBonusBtns();updateBoostPanel();if(S.auto&&S.bal>=S.bet*COLS&&!checkAutoplayStop()){await dly(S.turbo?200:500);hideWin();spin();}else{S.auto=false;bsState.autoRemaining=0;document.getElementById('btnAuto').classList.remove('active');setTimeout(hideWin,2000);}}
 
 function updBet(d){SFX.betChange();const idx=BETS.indexOf(S.bet);const newIdx=Math.max(0,Math.min(BETS.length-1,idx+d));S.bet=BETS[newIdx];document.getElementById('betVal').textContent=S.bet;if(typeof updateBonusPrices==='function')updateBonusPrices();if(typeof updateSpinMaggButtons==='function')updateSpinMaggButtons();}
 
@@ -2226,7 +2226,7 @@ function updateBoostPanel(){
     const btn=document.getElementById(b.id);
     const costEl=document.getElementById(b.costId);
     if(!btn||!costEl)return;
-    const cost=Math.round(S.bet*b.mult);
+    const cost=Math.round(S.bet*b.mult*100)/100;
     costEl.textContent=fmt(cost);
     const isActive=S.activeBoostMult===b.mult;
     btn.classList.toggle('active',isActive);
@@ -2347,7 +2347,7 @@ function updateBonusBtns(){
 }
 /* Bonus costs as multipliers of current bet */
 const BONUS_COST_MULT={buco_nero:75,supernova:75,antigravita:100,tesseract:65,superBonus:240,freeSpin:235,bonusMax:600,spaceSpin:1000};
-function getBonusCost(key){return Math.round(S.bet*BONUS_COST_MULT[key]);}
+function getBonusCost(key){return Math.round(S.bet*BONUS_COST_MULT[key]*100)/100;}
 function updateBonusPrices(){
   const fmt=cost=>`${cost}×`;
   const update=(id,key)=>{const el=document.querySelector('#'+id+' .bsp-cost');if(el)el.textContent=fmt(getBonusCost(key));};
@@ -2724,8 +2724,8 @@ document.getElementById('buySpaceSpin').addEventListener('click',async function(
     setGridState('winning');
     if(wr>=50){showBigWinPopup('MEGA WIN!',pay);}
     else if(wr>=20){showBigWinPopup('BIG WIN!',pay);}
-    else{showWin('SPACE WIN x3!\n+'+fmt(Math.round(pay)));}
-    dLog(`Space Spin: ${giantSize}×${giantSize} ${SYM_NAMES[chosenSym]||chosenSym} x10 = +${fmt(Math.round(pay))}`,'win');
+    else{showWin('SPACE WIN x3!\n+'+fmt(Math.round(pay*100)/100));}
+    dLog(`Space Spin: ${giantSize}×${giantSize} ${SYM_NAMES[chosenSym]||chosenSym} x10 = +${fmt(Math.round(pay*100)/100)}`,'win');
     addHistory(S.spins,S.bet,pay,0);
   }
   S.spins++;updDev();
