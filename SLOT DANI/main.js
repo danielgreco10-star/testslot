@@ -1282,9 +1282,9 @@ async function triggerFreeSpins(numSpins){
 
     /* Check extras (buco_nero, supernova, antigravita, tesseract) */
     let hasBH=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='buco_nero')hasBH=true;
-    if(hasBH){SFX.bucoNero();await triggerBlackHole();await cascadeGrid();await runFeatureCascadeLoop(fsMult);}
+    if(hasBH){SFX.bucoNero();await triggerBlackHole();await cascadeGrid();await runFeatureCascadeLoop(fsMult);S.bannedSym=null;S.snSlowCascade=false;}
     let hasSN=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='supernova')hasSN=true;
-    if(hasSN){SFX.supernova();await triggerSupernova();await cascadeGrid();await runFeatureCascadeLoop(fsMult);S.bannedSym=null;S.snSlowCascade=false;}
+    if(hasSN){SFX.supernova();await triggerSupernova();await cascadeGrid();await runFeatureCascadeLoop(fsMult);}
     let hasAnti=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='antigravita')hasAnti=true;
     if(hasAnti){SFX.antigravita();await triggerAntigravita();await cascadeGrid();await runFeatureCascadeLoop(fsMult);}
     let hasTess=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='tesseract')hasTess=true;
@@ -1306,7 +1306,7 @@ async function triggerFreeSpins(numSpins){
       document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin*100)/100);
       updSpinWinPanel(S.spinWin);
       {const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin*100)/100);};
-      dLog(`Free Spin Cascata: +${basePay.toFixed(0)} ×${fsMult} = +${pay.toFixed(0)}`,'casc');
+      dLog(`Free Spin Cascata: +${basePay.toFixed(2)} ×${fsMult} = +${pay.toFixed(2)}`,'casc');
       await highlightWins(clusters);
       await destroyClusters(clusters);
       await cascadeGrid();
@@ -1339,7 +1339,7 @@ function initDustParticles(){const container=document.getElementById('dustPartic
 
 function dLog(msg,cls=''){const log=document.getElementById('devLog');const entry=document.createElement('div');entry.className=`dev-log-entry log-${cls}`;entry.textContent=new Date().toLocaleTimeString()+' '+msg;log.insertBefore(entry,log.firstChild);while(log.children.length>100)log.removeChild(log.lastChild);}
 
-function updDev(){document.getElementById('statSpins').textContent=S.spins;document.getElementById('statWagered').textContent=fmt(Math.round(S.wagered));document.getElementById('statWon').textContent=fmt(Math.round(S.won));document.getElementById('statHits').textContent=S.hits;document.getElementById('statMaxW').textContent=fmt(Math.round(S.maxW));document.getElementById('statMaxC').textContent=S.maxC;const avgC=S.spins>0?(S.totC/S.spins).toFixed(2):'0';document.getElementById('statAvgC').textContent=avgC;const rtp=S.wagered>0?((S.won/S.wagered)*100).toFixed(2):'0';document.getElementById('statRTP').textContent=rtp+'%';}
+function updDev(){document.getElementById('statSpins').textContent=S.spins;document.getElementById('statWagered').textContent=fmt(Math.round(S.wagered*100)/100);document.getElementById('statWon').textContent=fmt(Math.round(S.won*100)/100);document.getElementById('statHits').textContent=S.hits;document.getElementById('statMaxW').textContent=fmt(Math.round(S.maxW*100)/100);document.getElementById('statMaxC').textContent=S.maxC;const avgC=S.spins>0?(S.totC/S.spins).toFixed(2):'0';document.getElementById('statAvgC').textContent=avgC;const rtp=S.wagered>0?((S.won/S.wagered)*100).toFixed(2):'0';document.getElementById('statRTP').textContent=rtp+'%';}
 
 async function highlightWins(clusters){
   /* Add neon border effect (controllable from editor) */
@@ -1522,225 +1522,15 @@ function bhWeightedPick(){
 }
 
 async function triggerBlackHole(){
-  /* Find the single central buco_nero */
   const bhCells=[];
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='buco_nero')bhCells.push([r,c]);
   if(bhCells.length===0)return;
-
-  /* Buco Nero — no cost (RTP balanced via paytable scaling) */
-  dLog(`Buco Nero attivato!`,'info');
-
-  /* Phase 1: Pulse the single central buco_nero */
   const[bhR,bhC]=bhCells[0];
   const bhCell=document.getElementById(`c${bhR}_${bhC}`);
+
+  /* Phase 1: Buco Nero pulses intensely */
   bhCell.classList.add('blackhole-origin');
-  await dly(600);
-
-  /* Phase 2: Expand bh into overlay */
-  const gridEl=document.querySelector('.grid-frame');
-  const cellRect=bhCell.getBoundingClientRect();
-  const gridRect=gridEl.getBoundingClientRect();
-  const centerX=gridRect.left+gridRect.width/2-cellRect.width/2;
-  const centerY=gridRect.top+gridRect.height/2-cellRect.height/2;
-
-  const flyer=document.createElement('div');
-  flyer.className='bh-flying';
-  flyer.style.width=cellRect.width+'px';
-  flyer.style.height=cellRect.height+'px';
-  flyer.style.left=cellRect.left+'px';
-  flyer.style.top=cellRect.top+'px';
-  flyer.innerHTML=renderSymbol('buco_nero');
-  const flyerImg=flyer.querySelector('img');
-  if(flyerImg)flyerImg.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%;';
-  document.body.appendChild(flyer);
-
-  bhCell.querySelector('.sw').style.opacity='0';
-  bhCell.classList.remove('blackhole-origin');
-
-  await dly(30);
-  flyer.style.left=centerX+'px';
-  flyer.style.top=centerY+'px';
-  flyer.style.width=(cellRect.width*1.6)+'px';
-  flyer.style.height=(cellRect.height*1.6)+'px';
-  flyer.style.boxShadow='0 0 50px rgba(150,0,255,0.8),0 0 100px rgba(100,0,200,0.4)';
-  await dly(1400);
-
-  flyer.style.opacity='0';
-  flyer.style.transform='scale(2)';
-  flyer.style.transition='all 0.4s ease-in';
-
-  const overlay=document.getElementById('bhOverlay');
-  const optionsDiv=document.getElementById('bhOptions');
-  const resultLabel=document.getElementById('bhResult');
-  const vortexIcon=document.getElementById('bhVortexIcon');
-  optionsDiv.innerHTML='';
-  resultLabel.textContent='';
-  resultLabel.classList.remove('visible');
-  vortexIcon.innerHTML=renderSymbol('buco_nero');
-
-  overlay.classList.add('visible');
-  await dly(500);
-  flyer.remove();
-
-  /* Phase 3: Build option cards - 5 symbols including alieno */
-  const optEls=[];
-  for(const sym of BH_UPGRADE_SYMS){
-    const el=document.createElement('div');
-    el.className='bh-option';
-    el.innerHTML=renderSymbol(sym)+'<div class="bh-sym-label">'+(SYM_NAMES[sym]||sym)+'</div>';
-    el.dataset.sym=sym;
-    optionsDiv.appendChild(el);
-    optEls.push(el);
-  }
-  await dly(300);
-
-  /* Phase 4: Roulette with RTP-weighted result */
-  const chosenIdx=bhWeightedPick();
-  const totalCycles=4;
-  const totalSteps=totalCycles*BH_UPGRADE_SYMS.length+chosenIdx;
-  let current=-1;
-
-  for(let step=0;step<=totalSteps;step++){
-    current=(current+1)%BH_UPGRADE_SYMS.length;
-    optEls.forEach((el,i)=>{
-      el.classList.toggle('bh-lit',i===current);
-    });
-    const progress=step/totalSteps;
-    const delay=50+Math.pow(progress,3)*450;
-    await dly(delay);
-  }
-
-  /* Phase 5: Lock chosen symbol */
-  optEls[chosenIdx].classList.remove('bh-lit');
-  optEls[chosenIdx].classList.add('bh-chosen');
-  const chosenSym=BH_UPGRADE_SYMS[chosenIdx];
-  const upgradedTo=UPGRADE_MAP[chosenSym];
-
-  await dly(600);
-  resultLabel.innerHTML=`<span style="color:#cc44ff">${SYM_NAMES[chosenSym]}</span> &#10140; <span style="color:#ffd700">${SYM_NAMES[upgradedTo]}</span>`;
-  resultLabel.classList.add('visible');
-  await dly(750);
-
-  /* Phase 6: Close overlay */
-  overlay.classList.remove('visible');
-  await dly(500);
-
-  /* Phase 7: SUCTION ANIMATION - chosen symbols get sucked toward the buco_nero center */
-  const suctionCells=[];
-  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-    if(S.grid[r][c]===chosenSym) suctionCells.push([r,c]);
-  }
-
-  if(suctionCells.length>0){
-    /* Create flying clones that get sucked to center */
-    const flyClones=[];
-    for(const[sr,sc] of suctionCells){
-      const srcCell=document.getElementById(`c${sr}_${sc}`);
-      const srcRect=srcCell.getBoundingClientRect();
-      const clone=document.createElement('div');
-      clone.className='bh-suction-clone';
-      clone.style.width=srcRect.width+'px';
-      clone.style.height=srcRect.height+'px';
-      clone.style.left=srcRect.left+'px';
-      clone.style.top=srcRect.top+'px';
-      clone.innerHTML=renderSymbol(chosenSym);
-      const cImg=clone.querySelector('img');
-      if(cImg)cImg.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:8px;';
-      document.body.appendChild(clone);
-      flyClones.push(clone);
-      /* Hide original cell content */
-      srcCell.querySelector('.sw').style.opacity='0';
-    }
-
-    /* Pulse the buco_nero center as attractor */
-    bhCell.classList.add('blackhole-origin');
-    bhCell.querySelector('.sw').style.opacity='1';
-    bhCell.querySelector('.sw').innerHTML=renderSymbol('buco_nero');
-
-    await dly(200);
-
-    /* Animate all clones toward buco_nero center with spiral suction */
-    const bhNewRect=bhCell.getBoundingClientRect();
-    const targetX=bhNewRect.left+bhNewRect.width/2;
-    const targetY=bhNewRect.top+bhNewRect.height/2;
-
-    for(const clone of flyClones){
-      const cloneRect=clone.getBoundingClientRect();
-      const cloneCX=cloneRect.left+cloneRect.width/2;
-      const cloneCY=cloneRect.top+cloneRect.height/2;
-      clone.style.setProperty('--suction-tx',(targetX-cloneCX)+'px');
-      clone.style.setProperty('--suction-ty',(targetY-cloneCY)+'px');
-      clone.classList.add('bh-sucking');
-    }
-
-    /* Wait for suction animation to complete */
-    await dly(1200);
-
-    /* Remove clones */
-    for(const clone of flyClones) clone.remove();
-    bhCell.classList.remove('blackhole-origin');
-
-    /* Flash buco_nero on each absorbed symbol */
-    bhCell.classList.add('bh-absorb-flash');
-    await dly(400);
-    bhCell.classList.remove('bh-absorb-flash');
-
-    /* Phase 8: Replace sucked symbols with upgraded versions */
-    for(const[sr,sc] of suctionCells){
-      S.grid[sr][sc]=upgradedTo;
-    }
-
-    /* Staggered reveal of upgraded symbols */
-    for(let i=0;i<suctionCells.length;i++){
-      const[ur,uc]=suctionCells[i];
-      const cell=document.getElementById(`c${ur}_${uc}`);
-      const sw=cell.querySelector('.sw');
-      sw.innerHTML=renderSymbol(upgradedTo);
-      sw.style.opacity='1';
-      cell.classList.add('bh-upgraded');
-      await dly(80);
-    }
-
-    dLog(`Buco Nero: ${SYM_NAMES[chosenSym]} → ${SYM_NAMES[upgradedTo]} (${suctionCells.length} celle)`,'win');
-    await dly(900);
-    for(const[ur,uc]of suctionCells)document.getElementById(`c${ur}_${uc}`).classList.remove('bh-upgraded');
-  }
-
-  /* Phase 9: Buco Nero becomes a Wild with fixed multiplier 2x-5x */
-  const bhWildMult=[2,3,4,5][Math.floor(Math.random()*4)];
-  for(const[br,bc]of bhCells){
-    S.grid[br][bc]='wild';
-    S.cellMult[br][bc]=bhWildMult;
-    const c2=document.getElementById(`c${br}_${bc}`);
-    const sw2=c2.querySelector('.sw');
-    sw2.innerHTML=renderSymbol('wild');
-    sw2.style.opacity='1';
-    c2.className='cell wild-cell';
-    /* Wild mult badge */
-    const wb=document.createElement('div');wb.className='wild-mult-badge';wb.textContent='×'+bhWildMult;c2.appendChild(wb);
-    /* Flash animation */
-    c2.classList.add('bh-upgraded');
-    c2.style.boxShadow='inset 0 0 30px rgba(255,215,0,0.8), 0 0 50px rgba(255,215,0,0.5)';
-  }
-  dLog(`Buco Nero → WILD ×${bhWildMult}!`,'win');
-  await dly(1200);
-  for(const[br,bc]of bhCells){
-    const c2=document.getElementById(`c${br}_${bc}`);
-    c2.classList.remove('bh-upgraded');
-    c2.style.boxShadow='';
-  }
-}
-
-async function triggerSupernova(){
-  const snCells=[];
-  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='supernova')snCells.push([r,c]);
-  if(snCells.length===0)return;
-  const[snR,snC]=snCells[0];
-  const snCell=document.getElementById(`c${snR}_${snC}`);
-
-  /* Phase 1: Supernova pulses intensely */
-  snCell.classList.add('sn-origin');
-  SFX.supernovaCharge();
+  SFX.bucoNero();
   await dly(600);
 
   /* Phase 2: Find which regular symbols are on the grid */
@@ -1750,7 +1540,7 @@ async function triggerSupernova(){
     if(s&&REGULAR_SYMS.includes(s)){symCount[s]=(symCount[s]||0)+1;}
   }
   const presentSyms=REGULAR_SYMS.filter(s=>symCount[s]>0);
-  if(presentSyms.length===0){snCell.classList.remove('sn-origin');return;}
+  if(presentSyms.length===0){bhCell.classList.remove('blackhole-origin');return;}
 
   /* Determine target: random symbol from those present on grid */
   const chosenIdx=Math.floor(Math.random()*presentSyms.length);
@@ -1820,7 +1610,7 @@ async function triggerSupernova(){
   await dly(1400);
 
   /* Phase 5: Multi-wave shockwave burst with cell shake */
-  const rect=snCell.getBoundingClientRect();
+  const rect=bhCell.getBoundingClientRect();
   const cx=rect.left+rect.width/2;
   const cy=rect.top+rect.height/2;
   /* Screen flash */
@@ -1838,10 +1628,10 @@ async function triggerSupernova(){
     document.body.appendChild(wave);
     waves.push(wave);
   }
-  /* Radial cell shake: cells shake based on distance from supernova */
+  /* Radial cell shake: cells shake based on distance from buco_nero */
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-    if(r===snR&&c===snC)continue;
-    const dist=Math.abs(r-snR)+Math.abs(c-snC);
+    if(r===bhR&&c===bhC)continue;
+    const dist=Math.abs(r-bhR)+Math.abs(c-bhC);
     const cell=document.getElementById(`c${r}_${c}`);
     setTimeout(()=>{cell.classList.add('sn-shake');setTimeout(()=>cell.classList.remove('sn-shake'),450);},dist*60);
   }
@@ -1865,17 +1655,17 @@ async function triggerSupernova(){
     cell.querySelector('.sw').innerHTML='';
   }
 
-  /* Phase 8: Transform supernova into WILD */
-  S.grid[snR][snC]='wild';
-  S.cellMult[snR][snC]=removedCount;
-  snCell.classList.remove('sn-origin');
-  snCell.className='cell wild-cell';
-  const sw=snCell.querySelector('.sw');
+  /* Phase 8: Transform buco_nero into WILD */
+  S.grid[bhR][bhC]='wild';
+  S.cellMult[bhR][bhC]=removedCount;
+  bhCell.classList.remove('blackhole-origin');
+  bhCell.className='cell wild-cell';
+  const sw=bhCell.querySelector('.sw');
   sw.innerHTML=renderSymbol('wild');
   const multBadge=document.createElement('div');
   multBadge.className='wild-mult-badge';
   multBadge.textContent='×'+removedCount;
-  snCell.appendChild(multBadge);
+  bhCell.appendChild(multBadge);
 
   /* Phase 9: Big central multiplier display */
   const multOverlay=document.getElementById('snMultOverlay');
@@ -1895,8 +1685,218 @@ async function triggerSupernova(){
   S.bannedSym=targetSym;
   S.snSlowCascade=true;
 
-  dLog(`Supernova: rimossi ${removedCount} ${SYM_NAMES[targetSym]||targetSym} → Wild ×${removedCount}`,'win');
+  dLog(`Buco Nero: rimossi ${removedCount} ${SYM_NAMES[targetSym]||targetSym} → Wild ×${removedCount}`,'win');
   await dly(300);
+}
+
+async function triggerSupernova(){
+  /* Find the single central supernova */
+  const snCells=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='supernova')snCells.push([r,c]);
+  if(snCells.length===0)return;
+
+  /* Supernova — no cost (RTP balanced via paytable scaling) */
+  dLog(`Supernova attivato!`,'info');
+
+  /* Phase 1: Pulse the single central supernova */
+  const[snR,snC]=snCells[0];
+  const snCell=document.getElementById(`c${snR}_${snC}`);
+  snCell.classList.add('sn-origin');
+  await dly(600);
+
+  /* Phase 2: Expand sn into overlay */
+  const gridEl=document.querySelector('.grid-frame');
+  const cellRect=snCell.getBoundingClientRect();
+  const gridRect=gridEl.getBoundingClientRect();
+  const centerX=gridRect.left+gridRect.width/2-cellRect.width/2;
+  const centerY=gridRect.top+gridRect.height/2-cellRect.height/2;
+
+  const flyer=document.createElement('div');
+  flyer.className='bh-flying';
+  flyer.style.width=cellRect.width+'px';
+  flyer.style.height=cellRect.height+'px';
+  flyer.style.left=cellRect.left+'px';
+  flyer.style.top=cellRect.top+'px';
+  flyer.innerHTML=renderSymbol('supernova');
+  const flyerImg=flyer.querySelector('img');
+  if(flyerImg)flyerImg.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%;';
+  document.body.appendChild(flyer);
+
+  snCell.querySelector('.sw').style.opacity='0';
+  snCell.classList.remove('sn-origin');
+
+  await dly(30);
+  flyer.style.left=centerX+'px';
+  flyer.style.top=centerY+'px';
+  flyer.style.width=(cellRect.width*1.6)+'px';
+  flyer.style.height=(cellRect.height*1.6)+'px';
+  flyer.style.boxShadow='0 0 50px rgba(150,0,255,0.8),0 0 100px rgba(100,0,200,0.4)';
+  await dly(1400);
+
+  flyer.style.opacity='0';
+  flyer.style.transform='scale(2)';
+  flyer.style.transition='all 0.4s ease-in';
+
+  const overlay=document.getElementById('bhOverlay');
+  const optionsDiv=document.getElementById('bhOptions');
+  const resultLabel=document.getElementById('bhResult');
+  const vortexIcon=document.getElementById('bhVortexIcon');
+  optionsDiv.innerHTML='';
+  resultLabel.textContent='';
+  resultLabel.classList.remove('visible');
+  vortexIcon.innerHTML=renderSymbol('supernova');
+
+  overlay.classList.add('visible');
+  await dly(500);
+  flyer.remove();
+
+  /* Phase 3: Build option cards - 5 symbols including alieno */
+  const optEls=[];
+  for(const sym of BH_UPGRADE_SYMS){
+    const el=document.createElement('div');
+    el.className='bh-option';
+    el.innerHTML=renderSymbol(sym)+'<div class="bh-sym-label">'+(SYM_NAMES[sym]||sym)+'</div>';
+    el.dataset.sym=sym;
+    optionsDiv.appendChild(el);
+    optEls.push(el);
+  }
+  await dly(300);
+
+  /* Phase 4: Roulette with RTP-weighted result */
+  const chosenIdx=bhWeightedPick();
+  const totalCycles=4;
+  const totalSteps=totalCycles*BH_UPGRADE_SYMS.length+chosenIdx;
+  let current=-1;
+
+  for(let step=0;step<=totalSteps;step++){
+    current=(current+1)%BH_UPGRADE_SYMS.length;
+    optEls.forEach((el,i)=>{
+      el.classList.toggle('bh-lit',i===current);
+    });
+    const progress=step/totalSteps;
+    const delay=50+Math.pow(progress,3)*450;
+    await dly(delay);
+  }
+
+  /* Phase 5: Lock chosen symbol */
+  optEls[chosenIdx].classList.remove('bh-lit');
+  optEls[chosenIdx].classList.add('bh-chosen');
+  const chosenSym=BH_UPGRADE_SYMS[chosenIdx];
+  const upgradedTo=UPGRADE_MAP[chosenSym];
+
+  await dly(600);
+  resultLabel.innerHTML=`<span style="color:#cc44ff">${SYM_NAMES[chosenSym]}</span> &#10140; <span style="color:#ffd700">${SYM_NAMES[upgradedTo]}</span>`;
+  resultLabel.classList.add('visible');
+  await dly(750);
+
+  /* Phase 6: Close overlay */
+  overlay.classList.remove('visible');
+  await dly(500);
+
+  /* Phase 7: SUCTION ANIMATION - chosen symbols get sucked toward the supernova center */
+  const suctionCells=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    if(S.grid[r][c]===chosenSym) suctionCells.push([r,c]);
+  }
+
+  if(suctionCells.length>0){
+    /* Create flying clones that get sucked to center */
+    const flyClones=[];
+    for(const[sr,sc] of suctionCells){
+      const srcCell=document.getElementById(`c${sr}_${sc}`);
+      const srcRect=srcCell.getBoundingClientRect();
+      const clone=document.createElement('div');
+      clone.className='bh-suction-clone';
+      clone.style.width=srcRect.width+'px';
+      clone.style.height=srcRect.height+'px';
+      clone.style.left=srcRect.left+'px';
+      clone.style.top=srcRect.top+'px';
+      clone.innerHTML=renderSymbol(chosenSym);
+      const cImg=clone.querySelector('img');
+      if(cImg)cImg.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:8px;';
+      document.body.appendChild(clone);
+      flyClones.push(clone);
+      /* Hide original cell content */
+      srcCell.querySelector('.sw').style.opacity='0';
+    }
+
+    /* Pulse the supernova center as attractor */
+    snCell.classList.add('sn-origin');
+    snCell.querySelector('.sw').style.opacity='1';
+    snCell.querySelector('.sw').innerHTML=renderSymbol('supernova');
+
+    await dly(200);
+
+    /* Animate all clones toward supernova center with spiral suction */
+    const snNewRect=snCell.getBoundingClientRect();
+    const targetX=snNewRect.left+snNewRect.width/2;
+    const targetY=snNewRect.top+snNewRect.height/2;
+
+    for(const clone of flyClones){
+      const cloneRect=clone.getBoundingClientRect();
+      const cloneCX=cloneRect.left+cloneRect.width/2;
+      const cloneCY=cloneRect.top+cloneRect.height/2;
+      clone.style.setProperty('--suction-tx',(targetX-cloneCX)+'px');
+      clone.style.setProperty('--suction-ty',(targetY-cloneCY)+'px');
+      clone.classList.add('bh-sucking');
+    }
+
+    /* Wait for suction animation to complete */
+    await dly(1200);
+
+    /* Remove clones */
+    for(const clone of flyClones) clone.remove();
+    snCell.classList.remove('sn-origin');
+
+    /* Flash supernova on each absorbed symbol */
+    snCell.classList.add('bh-absorb-flash');
+    await dly(400);
+    snCell.classList.remove('bh-absorb-flash');
+
+    /* Phase 8: Replace sucked symbols with upgraded versions */
+    for(const[sr,sc] of suctionCells){
+      S.grid[sr][sc]=upgradedTo;
+    }
+
+    /* Staggered reveal of upgraded symbols */
+    for(let i=0;i<suctionCells.length;i++){
+      const[ur,uc]=suctionCells[i];
+      const cell=document.getElementById(`c${ur}_${uc}`);
+      const sw=cell.querySelector('.sw');
+      sw.innerHTML=renderSymbol(upgradedTo);
+      sw.style.opacity='1';
+      cell.classList.add('bh-upgraded');
+      await dly(80);
+    }
+
+    dLog(`Supernova: ${SYM_NAMES[chosenSym]} → ${SYM_NAMES[upgradedTo]} (${suctionCells.length} celle)`,'win');
+    await dly(900);
+    for(const[ur,uc]of suctionCells)document.getElementById(`c${ur}_${uc}`).classList.remove('bh-upgraded');
+  }
+
+  /* Phase 9: Supernova becomes a Wild with fixed multiplier 2x-5x */
+  const snWildMult=[2,3,4,5][Math.floor(Math.random()*4)];
+  for(const[sr,sc]of snCells){
+    S.grid[sr][sc]='wild';
+    S.cellMult[sr][sc]=snWildMult;
+    const c2=document.getElementById(`c${sr}_${sc}`);
+    const sw2=c2.querySelector('.sw');
+    sw2.innerHTML=renderSymbol('wild');
+    sw2.style.opacity='1';
+    c2.className='cell wild-cell';
+    /* Wild mult badge */
+    const wb=document.createElement('div');wb.className='wild-mult-badge';wb.textContent='×'+snWildMult;c2.appendChild(wb);
+    /* Flash animation */
+    c2.classList.add('bh-upgraded');
+    c2.style.boxShadow='inset 0 0 30px rgba(255,215,0,0.8), 0 0 50px rgba(255,215,0,0.5)';
+  }
+  dLog(`Supernova → WILD ×${snWildMult}!`,'win');
+  await dly(1200);
+  for(const[sr,sc]of snCells){
+    const c2=document.getElementById(`c${sr}_${sc}`);
+    c2.classList.remove('bh-upgraded');
+    c2.style.boxShadow='';
+  }
 }
 
 /* ── FEATURE CASCADE LOOP — pays clusters immediately after each feature activation ── */
@@ -1930,7 +1930,7 @@ async function runFeatureCascadeLoop(fsMult){
     if(cnEl)cnEl.textContent=S.cascLvl+1;
     {const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin*100)/100);}
     if(typeof updateMultiplierStats==='function')updateMultiplierStats();
-    dLog('Cascata '+(S.cascLvl+1)+': +'+pay.toFixed(0),'casc');
+    dLog('Cascata '+(S.cascLvl+1)+': +'+pay.toFixed(2),'casc');
     SFX.cascadeStart(S.cascLvl);
     if(typeof triggerBgFlash==='function')triggerBgFlash('cascade-flash');
     SFX.clusterWin(clusters.reduce((s,c)=>s+c.sz,0));
@@ -1945,7 +1945,7 @@ async function runFeatureCascadeLoop(fsMult){
 
 function genForceExtra(sym){S.grid=[];S.cellMult=[];for(let r=0;r<ROWS;r++){S.grid[r]=[];S.cellMult[r]=[];for(let c=0;c<COLS;c++){S.grid[r][c]=null;S.cellMult[r][c]=1;}}let er,ec;if(sym==='buco_nero'||sym==='tesseract'){er=Math.floor(ROWS/2);ec=Math.floor(COLS/2);}else{er=Math.floor(Math.random()*ROWS);ec=Math.floor(Math.random()*COLS);}S.grid[er][ec]=sym;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(S.grid[r][c]===null)S.grid[r][c]=rndSym();}S.extraSpawned=true;renderFullGrid(true);}
 
-async function spin(){if(S.spinning)return;const ripple=document.createElement('div');ripple.className='spin-ripple';document.getElementById('spinBtn').appendChild(ripple);setTimeout(()=>ripple.remove(),800);if(S.spinMagg>0)SFX.spinMagg();else SFX.spinStart();const tb=S.bet;const isBonusSpin=S.bonusSpin;S.bonusSpin=false;const maggiMult=S.spinMagg>0?S.spinMagg:1;const realCost=Math.round(tb*maggiMult*100)/100;if(!isBonusSpin&&S.bal<realCost){showWin('CREDITO\nINSUFFICIENTE');setTimeout(hideWin,1500);S.spinMagg=0;return;}S.spinning=true;document.getElementById('spinBtn').classList.add('is-spinning');S.spinWin=0;S.cascLvl=0;setGridState('spinning');document.getElementById('spinBtn').disabled=true;document.getElementById('winAmount').textContent='0';updSpinWinPanel(0);hideWin();document.getElementById('cascadeOverlay').classList.remove('visible');if(!isBonusSpin){S.bal-=realCost;S.wagered+=realCost;}/* Spin maggiorato: increase bonus/scatter chance */if(S.spinMagg>0&&!S.forceExtra&&!S.forceScatter){const bInfo=BOOST_MULTS.find(b=>b.mult===S.activeBoostMult);const bonusChance=bInfo?bInfo.bonusChance:0.15;if(Math.random()<bonusChance){const bonuses=['buco_nero','supernova','antigravita','tesseract'];S.forceExtra=bonuses[Math.floor(Math.random()*bonuses.length)];}}S.spinMagg=0;S.activeBoostMult=0;S.spins++;updBal();updateBoostPanel();if(S.gridPreloaded){S.gridPreloaded=false;shuffleReveal();}else if(S.forceBH){genForcedBlackHole();S.forceBH=false;}else if(S.forceW){genForceWin();S.forceW=false;}else if(S.forceExtra){genForceExtra(S.forceExtra);S.forceExtra=null;}else{fillGrid(true);}await dly(S.speedMult>1?2200:3500);/* Check scatters */const scRes=countScatters();if(scRes.count>=3){for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.add('scatter-hl');}await dly(800);for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.remove('scatter-hl');}renderFullGrid(false);const fsCount=scRes.count>=5?15:10;SFX.freeSpinStart();await triggerFreeSpins(fsCount);}else{/* Scatters stay in grid as permanent symbols */}let hasBH=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='buco_nero')hasBH=true;if(hasBH){setGridState('bonus');SFX.bucoNero();showToast('Bonus Attivato!','bonus',3500);await triggerBlackHole();await cascadeGrid();await runFeatureCascadeLoop();}let hasSN=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='supernova')hasSN=true;if(hasSN){setGridState('bonus');SFX.supernova();await triggerSupernova();await cascadeGrid();await runFeatureCascadeLoop();S.bannedSym=null;S.snSlowCascade=false;}let hasAnti=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='antigravita')hasAnti=true;if(hasAnti){setGridState('bonus');SFX.antigravita();await triggerAntigravita();await cascadeGrid();await runFeatureCascadeLoop();}let hasTess=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='tesseract')hasTess=true;if(hasTess){setGridState('bonus');SFX.tesseractOpen();await triggerTesseract();await cascadeGrid();await runFeatureCascadeLoop();}while(true){const clusters=findClusters();if(!clusters.length)break;const pay=calcPay(clusters);S.spinWin+=pay;clusters.forEach(cl=>{cl.cells.forEach(([r,c])=>{S.cellMult[r][c]++;});const dv=DUST_VALUES[cl.sym]||0;if(dv>0){const cascMult=Math.max(1,S.cascLvl);const symBonus=(cl.sym==='astronauta'?3:cl.sym==='alieno'?2:1);const dustGain=Math.max(1,Math.round(dv*cl.sz*0.5*cascMult*symBonus));spawnDustParticles(cl.cells,Math.min(dustGain,8));updDust(dustGain);dLog(`Polvere +${dustGain} (${cl.sym}${cascMult>1?' ×'+cascMult+'casc':''}${symBonus>1?' ×'+symBonus+'sym':''})`,'info');}});document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin*100)/100);document.getElementById('winAmount').parentElement.classList.add('win-counting');updSpinWinPanel(S.spinWin);document.getElementById('cascadeOverlay').textContent=`Cascata ${S.cascLvl+1}`;document.getElementById('cascadeOverlay').classList.add('visible');const cnEl=document.getElementById('cascadeNum');if(cnEl)cnEl.textContent=S.cascLvl+1;{const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin*100)/100);};updateMultiplierStats();dLog(`Cascata ${S.cascLvl+1}: +${pay.toFixed(0)}`,'casc');SFX.cascadeStart(S.cascLvl);triggerBgFlash('cascade-flash');SFX.clusterWin(clusters.reduce((s,c)=>s+c.sz,0));await highlightWins(clusters);await destroyClusters(clusters);await cascadeGrid();S.cascLvl++;showToast('Cascata Livello '+S.cascLvl+'!','cascade',2500);await dly(150);}/* Clean up any wild/tesseract cells remaining after cascades */for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(S.grid[r][c]==='wild'||S.grid[r][c]==='tesseract'){S.grid[r][c]=rndSym();S.cellMult[r][c]=1;}}renderFullGrid(false);document.getElementById('cascadeOverlay').classList.remove('visible');if(S.spinWin>0){S.bal+=S.spinWin;S.won+=S.spinWin;S.hits++;if(S.spinWin>S.maxW)S.maxW=S.spinWin;updBal();const wr=S.spinWin/tb;setGridState('winning');spawnWinCoins(document.getElementById('winAmount'),Math.min(Math.ceil(wr),15));if(wr>=50){SFX.megaWin();showBigWinPopup('MEGA WIN!',S.spinWin);triggerBgFlash('mega-flash');triggerBgShift('mega');}else if(wr>=20){SFX.bigWin();showBigWinPopup('BIG WIN!',S.spinWin);triggerBgFlash('win-flash');triggerBgShift('big');}else if(wr>=8){SFX.smallWin();showWin('GRANDE!\n'+fmt(Math.round(S.spinWin*100)/100));triggerBgFlash('win-flash');triggerBgShift('small');}else{SFX.smallWin();}dLog(`Spin #${S.spins}: +${S.spinWin.toFixed(0)} (${wr.toFixed(1)}x)`,'win');addHistory(S.spins,tb,S.spinWin,S.cascLvl);}else{SFX.noWin();dLog(`Spin #${S.spins}: nessuna vincita`,'info');addHistory(S.spins,tb,0,S.cascLvl);}if(S.cascLvl>S.maxC)S.maxC=S.cascLvl;S.totC+=S.cascLvl;updDev();document.getElementById('winAmount').parentElement.classList.remove('win-counting');S.spinning=false;S.superBonusActive=false;S.jackpotMode=false;S.gridPreloaded=false;document.getElementById('spinBtn').classList.remove('is-spinning');setGridState('idle');document.getElementById('spinBtn').disabled=false;updateBonusBtns();updateBoostPanel();if(S.auto&&S.bal>=S.bet*COLS&&!checkAutoplayStop()){await dly(S.turbo?200:500);hideWin();spin();}else{S.auto=false;bsState.autoRemaining=0;document.getElementById('btnAuto').classList.remove('active');setTimeout(hideWin,2000);}}
+async function spin(){if(S.spinning)return;const ripple=document.createElement('div');ripple.className='spin-ripple';document.getElementById('spinBtn').appendChild(ripple);setTimeout(()=>ripple.remove(),800);if(S.spinMagg>0)SFX.spinMagg();else SFX.spinStart();const tb=S.bet;const isBonusSpin=S.bonusSpin;S.bonusSpin=false;const maggiMult=S.spinMagg>0?S.spinMagg:1;const realCost=Math.round(tb*maggiMult*100)/100;if(!isBonusSpin&&S.bal<realCost){showWin('CREDITO\nINSUFFICIENTE');setTimeout(hideWin,1500);S.spinMagg=0;return;}S.spinning=true;document.getElementById('spinBtn').classList.add('is-spinning');S.spinWin=0;S.cascLvl=0;setGridState('spinning');document.getElementById('spinBtn').disabled=true;document.getElementById('winAmount').textContent='0';updSpinWinPanel(0);hideWin();document.getElementById('cascadeOverlay').classList.remove('visible');if(!isBonusSpin){S.bal-=realCost;S.wagered+=realCost;}/* Spin maggiorato: increase bonus/scatter chance */if(S.spinMagg>0&&!S.forceExtra&&!S.forceScatter){const bInfo=BOOST_MULTS.find(b=>b.mult===S.activeBoostMult);const bonusChance=bInfo?bInfo.bonusChance:0.15;if(Math.random()<bonusChance){const bonuses=['buco_nero','supernova','antigravita','tesseract'];S.forceExtra=bonuses[Math.floor(Math.random()*bonuses.length)];}}S.spinMagg=0;S.activeBoostMult=0;S.spins++;updBal();updateBoostPanel();if(S.gridPreloaded){S.gridPreloaded=false;shuffleReveal();}else if(S.forceBH){genForcedBlackHole();S.forceBH=false;}else if(S.forceW){genForceWin();S.forceW=false;}else if(S.forceExtra){genForceExtra(S.forceExtra);S.forceExtra=null;}else{fillGrid(true);}await dly(S.speedMult>1?2200:3500);/* Check scatters */const scRes=countScatters();if(scRes.count>=3){for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.add('scatter-hl');}await dly(800);for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.remove('scatter-hl');}renderFullGrid(false);const fsCount=scRes.count>=5?15:10;SFX.freeSpinStart();await triggerFreeSpins(fsCount);}else{/* Scatters stay in grid as permanent symbols */}let hasBH=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='buco_nero')hasBH=true;if(hasBH){setGridState('bonus');SFX.bucoNero();showToast('Bonus Attivato!','bonus',3500);await triggerBlackHole();await cascadeGrid();await runFeatureCascadeLoop();S.bannedSym=null;S.snSlowCascade=false;}let hasSN=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='supernova')hasSN=true;if(hasSN){setGridState('bonus');SFX.supernova();await triggerSupernova();await cascadeGrid();await runFeatureCascadeLoop();}let hasAnti=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='antigravita')hasAnti=true;if(hasAnti){setGridState('bonus');SFX.antigravita();await triggerAntigravita();await cascadeGrid();await runFeatureCascadeLoop();}let hasTess=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='tesseract')hasTess=true;if(hasTess){setGridState('bonus');SFX.tesseractOpen();await triggerTesseract();await cascadeGrid();await runFeatureCascadeLoop();}while(true){const clusters=findClusters();if(!clusters.length)break;const pay=calcPay(clusters);S.spinWin+=pay;clusters.forEach(cl=>{cl.cells.forEach(([r,c])=>{S.cellMult[r][c]++;});const dv=DUST_VALUES[cl.sym]||0;if(dv>0){const cascMult=Math.max(1,S.cascLvl);const symBonus=(cl.sym==='astronauta'?3:cl.sym==='alieno'?2:1);const dustGain=Math.max(1,Math.round(dv*cl.sz*0.5*cascMult*symBonus));spawnDustParticles(cl.cells,Math.min(dustGain,8));updDust(dustGain);dLog(`Polvere +${dustGain} (${cl.sym}${cascMult>1?' ×'+cascMult+'casc':''}${symBonus>1?' ×'+symBonus+'sym':''})`,'info');}});document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin*100)/100);document.getElementById('winAmount').parentElement.classList.add('win-counting');updSpinWinPanel(S.spinWin);document.getElementById('cascadeOverlay').textContent=`Cascata ${S.cascLvl+1}`;document.getElementById('cascadeOverlay').classList.add('visible');const cnEl=document.getElementById('cascadeNum');if(cnEl)cnEl.textContent=S.cascLvl+1;{const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin*100)/100);};updateMultiplierStats();dLog(`Cascata ${S.cascLvl+1}: +${pay.toFixed(2)}`,'casc');SFX.cascadeStart(S.cascLvl);triggerBgFlash('cascade-flash');SFX.clusterWin(clusters.reduce((s,c)=>s+c.sz,0));await highlightWins(clusters);await destroyClusters(clusters);await cascadeGrid();S.cascLvl++;showToast('Cascata Livello '+S.cascLvl+'!','cascade',2500);await dly(150);}/* Clean up any wild/tesseract cells remaining after cascades */for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(S.grid[r][c]==='wild'||S.grid[r][c]==='tesseract'){S.grid[r][c]=rndSym();S.cellMult[r][c]=1;}}renderFullGrid(false);document.getElementById('cascadeOverlay').classList.remove('visible');if(S.spinWin>0){S.bal+=S.spinWin;S.won+=S.spinWin;S.hits++;if(S.spinWin>S.maxW)S.maxW=S.spinWin;updBal();const wr=S.spinWin/tb;setGridState('winning');spawnWinCoins(document.getElementById('winAmount'),Math.min(Math.ceil(wr),15));if(wr>=50){SFX.megaWin();showBigWinPopup('MEGA WIN!',S.spinWin);triggerBgFlash('mega-flash');triggerBgShift('mega');}else if(wr>=20){SFX.bigWin();showBigWinPopup('BIG WIN!',S.spinWin);triggerBgFlash('win-flash');triggerBgShift('big');}else if(wr>=8){SFX.smallWin();showWin('GRANDE!\n'+fmt(Math.round(S.spinWin*100)/100));triggerBgFlash('win-flash');triggerBgShift('small');}else{SFX.smallWin();}dLog(`Spin #${S.spins}: +${S.spinWin.toFixed(2)} (${wr.toFixed(1)}x)`,'win');addHistory(S.spins,tb,S.spinWin,S.cascLvl);}else{SFX.noWin();dLog(`Spin #${S.spins}: nessuna vincita`,'info');addHistory(S.spins,tb,0,S.cascLvl);}if(S.cascLvl>S.maxC)S.maxC=S.cascLvl;S.totC+=S.cascLvl;updDev();document.getElementById('winAmount').parentElement.classList.remove('win-counting');S.spinning=false;S.superBonusActive=false;S.jackpotMode=false;S.gridPreloaded=false;document.getElementById('spinBtn').classList.remove('is-spinning');setGridState('idle');document.getElementById('spinBtn').disabled=false;updateBonusBtns();updateBoostPanel();if(S.auto&&S.bal>=S.bet*COLS&&!checkAutoplayStop()){await dly(S.turbo?200:500);hideWin();spin();}else{S.auto=false;bsState.autoRemaining=0;document.getElementById('btnAuto').classList.remove('active');setTimeout(hideWin,2000);}}
 
 function updBet(d){SFX.betChange();const idx=BETS.indexOf(S.bet);const newIdx=Math.max(0,Math.min(BETS.length-1,idx+d));S.bet=BETS[newIdx];document.getElementById('betVal').textContent=S.bet;if(typeof updateBonusPrices==='function')updateBonusPrices();if(typeof updateSpinMaggButtons==='function')updateSpinMaggButtons();}
 
@@ -2088,10 +2088,10 @@ function showPremiumWin(amount,label,type){
     const progress=Math.min(elapsed/duration,1);
     /* Ease-out curve for satisfying deceleration */
     const eased=1-Math.pow(1-progress,3);
-    current=Math.round(amount*eased);
+    current=Math.round(amount*eased*100)/100;
     amountDisplay.textContent=fmt(current);
     if(progress<1){_winCountInterval=requestAnimationFrame(countUp);}
-    else{amountDisplay.textContent=fmt(amount);amountDisplay.style.animation='valFlash 0.3s ease-out';}
+    else{amountDisplay.textContent=fmt(Math.round(amount*100)/100);amountDisplay.style.animation='valFlash 0.3s ease-out';}
   }
   _winCountInterval=requestAnimationFrame(countUp);
 
