@@ -1,0 +1,3360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elven Fortunes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=MedievalSharp&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:100vw;height:100vh;overflow:hidden;font-family:'MedievalSharp',cursive;background:#000;display:flex;justify-content:center;align-items:center;user-select:none}
+
+/* ===== BACKGROUND ===== */
+.bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;background-image:url('img/background.png');background-size:cover;background-position:center;background-repeat:no-repeat}
+
+/* ===== GAME LAYOUT ===== */
+.game{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100vw;height:100vh}
+
+/* ===== SIDE CHARACTERS ===== */
+.side{display:none}
+
+/* ===== MAIN FRAME CONTAINER ===== */
+.frame-container{position:relative;width:500px;z-index:2}
+
+/* Single frame image: frame + spin bar combined (1024x1536) */
+.frame-wrapper{position:relative;width:100%;aspect-ratio:1024/1536}
+.frame-img{position:absolute;inset:0;
+  background:url('img/frame.png') center/100% 100% no-repeat;
+  z-index:1;pointer-events:none}
+
+/* Grid area: left 14.3%, top 14.7%, width 73.6%, height 62.7% of full image */
+.grid{position:absolute;left:14.3%;top:14.7%;width:73.6%;height:62.7%;
+  background:transparent;border:none;overflow:hidden;padding:0;
+  display:flex;align-items:center;justify-content:center;z-index:2}
+.reels{display:flex;gap:1px;position:relative;z-index:2}
+.reel{display:flex;flex-direction:column;gap:1px}
+
+/* Cell size for 6 cols x 9 rows at 500px container */
+.cell{width:60px;height:57px;
+  background:transparent;
+  border-radius:0;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  border:none;
+  transition:all .3s ease;cursor:default}
+.cell .sym{width:56px;height:53px;transition:transform .2s ease}
+.cell:hover .sym{transform:scale(1.1)}
+/* Big symbols */
+.cell.big-anchor{overflow:visible;z-index:5}
+.cell.big-part .sym{display:none}
+.cell.big-anchor .sym.big2x2{width:122px;height:116px;position:absolute;top:0;left:0;z-index:5;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,0.6))}
+.cell.big-anchor .sym.big3x3{width:182px;height:155px;position:absolute;top:0;left:0;z-index:5;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.7))}
+/* Big symbol decompose animation */
+.cell.big-decompose .sym{animation:bigDecompose .6s ease-in forwards}
+@keyframes bigDecompose{
+  0%{transform:scale(1);opacity:1;filter:brightness(1)}
+  40%{transform:scale(1.1);filter:brightness(1.8)}
+  70%{transform:scale(0.5);opacity:.6;filter:brightness(2) blur(2px)}
+  100%{transform:scale(0);opacity:0;filter:brightness(3) blur(4px)}
+}
+.cell.big-appear{animation:bigAppear .5s cubic-bezier(.22,.68,.36,1.2)}
+@keyframes bigAppear{
+  0%{transform:scale(0);opacity:0}
+  60%{transform:scale(1.15);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+
+/* Winning pulse - slow golden glow */
+.cell.winning{animation:winPulse .7s ease-in-out infinite alternate;
+  border:2px solid rgba(255,215,0,0.9);border-radius:0;
+  box-shadow:0 0 30px rgba(255,215,0,0.7),0 0 60px rgba(255,165,0,0.3),inset 0 0 20px rgba(255,215,0,0.2);
+  background:radial-gradient(circle,rgba(60,50,0,0.95),rgba(20,15,0,0.98))}
+@keyframes winPulse{
+  0%{transform:scale(1);box-shadow:0 0 30px rgba(255,215,0,0.7),0 0 60px rgba(255,165,0,0.3)}
+  100%{transform:scale(1.08);box-shadow:0 0 45px rgba(255,215,0,0.9),0 0 90px rgba(255,165,0,0.5)}
+}
+
+/* Explode - dramatic burst */
+.cell.explode{animation:explode .8s ease-out forwards}
+@keyframes explode{
+  0%{transform:scale(1);opacity:1;filter:brightness(1)}
+  15%{transform:scale(1.2);opacity:1;filter:brightness(2)}
+  30%{transform:scale(1.35) rotate(8deg);opacity:.9;filter:brightness(2.5) saturate(2)}
+  50%{transform:scale(1.5) rotate(-5deg);opacity:.5;filter:brightness(3) saturate(1.5)}
+  70%{transform:scale(1.2) rotate(12deg);opacity:.2;filter:brightness(4)}
+  100%{transform:scale(0) rotate(30deg);opacity:0;filter:brightness(5)}
+}
+
+/* Drop - bouncy fall from top */
+.cell.drop{animation:dropIn .7s cubic-bezier(.22,.68,.36,1.2)}
+@keyframes dropIn{
+  0%{transform:translateY(-90px) scale(0.8);opacity:0}
+  40%{transform:translateY(8px) scale(1.05);opacity:1}
+  60%{transform:translateY(-6px) scale(0.97)}
+  80%{transform:translateY(3px) scale(1.02)}
+  100%{transform:translateY(0) scale(1)}
+}
+
+/* Dissolve - soft magical fade for non-cluster matching symbols */
+.cell.dissolve{animation:dissolve .9s ease-out forwards}
+@keyframes dissolve{
+  0%{transform:scale(1);opacity:1;filter:brightness(1) blur(0)}
+  25%{transform:scale(1.05);opacity:.8;filter:brightness(1.8) blur(0)}
+  50%{transform:scale(1.02);opacity:.5;filter:brightness(2) blur(2px)}
+  75%{transform:scale(0.95);opacity:.2;filter:brightness(2.5) blur(4px)}
+  100%{transform:scale(0.85);opacity:0;filter:brightness(3) blur(6px)}
+}
+
+/* Wild spawn - epic golden entrance */
+.cell.wild-spawn{animation:wildSpawn 1s ease-out forwards}
+.cell.wild-spawn .sym{animation:wildGlow 1s ease-out forwards}
+@keyframes wildSpawn{
+  0%{transform:scale(0) rotate(-360deg);opacity:0;box-shadow:0 0 0 rgba(255,215,0,0)}
+  25%{transform:scale(1.5) rotate(-30deg);opacity:1;box-shadow:0 0 60px rgba(255,215,0,1),0 0 120px rgba(255,165,0,0.6)}
+  50%{transform:scale(0.85) rotate(15deg);opacity:1;box-shadow:0 0 40px rgba(255,215,0,0.7),0 0 80px rgba(255,165,0,0.4)}
+  70%{transform:scale(1.15) rotate(-5deg);box-shadow:0 0 50px rgba(255,215,0,0.8)}
+  85%{transform:scale(0.95) rotate(2deg);box-shadow:0 0 30px rgba(255,215,0,0.5)}
+  100%{transform:scale(1) rotate(0deg);box-shadow:0 0 20px rgba(255,215,0,0.4)}
+}
+@keyframes wildGlow{
+  0%{filter:brightness(0) drop-shadow(0 0 0 transparent)}
+  20%{filter:brightness(5) drop-shadow(0 0 30px rgba(255,215,0,1))}
+  50%{filter:brightness(2) drop-shadow(0 0 20px rgba(255,215,0,0.8))}
+  100%{filter:brightness(1) drop-shadow(0 0 10px rgba(255,215,0,0.5))}
+}
+
+.cell.spinning .sym{animation:spinBlur .07s linear infinite}
+@keyframes spinBlur{0%{transform:translateY(-110%);opacity:.2}50%{opacity:.5}100%{transform:translateY(110%);opacity:.2}}
+
+/* ===== TITLE BANNER (hidden - frame image has built-in title) ===== */
+.title-wrap{display:none}
+
+/* ===== PAYTABLE POPUP ===== */
+.paytable-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:50000;
+  justify-content:center;align-items:center;backdrop-filter:blur(4px)}
+.paytable-overlay.show{display:flex}
+.paytable-box{background:linear-gradient(180deg,#1a1a2e,#0d0d1a);border:2px solid #FFD700;border-radius:16px;
+  padding:20px 24px;max-width:720px;width:95%;max-height:90vh;overflow-y:auto;position:relative;
+  box-shadow:0 0 60px rgba(255,215,0,0.2)}
+.paytable-close{position:absolute;top:10px;right:14px;background:none;border:none;color:#FFD700;
+  font-size:24px;cursor:pointer;z-index:1;line-height:1}
+.paytable-close:hover{color:#fff}
+.paytable-title{text-align:center;font-family:'Cinzel Decorative',cursive;font-size:20px;font-weight:900;
+  color:#FFD700;margin-bottom:16px;text-shadow:0 0 15px rgba(255,215,0,0.4)}
+.paytable-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:600px){.paytable-grid{grid-template-columns:repeat(2,1fr)}}
+.paytable-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,215,0,0.2);border-radius:10px;
+  padding:10px;text-align:center}
+.paytable-card img{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+  margin-bottom:6px}
+.paytable-card .sym-name{color:#FFD700;font-family:'MedievalSharp',cursive;font-size:11px;margin-bottom:6px;
+  font-weight:bold}
+.paytable-row{display:flex;justify-content:space-between;align-items:center;padding:2px 4px;
+  font-size:10px;border-bottom:1px solid rgba(255,255,255,0.05)}
+.paytable-row:last-child{border-bottom:none}
+.paytable-row .tier{color:#aaa;font-weight:bold;min-width:32px}
+.paytable-row .payout{color:#4dff88;font-weight:bold}
+.paytable-btn{position:fixed;top:10px;left:10px;z-index:10000;background:linear-gradient(145deg,#1a1a2e,#0d0d1a);
+  border:2px solid #FFD700;color:#FFD700;padding:6px 14px;border-radius:8px;cursor:pointer;
+  font-family:'MedievalSharp',cursive;font-size:12px;font-weight:bold;
+  box-shadow:0 2px 10px rgba(255,215,0,0.3);transition:all .2s}
+.paytable-btn:hover{background:#FFD700;color:#000}
+
+/* ===== CHARGE BAR (VERTICAL) ===== */
+.charge-bar{position:relative;width:32px;height:100%;
+  background:linear-gradient(180deg,#0a0514,#0d0820,#0a0514);
+  border-radius:16px;border:2px solid #4a3a7a;overflow:visible;
+  box-shadow:inset 0 0 12px rgba(0,0,0,0.9),0 0 8px rgba(100,60,180,0.3),0 0 20px rgba(80,40,160,0.15);
+  z-index:3}
+.charge-bar::before{content:'';position:absolute;top:2px;left:4px;width:8px;bottom:2px;
+  background:linear-gradient(180deg,rgba(255,255,255,0.06),transparent 40%,rgba(255,255,255,0.03));
+  border-radius:12px;pointer-events:none;z-index:4}
+.charge-fill{position:absolute;bottom:0;left:0;right:0;height:0%;border-radius:0 0 14px 14px;
+  background:linear-gradient(0deg,#3a0080,#6622cc,#9944ff,#bb66ff);
+  box-shadow:0 0 15px rgba(120,60,220,0.6),0 0 30px rgba(100,40,200,0.3),inset 0 0 8px rgba(255,200,255,0.2);
+  transition:height 0.6s cubic-bezier(.25,.8,.25,1)}
+.charge-fill::after{content:'';position:absolute;top:0;left:3px;right:12px;height:100%;
+  background:linear-gradient(90deg,rgba(255,255,255,0.2),transparent);border-radius:14px;pointer-events:none}
+/* Glow ring at fill top */
+.charge-fill::before{content:'';position:absolute;top:-3px;left:-2px;right:-2px;height:6px;
+  background:radial-gradient(ellipse at center,rgba(200,150,255,0.9),rgba(120,60,220,0.4),transparent);
+  border-radius:50%;filter:blur(2px);pointer-events:none}
+/* Threshold markers - horizontal lines across the bar */
+.charge-mark{position:absolute;left:0;right:0;height:3px;transform:translateY(50%);
+  background:rgba(80,60,120,0.5);z-index:5;transition:all .4s ease}
+.charge-mark::after{content:attr(data-label);position:absolute;left:calc(100% + 6px);top:50%;transform:translateY(-50%);
+  font-size:8px;font-weight:900;font-family:'Cinzel Decorative',cursive;
+  color:rgba(150,120,200,0.5);white-space:nowrap;transition:all .4s ease;
+  text-shadow:0 0 4px rgba(0,0,0,0.8)}
+/* Gem icons on threshold markers */
+.charge-mark::before{content:'';position:absolute;right:calc(100% + 4px);top:50%;transform:translateY(-50%);
+  width:12px;height:12px;border-radius:3px;rotate:45deg;
+  background:linear-gradient(135deg,#555,#333);border:1.5px solid #6a5a9a;
+  transition:all .4s ease;box-shadow:0 1px 4px rgba(0,0,0,0.6)}
+/* Threshold 1 = green (30) */
+#cm1.reached{background:rgba(0,220,80,0.9);box-shadow:0 0 10px rgba(0,220,80,0.5)}
+#cm1.reached::before{background:linear-gradient(135deg,#44ff88,#00cc44);border-color:#44ff88;
+  box-shadow:0 0 12px rgba(0,220,80,0.9),0 0 20px rgba(0,180,60,0.4);animation:gemPop .5s ease-out}
+#cm1.reached::after{color:#44ff88;text-shadow:0 0 8px rgba(0,220,80,0.6)}
+/* Threshold 2 = blue (60) */
+#cm2.reached{background:rgba(50,150,255,0.9);box-shadow:0 0 10px rgba(50,150,255,0.5)}
+#cm2.reached::before{background:linear-gradient(135deg,#66bbff,#2288ee);border-color:#66bbff;
+  box-shadow:0 0 12px rgba(50,150,255,0.9),0 0 20px rgba(30,100,220,0.4);animation:gemPop .5s ease-out}
+#cm2.reached::after{color:#66bbff;text-shadow:0 0 8px rgba(50,150,255,0.6)}
+/* Threshold 3 = purple (90) */
+#cm3.reached{background:rgba(180,80,255,0.9);box-shadow:0 0 10px rgba(180,80,255,0.5)}
+#cm3.reached::before{background:linear-gradient(135deg,#cc88ff,#9944ee);border-color:#cc88ff;
+  box-shadow:0 0 12px rgba(180,80,255,0.9),0 0 20px rgba(140,40,220,0.4);animation:gemPop .5s ease-out}
+#cm3.reached::after{color:#cc88ff;text-shadow:0 0 8px rgba(180,80,255,0.6)}
+/* Threshold 4 = red/gold (120) */
+#cm4.reached{background:rgba(255,60,30,0.9);box-shadow:0 0 10px rgba(255,60,30,0.5)}
+#cm4.reached::before{background:linear-gradient(135deg,#ff6644,#ee2200);border-color:#ff6644;
+  box-shadow:0 0 12px rgba(255,60,30,0.9),0 0 20px rgba(220,30,0,0.4);animation:gemPop .5s ease-out}
+#cm4.reached::after{color:#ff6644;text-shadow:0 0 8px rgba(255,60,30,0.6)}
+@keyframes gemPop{0%{transform:translateY(-50%) rotate(45deg) scale(1)}40%{transform:translateY(-50%) rotate(45deg) scale(1.8)}100%{transform:translateY(-50%) rotate(45deg) scale(1)}}
+/* Charge text label at bottom */
+.charge-label{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);
+  font-size:9px;font-weight:900;color:rgba(180,150,230,0.9);z-index:6;white-space:nowrap;
+  font-family:'Cinzel Decorative',cursive;
+  text-shadow:0 0 6px rgba(120,60,220,0.5),0 1px 2px rgba(0,0,0,0.9)}
+/* Ambient particles on full bar */
+@keyframes chargeParticle{0%{opacity:0;transform:translateY(0) scale(0)}50%{opacity:1;transform:translateY(-10px) scale(1)}100%{opacity:0;transform:translateY(-25px) scale(0.5)}}
+.charge-bar.full .charge-fill{background:linear-gradient(0deg,#cc0000,#ff4400,#FFD700,#ffee66);
+  box-shadow:0 0 20px rgba(255,100,0,0.7),0 0 40px rgba(255,60,0,0.4),inset 0 0 10px rgba(255,200,100,0.3)}
+
+/* ===== SPIN BAR (integrated in frame image) ===== */
+/* All spin bar elements are positioned absolutely within .frame-wrapper */
+/* Image: 1024x1536. Spin bar area: roughly y=1190-1500 (77.5%-97.7%) */
+
+.sb-num{position:absolute;font-family:'Cinzel Decorative',cursive;font-weight:900;
+  color:#3a2a0a;text-shadow:none;
+  pointer-events:none;user-select:none;white-space:nowrap;display:flex;
+  align-items:center;justify-content:center;z-index:3;
+  background:rgb(217,175,57);border-radius:2px}
+/* Drag mode: visible overlays */
+.sb-num.draggable{pointer-events:auto;cursor:move;
+  outline:2px solid #ff0000 !important;outline-offset:1px;
+  z-index:9999 !important}
+.sb-click.draggable{
+  outline:3px solid #00ffff !important;outline-offset:2px;
+  background:rgba(0,255,255,0.4) !important;
+  z-index:9998 !important}
+.sb-click.draggable::after{content:attr(title);color:#000;font:bold 10px sans-serif;
+  display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+/* Resize handles on draggable overlays */
+.ov-handle{position:absolute;background:#ff0;border:1px solid #000;z-index:10001;pointer-events:auto;display:none}
+.ov-handle-e{width:6px;height:60%;top:20%;right:-4px;cursor:ew-resize}
+.ov-handle-s{height:6px;width:60%;left:20%;bottom:-4px;cursor:ns-resize}
+.ov-handle-se{width:8px;height:8px;right:-5px;bottom:-5px;cursor:nwse-resize;border-radius:2px}
+.draggable .ov-handle{display:block}
+
+/* SALDO value */
+.sb-num-bal{font-size:10px;left:14%;top:81%;width:14%;height:2.8%}
+/* VINCITE box 1 */
+.sb-num-vin1{font-size:8px;left:6%;top:90%;width:13%;height:2.2%}
+/* VINCITE box 2 */
+.sb-num-vin2{font-size:8px;left:23%;top:90%;width:12%;height:2.2%}
+/* VINCITE TOTALI right */
+.sb-num-win{font-size:10px;left:67%;top:81%;width:19%;height:2.2%}
+
+/* Invisible clickable zones within frame-wrapper */
+.sb-click{position:absolute;cursor:pointer;border:none;background:transparent;z-index:5}
+.sb-click:hover{filter:brightness(1.2)}
+.sb-click:active{transform:scale(0.95)}
+/* MAX BET button */
+.sb-click-maxbet{left:34.7%;top:78.5%;width:8.3%;height:4.6%;cursor:pointer;border-radius:50%}
+/* Bet minus (-) */
+.sb-click-betdown{left:58.6%;top:80.1%;width:5.9%;height:2.9%;cursor:pointer;border-radius:50%}
+/* Bet plus (+) */
+.sb-click-betup{left:91.3%;top:80.4%;width:4.9%;height:2.8%;cursor:pointer;border-radius:50%}
+/* SPIN button (large golden coin) */
+.sb-click-spin{left:37.1%;top:84.3%;width:28.3%;height:11.7%;border-radius:50%;cursor:pointer}
+.sb-click-spin:hover{filter:brightness(1.15) drop-shadow(0 0 12px rgba(255,215,0,0.6))}
+.sb-click-spin:active{transform:scale(0.93)}
+.frame-wrapper.disabled .sb-click-spin{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* ===== BONUS MENU (right side vertical panel) ===== */
+.buy-menu{position:absolute;top:15%;right:1.5%;z-index:20;width:10%;
+  display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:0}
+.buy-btn{position:relative;z-index:1;width:100%;
+  background:linear-gradient(180deg,#1a0e2e,#0d0820);
+  border:1.5px solid #4a3a7a;border-radius:8px;cursor:pointer;transition:all .25s ease;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:6px 3px;gap:1px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.05)}
+.buy-btn .buy-icon{font-size:16px;line-height:1;filter:drop-shadow(0 0 4px rgba(255,215,0,0.4))}
+.buy-btn .buy-name{font-family:'MedievalSharp',cursive;font-size:7px;font-weight:bold;
+  color:#ccc;text-shadow:0 1px 2px #000;white-space:nowrap;line-height:1.1}
+.buy-btn .buy-cost{font-family:'Cinzel Decorative',cursive;font-size:9px;font-weight:900;
+  color:#FFD700;text-shadow:0 0 6px rgba(255,215,0,0.5);line-height:1.1}
+.buy-btn:hover:not(:disabled){transform:scale(1.06);border-color:#FFD700;
+  box-shadow:0 0 15px rgba(255,215,0,0.3),0 4px 12px rgba(0,0,0,0.5);
+  background:linear-gradient(180deg,#2a1e4e,#1a1040)}
+.buy-btn:active:not(:disabled){transform:scale(0.95)}
+.buy-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;filter:grayscale(0.5)}
+/* Color accents per button */
+.buy-btn[data-buy="findBonus"]{border-color:#2a7a3a}
+.buy-btn[data-buy="findBonus"]:hover:not(:disabled){border-color:#44ff88;box-shadow:0 0 12px rgba(0,220,80,0.4)}
+.buy-btn[data-buy="removeSymbols"]{border-color:#2a5a8a}
+.buy-btn[data-buy="removeSymbols"]:hover:not(:disabled){border-color:#44bbff;box-shadow:0 0 12px rgba(0,160,255,0.4)}
+.buy-btn[data-buy="bigSymbols"]{border-color:#5a3a8a}
+.buy-btn[data-buy="bigSymbols"]:hover:not(:disabled){border-color:#cc88ff;box-shadow:0 0 12px rgba(180,80,255,0.4)}
+.buy-btn[data-buy="fireballs"]{border-color:#8a4a1a}
+.buy-btn[data-buy="fireballs"]:hover:not(:disabled){border-color:#ff8833;box-shadow:0 0 12px rgba(255,120,0,0.4)}
+.buy-btn[data-buy="buyFSFull"]{border-color:#7a2a5a}
+.buy-btn[data-buy="buyFSFull"]:hover:not(:disabled){border-color:#ff44cc;box-shadow:0 0 12px rgba(255,60,200,0.4)}
+.buy-btn[data-buy="buyFSAuto"]{border-color:#8a6a1a}
+.buy-btn[data-buy="buyFSAuto"]:hover:not(:disabled){border-color:#FFD700;box-shadow:0 0 15px rgba(255,215,0,0.5)}
+
+/* ===== SPEED BOOST BUTTONS ===== */
+.speed-panel{position:absolute;bottom:3%;right:1.5%;z-index:20;
+  display:flex;gap:3px;align-items:center}
+.speed-btn{background:linear-gradient(180deg,#1a1a2e,#0d0d1a);
+  border:1.5px solid #444;border-radius:6px;cursor:pointer;
+  color:#aaa;font-family:'Cinzel Decorative',cursive;font-size:10px;font-weight:900;
+  padding:4px 7px;transition:all .2s ease;
+  box-shadow:0 2px 6px rgba(0,0,0,0.4)}
+.speed-btn:hover{border-color:#FFD700;color:#FFD700;box-shadow:0 0 10px rgba(255,215,0,0.3)}
+.speed-btn.active{background:linear-gradient(180deg,#2a1a00,#1a1000);
+  border-color:#FFD700;color:#FFD700;
+  box-shadow:0 0 12px rgba(255,215,0,0.4),inset 0 0 6px rgba(255,215,0,0.1);
+  text-shadow:0 0 6px rgba(255,215,0,0.5)}
+
+/* ===== FREE SPINS BANNER ===== */
+.fs{display:none;position:absolute;top:-30px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(145deg,#8B0000,#CC0000);color:#FFD700;padding:5px 18px;border-radius:15px;
+  font-size:13px;font-weight:bold;border:2px solid #FFD700;white-space:nowrap;z-index:20;
+  box-shadow:0 0 20px rgba(255,0,0,0.4),0 4px 10px rgba(0,0,0,0.5)}
+.fs.show{display:block;animation:popIn .3s ease-out}
+
+/* ===== WIN BANNER ===== */
+.banner{display:none;position:absolute;top:46%;left:51%;transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse,rgba(0,40,0,0.97),rgba(0,15,0,0.99));
+  border:3px solid #FFD700;border-radius:20px;padding:30px 60px;z-index:100;text-align:center;
+  box-shadow:0 0 80px rgba(255,215,0,0.4),0 0 120px rgba(0,80,0,0.3);
+  white-space:nowrap}
+.banner.show{display:flex;flex-direction:column;align-items:center;animation:popIn .5s ease-out}
+.banner h2{font-family:'Cinzel Decorative',cursive;font-size:28px;color:#FFD700;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:10px}
+.banner p{color:#90EE90;font-size:18px}
+@keyframes popIn{from{transform:translate(-50%,-50%) scale(0);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+
+.win-pop{position:absolute;top:14.7%;left:14.3%;width:73.6%;height:62.7%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel Decorative',cursive;font-size:0;color:#FFD700;
+  text-shadow:0 0 30px rgba(255,215,0,0.8),0 0 60px rgba(255,165,0,0.4);z-index:50;white-space:nowrap;transition:font-size .3s ease;pointer-events:none}
+.win-pop.show{font-size:24px;animation:winB .5s ease-out}
+@keyframes winB{0%{transform:scale(0)}60%{transform:scale(1.4)}100%{transform:scale(1)}}
+
+/* ===== PARTICLES ===== */
+.ptcl{position:fixed;pointer-events:none;z-index:200;animation:ptclFall 2s ease-in forwards}
+@keyframes ptclFall{0%{opacity:1;transform:translateY(0) rotate(0) scale(1)}100%{opacity:0;transform:translateY(350px) rotate(720deg) scale(0)}}
+.coin-rain{position:fixed;pointer-events:none;z-index:150;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#FFE44D,#DAA520);
+  box-shadow:inset -2px -2px 4px rgba(0,0,0,0.3),0 0 8px rgba(255,215,0,0.5);
+  animation:coinFall 1.5s ease-in forwards}
+@keyframes coinFall{0%{opacity:1;transform:translateY(-50px) rotateX(0)}50%{transform:translateY(40vh) rotateX(900deg)}100%{opacity:0;transform:translateY(100vh) rotateX(1800deg)}}
+
+/* ===== CHARGE NUMBER POPUP (covers grid + frame exactly) ===== */
+.charge-popup{position:absolute;top:14.7%;left:14.3%;width:73.6%;height:62.7%;
+  z-index:100;pointer-events:none;text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,0.5),transparent 70%)}
+.charge-popup-num.text{font-size:36px}
+.charge-popup-num{font-family:'Cinzel Decorative',cursive;font-size:80px;font-weight:900;
+  background:linear-gradient(180deg,#FFE44D,#FFD700,#FF8C00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 4px 15px rgba(255,165,0,0.8)) drop-shadow(0 0 40px rgba(255,215,0,0.5));
+  animation:numPop 1.2s ease-out forwards}
+.charge-popup-label{font-family:'MedievalSharp',cursive;font-size:16px;color:#FFD700;
+  text-shadow:0 2px 8px rgba(0,0,0,0.8);margin-top:-10px;
+  animation:numFadeIn .6s ease-out .3s both}
+@keyframes numPop{
+  0%{transform:scale(0) rotate(-20deg);opacity:0}
+  30%{transform:scale(1.4) rotate(5deg);opacity:1}
+  50%{transform:scale(0.9) rotate(-3deg)}
+  65%{transform:scale(1.1) rotate(1deg)}
+  80%{transform:scale(1) rotate(0deg)}
+  100%{transform:scale(1) rotate(0deg);opacity:1}
+}
+@keyframes numFadeIn{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes numFadeOut{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(0.5)}}
+
+/* ===== FIREBALL ===== */
+.fireball{position:absolute;width:36px;height:36px;border-radius:50%;z-index:120;pointer-events:none;
+  background:radial-gradient(circle at 45% 40%,#fff,#FFEE60 15%,#FFB020 35%,#FF6000 55%,#DD2000 75%,#600 100%);
+  box-shadow:0 0 25px rgba(255,120,0,1),0 0 50px rgba(255,60,0,0.8),0 0 80px rgba(255,30,0,0.4),0 0 120px rgba(200,0,0,0.2);
+  animation:fireGlow .12s ease-in-out infinite alternate}
+/* Fire tail/trail */
+.fireball::before{content:'';position:absolute;top:-20px;left:6px;width:24px;height:40px;
+  background:linear-gradient(180deg,transparent,rgba(255,100,0,0.1),rgba(255,60,0,0.4),rgba(255,200,50,0.6));
+  border-radius:50% 50% 40% 40%;filter:blur(4px);animation:tailFlicker .08s ease-in-out infinite alternate}
+/* Inner glow */
+.fireball::after{content:'';position:absolute;top:-10px;left:-4px;width:44px;height:44px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,220,80,0.5),rgba(255,100,0,0.2) 50%,transparent 70%);
+  animation:fireFlicker .1s ease-in-out infinite alternate}
+@keyframes fireGlow{
+  0%{box-shadow:0 0 20px rgba(255,120,0,0.9),0 0 40px rgba(255,60,0,0.6),0 0 70px rgba(255,30,0,0.3);transform:scale(0.95)}
+  100%{box-shadow:0 0 30px rgba(255,120,0,1),0 0 60px rgba(255,60,0,0.8),0 0 100px rgba(255,30,0,0.4);transform:scale(1.05)}}
+@keyframes fireFlicker{0%{transform:scale(0.85);opacity:.5}100%{transform:scale(1.15);opacity:.9}}
+@keyframes tailFlicker{0%{opacity:.6;height:35px}100%{opacity:.9;height:45px}}
+@keyframes fbMultiFloat{0%{opacity:1;transform:translateY(0) scale(1)}30%{transform:translateY(-15px) scale(1.3)}100%{opacity:0;transform:translateY(-60px) scale(0.8)}}
+/* Impact crater effect */
+.fire-crater{position:absolute;border-radius:50%;z-index:115;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,200,50,0.6),rgba(255,100,0,0.3) 40%,transparent 70%);
+  animation:craterExpand .6s ease-out forwards}
+@keyframes craterExpand{
+  0%{width:0;height:0;opacity:1}
+  50%{width:120px;height:120px;opacity:.7}
+  100%{width:160px;height:160px;opacity:0}}
+/* Cell on meteor impact - engulfed in flames */
+.cell.fire-impact{animation:fireImpact 1s ease-out;animation-fill-mode:none;position:relative;overflow:visible}
+.cell.fire-impact::before{content:'';position:absolute;inset:-12px;z-index:10;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 70%,rgba(255,220,50,0.8),rgba(255,80,0,0.6) 40%,rgba(200,0,0,0.3) 70%,transparent);
+  animation:impactFlames 1s ease-out forwards}
+.cell.fire-impact::after{content:'';position:absolute;left:5%;right:5%;bottom:-5px;height:140%;z-index:11;pointer-events:none;
+  background:linear-gradient(0deg,rgba(255,255,100,0.7),rgba(255,160,0,0.6) 25%,rgba(255,60,0,0.4) 50%,rgba(200,0,0,0.2) 75%,transparent);
+  border-radius:40% 40% 0 0;filter:blur(2px);
+  animation:flamesFlicker .12s ease-in-out infinite alternate, impactFlamesFade 1s ease-out forwards}
+@keyframes fireImpact{
+  0%{filter:brightness(1);transform:scale(1)}
+  8%{filter:brightness(6) saturate(3);transform:scale(1.2) rotate(2deg);box-shadow:0 0 50px rgba(255,100,0,1),0 0 100px rgba(255,50,0,0.7)}
+  20%{filter:brightness(4) saturate(2);transform:scale(0.88) rotate(-3deg)}
+  35%{filter:brightness(3);transform:scale(1.06) rotate(1deg);box-shadow:0 0 35px rgba(255,80,0,0.8)}
+  50%{filter:brightness(2.5) saturate(1.5);transform:scale(0.97) rotate(-1deg)}
+  70%{filter:brightness(1.5);transform:scale(1.01)}
+  100%{filter:brightness(1);transform:scale(1);box-shadow:none}}
+@keyframes impactFlames{
+  0%{opacity:0;transform:scale(0.5)}
+  15%{opacity:1;transform:scale(1.3)}
+  40%{opacity:.9;transform:scale(1.1)}
+  100%{opacity:0;transform:scale(0.8)}}
+@keyframes impactFlamesFade{0%{opacity:0}10%{opacity:1}50%{opacity:.8}100%{opacity:0}}
+/* Adjacent cells catching fire - real flames */
+.cell.fire-spread{animation:fireSpread 1.2s ease-out;animation-fill-mode:none;position:relative;overflow:visible}
+.cell.fire-spread::before{content:'';position:absolute;inset:-8px;z-index:10;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 80%,rgba(255,60,0,0.7),rgba(255,120,0,0.4) 40%,transparent 70%);
+  animation:flamesUp 1.2s ease-out forwards}
+.cell.fire-spread::after{content:'';position:absolute;left:10%;right:10%;bottom:0;height:120%;z-index:11;pointer-events:none;
+  background:linear-gradient(0deg,rgba(255,200,0,0.6),rgba(255,100,0,0.5) 30%,rgba(255,50,0,0.3) 60%,transparent);
+  border-radius:50% 50% 0 0;filter:blur(3px);
+  animation:flamesFlicker .15s ease-in-out infinite alternate, flamesFade 1.2s ease-out forwards}
+@keyframes fireSpread{
+  0%{filter:brightness(1);transform:scale(1)}
+  15%{filter:brightness(2) saturate(3) hue-rotate(-10deg);transform:scale(1.08);box-shadow:0 0 40px rgba(255,60,0,0.9),0 0 80px rgba(255,30,0,0.4)}
+  40%{filter:brightness(2.5) saturate(2) hue-rotate(-5deg);transform:scale(1.02);box-shadow:0 0 30px rgba(255,80,0,0.7)}
+  70%{filter:brightness(1.5) saturate(1.3);box-shadow:0 0 15px rgba(255,120,0,0.4)}
+  100%{filter:brightness(1);transform:scale(1);box-shadow:none}}
+@keyframes flamesUp{
+  0%{opacity:0;transform:scaleY(0.3)}
+  20%{opacity:1;transform:scaleY(1.2)}
+  50%{opacity:.8;transform:scaleY(1)}
+  100%{opacity:0;transform:scaleY(0.5)}}
+@keyframes flamesFlicker{0%{transform:scaleX(0.9) scaleY(0.95)}100%{transform:scaleX(1.1) scaleY(1.05)}}
+@keyframes flamesFade{0%{opacity:0}15%{opacity:1}60%{opacity:.7}100%{opacity:0}}
+
+@keyframes frameShake{
+  0%{transform:translate(0,0)}
+  15%{transform:translate(-4px,3px)}
+  30%{transform:translate(3px,-2px)}
+  45%{transform:translate(-2px,2px)}
+  60%{transform:translate(2px,-1px)}
+  75%{transform:translate(-1px,1px)}
+  100%{transform:translate(0,0)}}
+.grid-shake{animation:frameShake .4s ease-out;animation-fill-mode:none}
+</style>
+</head>
+<body>
+
+<!-- ===== BACKGROUND: Irish landscape ===== -->
+<div class="bg"></div>
+
+<!-- ===== GAME CONTAINER ===== -->
+<div class="game">
+
+<!-- ===== LEPRECHAUN (Left) ===== -->
+<div class="side side-left" id="leprechaun">
+<img src="img/leprechaun.png" draggable="false">
+</div>
+
+<!-- ===== MAIN SLOT FRAME ===== -->
+<div class="frame-container" id="frame">
+  <div class="frame-wrapper" id="frameWrap">
+    <!-- Single frame image (frame + spin bar combined) -->
+    <div class="frame-img" id="frameImg"></div>
+
+    <!-- Grid positioned over the cell area -->
+    <div class="grid">
+      <div id="shakeWrap" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%">
+        <div class="reels" id="reels"></div>
+      </div>
+    </div>
+
+    <!-- Free spins banner -->
+    <div class="fs" id="fs" style="position:absolute;top:3%;left:50%;transform:translateX(-50%);z-index:25">FREE SPINS: <span id="fsN">0</span></div>
+
+    <!-- Win overlays -->
+    <div class="win-pop" id="winPop"></div>
+    <div class="banner" id="banner"><h2>FREE SPINS!</h2><p id="bannerTxt"></p></div>
+
+    <!-- Charge bar vertical, left side of grid -->
+    <div class="charge-bar" id="chargeBar" style="position:absolute;left:3.5%;top:15%;height:62%;z-index:11">
+      <div class="charge-fill" id="chargeFill"></div>
+      <div class="charge-mark" id="cm1" data-label="I" style="bottom:25%"></div>
+      <div class="charge-mark" id="cm2" data-label="II" style="bottom:50%"></div>
+      <div class="charge-mark" id="cm3" data-label="III" style="bottom:75%"></div>
+      <div class="charge-mark" id="cm4" data-label="IV" style="bottom:calc(100% - 3px)"></div>
+      <span class="charge-label" id="chargeTxt">0/120</span>
+    </div>
+
+    <!-- Spin bar dynamic numbers (positioned over frame image) -->
+    <div class="sb-num sb-num-bal"><span id="bal">5,000.00</span><div class="ov-handle ov-handle-e"></div><div class="ov-handle ov-handle-s"></div><div class="ov-handle ov-handle-se"></div></div>
+    <div class="sb-num sb-num-vin1"><span id="betV">1.00</span><div class="ov-handle ov-handle-e"></div><div class="ov-handle ov-handle-s"></div><div class="ov-handle ov-handle-se"></div></div>
+    <div class="sb-num sb-num-vin2"><span id="vin2">0.00</span><div class="ov-handle ov-handle-e"></div><div class="ov-handle ov-handle-s"></div><div class="ov-handle ov-handle-se"></div></div>
+    <div class="sb-num sb-num-win"><span id="winV">0.00</span><div class="ov-handle ov-handle-e"></div><div class="ov-handle ov-handle-s"></div><div class="ov-handle ov-handle-se"></div></div>
+
+    <!-- Spin bar clickable zones -->
+    <div class="sb-click sb-click-maxbet" id="maxBetBtn" title="MAX BET"><div class="ov-handle ov-handle-e"></div><div class="ov-handle ov-handle-s"></div><div class="ov-handle ov-handle-se"></div></div>
+    <div class="sb-click sb-click-betdown" id="betDown" title="-"><div class="ov-handle ov-handle-e"></div><div class="ov-handle ov-handle-s"></div><div class="ov-handle ov-handle-se"></div></div>
+    <div class="sb-click sb-click-betup" id="betUp" title="+"><div class="ov-handle ov-handle-e"></div><div class="ov-handle ov-handle-s"></div><div class="ov-handle ov-handle-se"></div></div>
+    <div class="sb-click sb-click-spin" id="spinBtn" onclick="doSpin()" title="SPIN"><div class="ov-handle ov-handle-e"></div><div class="ov-handle ov-handle-s"></div><div class="ov-handle ov-handle-se"></div></div>
+  </div>
+
+  <!-- Bonus menu on right -->
+  <div class="buy-menu" id="buyMenu">
+    <button class="buy-btn" data-buy="findBonus" onclick="doBuy('findBonus')">
+      <span class="buy-icon">&#x1F50D;</span>
+      <span class="buy-name">FIND BONUS</span>
+      <span class="buy-cost">2x</span>
+    </button>
+    <button class="buy-btn" data-buy="removeSymbols" onclick="doBuy('removeSymbols')">
+      <span class="buy-icon">&#x1F300;</span>
+      <span class="buy-name">REMOVE SYMBOLS</span>
+      <span class="buy-cost">10x</span>
+    </button>
+    <button class="buy-btn" data-buy="bigSymbols" onclick="doBuy('bigSymbols')">
+      <span class="buy-icon">&#x1F48E;</span>
+      <span class="buy-name">GIANT SYMBOL</span>
+      <span class="buy-cost">25x</span>
+    </button>
+    <button class="buy-btn" data-buy="fireballs" onclick="doBuy('fireballs')">
+      <span class="buy-icon">&#x1F525;</span>
+      <span class="buy-name">FIREBALL</span>
+      <span class="buy-cost">180x</span>
+    </button>
+    <button class="buy-btn" data-buy="buyFSFull" onclick="doBuy('buyFSFull')">
+      <span class="buy-icon">&#x2728;</span>
+      <span class="buy-name">FREE SPINS FULL</span>
+      <span class="buy-cost">1600x</span>
+    </button>
+    <button class="buy-btn" data-buy="buyFSAuto" onclick="doBuy('buyFSAuto')">
+      <span class="buy-icon">&#x1F451;</span>
+      <span class="buy-name">FINAL FREE SPIN</span>
+      <span class="buy-cost">3000x</span>
+    </button>
+  </div>
+  <!-- Speed boost buttons bottom-right corner -->
+  <div class="speed-panel" id="speedPanel">
+    <button class="speed-btn active" data-speed="1" onclick="setSpeed(1)">1x</button>
+    <button class="speed-btn" data-speed="1.25" onclick="setSpeed(1.25)">1.25x</button>
+    <button class="speed-btn" data-speed="1.5" onclick="setSpeed(1.5)">1.5x</button>
+    <button class="speed-btn" data-speed="2" onclick="setSpeed(2)">2x</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== SYMBOLS - 3D Irish Theme =====
+const IMG=p=>`<img src="img/${p}.png" style="width:100%;height:100%;object-fit:contain" draggable="false">`;
+// Tiers: [5, 6, 7, 8, 9-11, 12-14, 15+]
+const TIER_LABELS=['5','6','7','8','9-11','12-14','15+'];
+const S = {
+  potOfGold:   { name:'Pentola d\'Oro', t:'p', img:'potOfGold',   tiers:[1.00, 1.50, 2.50, 5.00, 10.00, 25.00, 100.00], svg:IMG('potOfGold') },
+  greenAcorn:  { name:'Ghianda Verde',  t:'m', img:'greenAcorn',  tiers:[0.50, 0.75, 1.25, 2.50,  5.00, 12.50,  50.00], svg:IMG('greenAcorn') },
+  crystalBell: { name:'Campana Vetro',  t:'p', img:'crystalBell', tiers:[0.30, 0.50, 0.75, 1.50,  3.00,  7.50,  30.00], svg:IMG('crystalBell') },
+  redMushroom: { name:'Fungo Rosso',    t:'m', img:'redMushroom', tiers:[0.25, 0.30, 0.50, 0.80,  2.00,  5.00,  15.00], svg:IMG('redMushroom') },
+  blueMushroom:{ name:'Fungo Blu',      t:'m', img:'blueMushroom',tiers:[0.20, 0.25, 0.40, 0.60,  1.00,  2.50,  10.00], svg:IMG('blueMushroom') },
+  celticKnot:  { name:'Medaglione',     t:'p', img:'celticKnot',  tiers:[0.10, 0.15, 0.20, 0.30,  0.50,  1.50,   5.00], svg:IMG('celticKnot') },
+  wild:        { name:'WILD',           t:'w', img:'wild',        tiers:[0,0,0,0,0,0,0], svg:IMG('wild') },
+  scatter:     { name:'BONUS',          t:'s', img:'bonus',       tiers:[0,0,0,0,0,0,0], svg:IMG('bonus') }
+};
+
+// Get tier index from cluster size
+function getTierIdx(size){
+  if(size>=15)return 6;
+  if(size>=12)return 5;
+  if(size>=9)return 4;
+  if(size===8)return 3;
+  if(size===7)return 2;
+  if(size===6)return 1;
+  if(size===5)return 0;
+  return -1;
+}
+
+// ===== GAME CONFIG =====
+const COLS=6, ROWS=8;
+let grid=[], balance=5000, bet=1, totalWin=0, isSpinning=false, freeSpins=0, inFS=false, chargePoints=0, chargeMulti=1, fireballMulti=1;
+
+function pickFireballMulti(){
+  const ms=CFG.fireballMultis;
+  const totalW=ms.reduce((a,m)=>a+m.w,0);
+  let rn=Math.random()*totalW, cum=0;
+  for(const m of ms){cum+=m.w;if(rn<cum)return m.v;}
+  return ms[0].v;
+}
+function pickFireballCount(){
+  const cs=CFG.fireballCounts.filter(c=>c.w>0);
+  if(cs.length===0)return CFG.fireballMin;
+  const totalW=cs.reduce((a,c)=>a+c.w,0);
+  let rn=Math.random()*totalW, cum=0;
+  for(const c of cs){cum+=c.w;if(rn<cum)return c.n;}
+  return cs[0].n;
+}
+let buyBonus=null, autoChargeMax=false, autoWildPerSpin=false, fsTotalWin=0;
+const bets=[0.20, 0.50, 1, 2, 5, 10, 20, 50, 100];
+let betIdx=2;
+
+// ===== RTP 95% ENGINE CONFIG =====
+// Symbol weights calibrated for ~95% RTP over 1B spins
+// Rarer high-pay symbols, more common low-pay symbols
+const W={
+  potOfGold:8,      // rarest - highest pay
+  greenAcorn:12,    // rare
+  crystalBell:15,   // medium
+  redMushroom:18,   // medium-common
+  blueMushroom:20,  // common
+  celticKnot:24,    // most common - lowest pay
+  scatter:1         // ~0.25% per cell → ~0.25%*48cells ≈ 12% to see ≥1, ~0.24% for ≥3
+};
+
+// ===== GAME FEATURE CONFIG (editable from menu) =====
+const CFG={
+  // Scatter / Free Spins
+  scatterWeight:1,          // base scatter weight (in W above)
+  scatterForFS:3,           // scatters needed for FS
+  fsSpins:8,                // base free spins awarded
+  fsSpins4:12,              // FS for 4 scatters
+  fsSpins5:15,              // FS for 5+ scatters
+  fsRetriggerExtra:3,       // extra spins on retrigger during FS
+
+  // Fireballs
+  fireballMin:2,            // min fireballs per charge-75 ability
+  fireballMax:4,            // max fireballs
+  fireballBuyMin:2,         // min fireballs when buying
+  fireballBuyMax:4,         // max fireballs when buying
+  // Fireball count weights: how often each count appears
+  fireballCounts:[
+    {n:1, w:0},
+    {n:2, w:40},
+    {n:3, w:35},
+    {n:4, w:18},
+    {n:5, w:5},
+    {n:6, w:1.5},
+    {n:7, w:0.4},
+    {n:8, w:0.1}
+  ],
+  // Fireball multipliers: [value, weight] - lower weight = rarer
+  fireballMultis:[
+    {v:1,  w:40},
+    {v:2,  w:30},
+    {v:3,  w:16},
+    {v:5,  w:7},
+    {v:10, w:4},
+    {v:25, w:1.8},
+    {v:50, w:0.8},
+    {v:100,w:0.4}
+  ],
+
+  // Big Symbols
+  bigSym2x2Chance:0.08,     // chance to place a 2x2 each spin
+  bigSym3x3Chance:0.03,     // chance to place a 3x3 each spin
+  bigSymBuyMin:2,           // minimum big syms when buying
+
+  // Charge Bar
+  chargeMax:120,            // points to fill bar
+  chargeTh1:30,             // threshold 1 - ability trigger
+  chargeTh2:60,             // threshold 2
+  chargeTh3:90,             // threshold 3
+  chargeTh4:120,            // threshold 4 - WILD transform + multiplier
+
+  // Charge Abilities
+  removeSymMin:1,           // min symbol types removed (ability 25)
+  removeSymMax:4,           // max symbol types removed
+  transformEnabled:true,    // symbol transform ability
+  bigDropMin:1,             // min giant symbols dropped
+  bigDropMax:2,             // max giant symbols dropped
+  bigDrop3x3Chance:0.4,     // chance of 3x3 vs 2x2
+
+  // Cascade
+  wildPerCluster:true,      // spawn 1 wild per cluster on cascade
+
+  // Multiplier
+  chargeMultiStart:1,       // starting multiplier
+  chargeMultiStep:1,        // multiplier increment per bar fill
+};
+
+let WT=Object.values(W).reduce((a,b)=>a+b,0);
+
+function rndSym(doubleScatter){
+  let tw=WT;
+  if(doubleScatter)tw+=W.scatter;
+  let r=Math.random()*tw;
+  for(const[s,w]of Object.entries(W)){
+    const ew=(doubleScatter&&s==='scatter')?w*2:w;
+    r-=ew;if(r<=0)return s;
+  }
+  return'celticKnot';
+}
+let spinSpeed=1; // 1=normal, 1.25=fast, 1.5=faster, 2=turbo
+function sleep(ms){return new Promise(r=>setTimeout(r,Math.max(ms/spinSpeed,10)))}
+function setSpeed(s){
+  spinSpeed=s;
+  document.querySelectorAll('.speed-btn').forEach(b=>{
+    b.classList.toggle('active',parseFloat(b.dataset.speed)===s);
+  });
+  // Also speed up CSS animations
+  document.documentElement.style.setProperty('--anim-speed',1/s);
+}
+
+// Big symbol types (including wild)
+const bigSymTypes=['potOfGold','redMushroom','greenAcorn','celticKnot','blueMushroom','crystalBell','wild'];
+let bigIdCounter=0;
+
+// Try to place big symbols on the grid after normal fill
+function placeBigSymbols(forceMin){
+  const minBig=forceMin||0;
+  let placed=0;
+
+  function tryPlace(size){
+    const maxC=COLS-size,maxR=ROWS-size;
+    const sym=bigSymTypes[Math.floor(Math.random()*bigSymTypes.length)];
+    const c=Math.floor(Math.random()*(maxC+1));
+    const r=Math.floor(Math.random()*(maxR+1));
+    let free=true;
+    for(let dc=0;dc<size;dc++)for(let dr=0;dr<size;dr++){
+      const v=grid[c+dc][r+dr];
+      if(v&&typeof v==='string'&&v.startsWith('B'))free=false;
+    }
+    if(free){
+      const id='B'+bigIdCounter++;
+      for(let dc=0;dc<size;dc++)for(let dr=0;dr<size;dr++)grid[c+dc][r+dr]=id;
+      bigSymMap[id]={sym,size,c,r};
+      placed++;return true;
+    }
+    return false;
+  }
+
+  // Normal random placement
+  if(Math.random()<CFG.bigSym3x3Chance)tryPlace(3);
+  if(Math.random()<CFG.bigSym2x2Chance)tryPlace(2);
+
+  // Force minimum if buy bonus active
+  let attempts=0;
+  while(placed<minBig&&attempts<20){
+    const size=Math.random()<0.4?3:2;
+    tryPlace(size);
+    attempts++;
+  }
+}
+
+// Map of big symbol IDs to their info
+let bigSymMap={};
+
+// Decompose remaining big symbols into individual cells with animation
+async function decomposeBigSymbols(){
+  const ids=Object.keys(bigSymMap);
+  if(ids.length===0)return false;
+
+  // Collect all cells that belong to big symbols
+  const affectedCells=[];
+  const infos=[];
+  for(const id of ids){
+    const info=bigSymMap[id];
+    if(!info)continue;
+    infos.push({...info, id});
+    for(let dc=0;dc<info.size;dc++){
+      for(let dr=0;dr<info.size;dr++){
+        const c=info.c+dc, r=info.r+dr;
+        if(c<COLS&&r<ROWS)affectedCells.push({c,r});
+      }
+    }
+  }
+
+  // 1. Animate big symbol anchors shrinking/decomposing
+  for(const info of infos){
+    const anchor=document.getElementById('c'+info.c+'_'+info.r);
+    if(anchor)anchor.classList.add('big-decompose');
+  }
+  await sleep(650);
+
+  // 2. Replace big IDs in grid with actual symbol name (1x1 each)
+  for(const info of infos){
+    for(let dc=0;dc<info.size;dc++){
+      for(let dr=0;dr<info.size;dr++){
+        const c=info.c+dc, r=info.r+dr;
+        if(c<COLS&&r<ROWS&&grid[c][r]===info.id){
+          grid[c][r]=info.sym;
+        }
+      }
+    }
+    delete bigSymMap[info.id];
+  }
+
+  // 3. Re-render
+  renderAll();
+
+  // 4. Animate only the affected cells popping in as individual symbols
+  for(const p of affectedCells){
+    const el=document.getElementById('c'+p.c+'_'+p.r);
+    if(el)el.classList.add('big-appear');
+  }
+  await sleep(550);
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('big-decompose','big-appear'));
+  return true;
+}
+
+// Get the actual symbol for a cell (resolves big sym IDs)
+function getSymAt(c,r){
+  const v=grid[c][r];
+  if(v&&v.startsWith&&v.startsWith('B')){
+    const info=bigSymMap[v];
+    return info?info.sym:'beerLight';
+  }
+  return v;
+}
+
+// Check if cell is anchor (top-left) of a big symbol
+function isBigAnchor(c,r){
+  const v=grid[c][r];
+  if(!v||!v.startsWith||!v.startsWith('B'))return null;
+  const info=bigSymMap[v];
+  if(info&&info.c===c&&info.r===r)return info;
+  return null;
+}
+
+// Check if cell is part of a big symbol (not anchor)
+function isBigPart(c,r){
+  const v=grid[c][r];
+  if(!v||!v.startsWith||!v.startsWith('B'))return false;
+  const info=bigSymMap[v];
+  return info&&!(info.c===c&&info.r===r);
+}
+
+// ===== BUY BONUS =====
+const buyCosts={findBonus:2,removeSymbols:10,fireballs:180,bigSymbols:25,buyFSFull:1600,buyFSAuto:3000};
+
+function doBuy(type){
+  if(isSpinning||inFS)return;
+  const cost=buyCosts[type]*bet;
+  if(balance<cost)return;
+  balance-=cost;updBal();
+  buyBonus=type;
+  // For FS buys, activate free spins immediately
+  if(type==='buyFSFull'||type==='buyFSAuto'){
+    freeSpins=8;inFS=true;fsTotalWin=0;
+    if(type==='buyFSFull'){chargePoints=120;chargeMulti=1;chargeTriggered=new Set();updCharge()}
+    if(type==='buyFSAuto'){autoWildPerSpin=true}
+    updFS();document.getElementById('fs').classList.add('show');
+    showBanner(8);
+    setTimeout(()=>doSpin(),1500);
+  }else{
+    // Single spin bonuses: just do spin
+    doSpin();
+  }
+}
+
+function updBuyBtns(){
+  document.querySelectorAll('.buy-btn').forEach(btn=>{
+    const type=btn.dataset.buy;
+    const cost=buyCosts[type]*bet;
+    btn.disabled=balance<cost||isSpinning||inFS;
+    const costEl=btn.querySelector('.buy-cost');
+    if(costEl) costEl.textContent=(buyCosts[type])+'x';
+  });
+}
+
+// ===== INIT =====
+function init(){
+  const el=document.getElementById('reels');el.innerHTML='';grid=[];
+  for(let c=0;c<COLS;c++){
+    const rd=document.createElement('div');rd.className='reel';rd.id='r'+c;grid[c]=[];
+    for(let r=0;r<ROWS;r++){
+      const cell=document.createElement('div');cell.className='cell';cell.id='c'+c+'_'+r;
+      grid[c][r]=rndSym();cell.innerHTML='<div class="sym">'+S[grid[c][r]].svg+'</div>';
+      rd.appendChild(cell);
+    }
+    el.appendChild(rd);
+  }
+}
+
+function renderAll(){
+  for(let c=0;c<COLS;c++){
+    for(let r=0;r<ROWS;r++){
+      const el=document.getElementById('c'+c+'_'+r);
+      const bigA=isBigAnchor(c,r);
+      if(bigA){
+        const sym=bigA.sym;
+        const cls=bigA.size===3?'big3x3':'big2x2';
+        el.innerHTML='<div class="sym '+cls+'">'+S[sym].svg+'</div>';
+        el.className='cell big-anchor';
+      }else if(isBigPart(c,r)){
+        el.innerHTML='';
+        el.className='cell big-part';
+      }else{
+        const sym=grid[c][r];
+        el.innerHTML='<div class="sym">'+(S[sym]?S[sym].svg:'')+'</div>';
+        el.className='cell';
+      }
+    }
+  }
+}
+function renderReel(c){
+  for(let r=0;r<ROWS;r++){
+    const el=document.getElementById('c'+c+'_'+r);
+    const bigA=isBigAnchor(c,r);
+    if(bigA){
+      const sym=bigA.sym;
+      const cls=bigA.size===3?'big3x3':'big2x2';
+      el.innerHTML='<div class="sym '+cls+'">'+S[sym].svg+'</div>';
+      el.className='cell big-anchor';
+    }else if(isBigPart(c,r)){
+      el.innerHTML='';
+      el.className='cell big-part';
+    }else{
+      const sym=grid[c][r];
+      el.innerHTML='<div class="sym">'+(S[sym]?S[sym].svg:'')+'</div>';
+      el.className='cell';
+    }
+  }
+}
+
+// ===== SPIN =====
+async function doSpin(){
+  if(isSpinning)return;
+  if(!inFS&&balance<bet)return;
+  isSpinning=true;totalWin=0;
+  if(!inFS){chargePoints=0;chargeMulti=1;chargeTriggered=new Set();updCharge()}
+  document.getElementById('frameWrap').classList.add('disabled');
+  document.getElementById('winV').textContent='0';
+  hideWin();
+  if(!inFS){balance-=bet;updBal()}
+
+  for(let c=0;c<COLS;c++){
+    for(let r=0;r<ROWS;r++){
+      setTimeout(()=>{const el=document.getElementById('c'+c+'_'+r);if(el)el.classList.add('spinning')},c*80);
+    }
+  }
+  await sleep(600);
+  // Fill entire grid first, then place big symbols BEFORE rendering
+  bigSymMap={};
+  const dblScat=buyBonus==='findBonus';
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)grid[c][r]=rndSym(dblScat);
+  const forceMinBig=buyBonus==='bigSymbols'?2:0;
+  placeBigSymbols(forceMinBig);
+  // Reveal reels one by one, render big symbols only when all their columns are revealed
+  const revealed=new Set();
+  for(let c=0;c<COLS;c++){
+    await sleep(150+c*40);
+    revealed.add(c);
+    for(let r=0;r<ROWS;r++){const el=document.getElementById('c'+c+'_'+r);if(el)el.classList.remove('spinning')}
+    // Render this column - for big symbols, only show when all columns are revealed
+    for(let r=0;r<ROWS;r++){
+      const el=document.getElementById('c'+c+'_'+r);
+      const bigA=isBigAnchor(c,r);
+      if(bigA){
+        // Check if all columns of this big sym are revealed
+        const allRevealed=Array.from({length:bigA.size},(_,i)=>revealed.has(bigA.c+i)).every(Boolean);
+        if(allRevealed){
+          const cls=bigA.size===3?'big3x3':'big2x2';
+          el.innerHTML='<div class="sym '+cls+'">'+S[bigA.sym].svg+'</div>';
+          el.className='cell big-anchor';
+        }else{
+          el.innerHTML='<div class="sym">'+S[bigA.sym].svg+'</div>';
+          el.className='cell';
+        }
+      }else if(isBigPart(c,r)){
+        // Show normal sym placeholder until anchor reveals
+        const partSym=getSymAt(c,r);
+        el.innerHTML='';
+        el.className='cell big-part';
+      }else{
+        const sym=grid[c][r];
+        el.innerHTML='<div class="sym">'+(S[sym]?S[sym].svg:'')+'</div>';
+        el.className='cell';
+      }
+    }
+  }
+  // Final render to make sure all big symbols display correctly
+  renderAll();
+  await sleep(200);
+
+  // Buy bonus: removeSymbols - remove 1-4 symbol types before cascade
+  if(buyBonus==='removeSymbols'){
+    await chargeAbility25();
+  }
+
+  // Buy bonus: fireballs - launch 2-4 before cascade
+  if(buyBonus==='fireballs'){
+    await chargeAbility75();
+  }
+
+  // Buy bonus: autoWildPerSpin - activate wild transform every FS spin
+  if(autoWildPerSpin&&inFS){
+    await chargeAbility100();
+  }
+
+  // Buy bonus: buyFSFull - fill bar on first spin only
+  if(buyBonus==='buyFSFull'&&inFS&&freeSpins===7){
+    // Already set chargePoints=100 in doBuy, trigger abilities after cascade
+  }
+
+  await cascade();
+  // Decompose any remaining big symbols into 1x1 cells, then cascade again
+  if(await decomposeBigSymbols()){
+    await cascade();
+  }
+  // After all cascades done, trigger charge abilities
+  if(chargePoints>=30)await triggerChargeAbilities();
+  // Check for bonus LAST, after everything else
+  checkScat();
+  if(inFS){
+    // Accumulate wins during free spins
+    fsTotalWin+=totalWin;
+    document.getElementById('winV').textContent=fsTotalWin.toFixed(2);
+    if(totalWin>0)particles(totalWin);
+    freeSpins--;updFS();
+    if(freeSpins<=0){
+      // Free spins ended: pay total
+      inFS=false;autoChargeMax=false;autoWildPerSpin=false;
+      document.getElementById('fs').classList.remove('show');
+      if(fsTotalWin>0){balance+=fsTotalWin;updBal();showWin(fsTotalWin);particles(fsTotalWin)}
+      fsTotalWin=0;
+    }
+  }else{
+    if(totalWin>0){balance+=totalWin;updBal();showWin(totalWin);particles(totalWin)}
+  }
+  // Reset single-use buy bonuses after spin
+  if(buyBonus&&buyBonus!=='buyFSFull'&&buyBonus!=='buyFSAuto')buyBonus=null;
+  isSpinning=false;document.getElementById('frameWrap').classList.remove('disabled');
+  updBuyBtns();
+  if(inFS&&freeSpins>0)setTimeout(()=>doSpin(),900);
+}
+
+// ===== CASCADE =====
+async function cascade(){
+  let clusters=findClusters();
+  while(clusters.length>0){
+    // One wild per cluster ONLY if cluster has NO wilds in it (configurable)
+    const wildPositions=[];
+    const wildSet=new Set();
+    if(CFG.wildPerCluster){
+      for(const cl of clusters){
+        const hasWild=cl.cells.some(p=>getSymAt(p.c,p.r)==='wild');
+        if(!hasWild){
+          const pos=cl.cells[Math.floor(Math.random()*cl.cells.length)];
+          wildPositions.push(pos);
+          wildSet.add(pos.c+','+pos.r);
+        }
+      }
+    }
+
+    // Only cluster cells get removed (no extra matching)
+    const clusterSet=new Set();
+    const clusterCells=[];
+    for(const cl of clusters){for(const p of cl.cells){
+      const k=p.c+','+p.r;
+      if(!clusterSet.has(k)){clusterSet.add(k);clusterCells.push(p)}
+    }}
+
+    // 1. Highlight cluster cells
+    for(let i=0;i<clusterCells.length;i++){
+      const p=clusterCells[i];
+      document.getElementById('c'+p.c+'_'+p.r).classList.add('winning');
+      if(i<6)await sleep(40);
+    }
+    const w=calcWinAll(clusters)*chargeMulti*fireballMulti;totalWin+=w;
+    document.getElementById('winV').textContent=(inFS?(fsTotalWin+totalWin):totalWin).toFixed(2);
+    // Add paid symbols to charge bar
+    chargePoints=Math.min(CFG.chargeMax,chargePoints+clusterCells.length);
+    updCharge();
+    await sleep(1000);
+
+    // 2. Explode cluster cells (except wild positions)
+    for(const p of clusterCells){
+      if(wildSet.has(p.c+','+p.r))continue;
+      const el=document.getElementById('c'+p.c+'_'+p.r);
+      el.classList.remove('winning');el.classList.add('explode');
+    }
+    await sleep(900);
+
+    // 3. Spawn WILD at each cluster's chosen position
+    for(let i=0;i<wildPositions.length;i++){
+      const wp=wildPositions[i];
+      const wildCell=document.getElementById('c'+wp.c+'_'+wp.r);
+      wildCell.classList.remove('winning');
+      grid[wp.c][wp.r]='wild';
+      wildCell.innerHTML='<div class="sym">'+S['wild'].svg+'</div>';
+      wildCell.classList.add('wild-spawn');
+      if(wildPositions.length>1)await sleep(200);
+    }
+    await sleep(1100);
+
+    // 4. Clean up big symbol references for removed cells
+    for(const p of clusterCells){
+      if(wildSet.has(p.c+','+p.r))continue;
+      const v=grid[p.c][p.r];
+      if(v&&v.startsWith&&v.startsWith('B'))delete bigSymMap[v];
+    }
+    // Remove exploded symbols from grid (NOT wild positions)
+    for(let c=0;c<COLS;c++){
+      const wr=clusterCells.filter(p=>p.c===c&&!wildSet.has(p.c+','+p.r)).map(p=>p.r).sort((a,b)=>b-a);
+      for(const r of wr)grid[c].splice(r,1);
+      for(let i=0;i<wr.length;i++)grid[c].unshift(rndSym());
+    }
+
+    // 6. Render and animate drops
+    renderAll();
+    for(let c=0;c<COLS;c++){
+      const dropCount=clusterCells.filter(p=>p.c===c&&!wildSet.has(p.c+','+p.r)).length;
+      for(let r=0;r<dropCount;r++){
+        const el=document.getElementById('c'+c+'_'+r);
+        el.classList.add('drop');
+        el.style.animationDelay=(c*60+r*30)+'ms';
+      }
+    }
+    for(const wp of wildPositions){
+      const newWC=document.getElementById('c'+wp.c+'_'+wp.r);
+      newWC.classList.add('wild-spawn');
+    }
+
+    await sleep(900);
+    document.querySelectorAll('.cell').forEach(c=>{c.classList.remove('explode','drop','wild-spawn');c.style.animationDelay=''});
+    clusters=findClusters();
+  }
+}
+
+// ===== CLUSTER WINS (adjacent matching, wild = joker) =====
+// Returns array of clusters, each cluster is an array of {c,r}
+function findClusters(){
+  const clusters=[];
+  const symTypes=Object.keys(S).filter(s=>s!=='wild'&&s!=='scatter');
+  const usedCells=new Set();
+
+  for(const symType of symTypes){
+    const vis=Array.from({length:COLS},()=>Array(ROWS).fill(false));
+    for(let c=0;c<COLS;c++){for(let r=0;r<ROWS;r++){
+      if(vis[c][r])continue;
+      const cellSym=getSymAt(c,r);
+      if(cellSym!==symType&&cellSym!=='wild')continue;
+      const cl=[],q=[{c,r}];vis[c][r]=true;
+      while(q.length){const p=q.shift();cl.push(p);
+        for(const[dc,dr]of[[-1,0],[1,0],[0,-1],[0,1]]){
+          const nc=p.c+dc,nr=p.r+dr;
+          if(nc>=0&&nc<COLS&&nr>=0&&nr<ROWS&&!vis[nc][nr]){
+            const ns=getSymAt(nc,nr);
+            if(ns===symType||ns==='wild'){vis[nc][nr]=true;q.push({c:nc,r:nr})}
+          }
+        }
+      }
+      // Count non-wild symbols in cluster - need at least 1 non-wild
+      const nonWild=cl.filter(p=>getSymAt(p.c,p.r)!=='wild');
+      if(cl.length>=5&&nonWild.length>=1){
+        // Mark non-wild cells as used, but wilds can be shared across clusters
+        const hasNewNonWild=nonWild.some(p=>!usedCells.has(p.c+','+p.r));
+        if(hasNewNonWild){
+          for(const p of nonWild)usedCells.add(p.c+','+p.r);
+          clusters.push({sym:symType, cells:cl});
+        }
+      }
+    }}
+  }
+  return clusters;
+}
+
+// Calculate win based on cluster size tiers
+function calcWinAll(clusters){
+  let total=0;
+  for(const cl of clusters){
+    const size=cl.cells.length;
+    const ti=getTierIdx(size);
+    if(ti<0)continue;
+    const pay=S[cl.sym]?.tiers?.[ti]||0;
+    total+=pay*bet;
+  }
+  return total;
+}
+
+function checkScat(){
+  let n=0;for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(getSymAt(c,r)==='scatter')n++;
+  if(n>=CFG.scatterForFS){
+    const sp=n===3?CFG.fsSpins:n===4?CFG.fsSpins4:CFG.fsSpins5;
+    if(inFS){freeSpins+=CFG.fsRetriggerExtra;updFS();showBanner(CFG.fsRetriggerExtra)}
+    else{freeSpins+=sp;inFS=true;fsTotalWin=0;showBanner(sp);updFS()}
+  }
+}
+
+// ===== UI UPDATES =====
+// Returns array of newly reached thresholds
+function updCharge(){
+  const pct=Math.min(chargePoints/CFG.chargeMax*100,100);
+  document.getElementById('chargeFill').style.height=pct+'%';
+  // Round corners on top when filling
+  if(pct>=99)document.getElementById('chargeFill').style.borderRadius='14px';
+  else document.getElementById('chargeFill').style.borderRadius='0 0 14px 14px';
+  // Full bar glow effect
+  const bar=document.getElementById('chargeBar');
+  if(pct>=100)bar.classList.add('full');else bar.classList.remove('full');
+  const multiTxt=chargeMulti>1?' x'+chargeMulti:'';
+  document.getElementById('chargeTxt').textContent=Math.min(Math.floor(chargePoints),CFG.chargeMax)+'/'+CFG.chargeMax+multiTxt;
+  const th1Pct=CFG.chargeTh1/CFG.chargeMax*100;
+  const th2Pct=CFG.chargeTh2/CFG.chargeMax*100;
+  const th3Pct=CFG.chargeTh3/CFG.chargeMax*100;
+  const th4Pct=CFG.chargeTh4/CFG.chargeMax*100;
+  const marks=[{id:'cm1',th:th1Pct},{id:'cm2',th:th2Pct},{id:'cm3',th:th3Pct},{id:'cm4',th:th4Pct}];
+  const newlyReached=[];
+  for(const m of marks){
+    const el=document.getElementById(m.id);
+    const wasReached=el.classList.contains('reached');
+    if(pct>=m.th){
+      el.classList.add('reached');
+      if(!wasReached)newlyReached.push(m.th);
+    }else{el.classList.remove('reached')}
+  }
+  return newlyReached;
+}
+
+// Track which thresholds were reached this spin
+let chargeTriggered=new Set();
+
+// Random ability picker for levels 25/50/75
+function pickRandomAbility(){
+  const pool=[chargeAbility25, chargeAbility75, chargeAbilityBigSymbols];
+  if(CFG.transformEnabled) pool.push(chargeAbility50);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+async function triggerChargeAbilities(){
+  const ths=[CFG.chargeTh1,CFG.chargeTh2,CFG.chargeTh3];
+  for(const th of ths){
+    if(chargePoints>=th&&!chargeTriggered.has(th)){
+      chargeTriggered.add(th);
+      await pickRandomAbility()();
+      await cascade();
+      fireballMulti=1; // reset after fireball cascade
+      if(chargePoints>=CFG.chargeTh1)await triggerChargeAbilities();
+      return;
+    }
+  }
+  if(chargePoints>=CFG.chargeTh4&&!chargeTriggered.has(CFG.chargeTh4)){
+    chargeTriggered.add(CFG.chargeTh4);
+    await chargeAbility100();
+    chargePoints=chargePoints-CFG.chargeMax;
+    chargeMulti+=CFG.chargeMultiStep;
+    chargeTriggered=new Set();
+    updCharge();
+    await showChargeNumber('x'+chargeMulti, 'ALL WINS MULTIPLIED');
+    await cascade();
+    fireballMulti=1;
+    if(chargePoints>=CFG.chargeTh1)await triggerChargeAbilities();
+  }
+}
+
+// Show number popup animation
+async function showChargeNumber(num,label){
+  const popup=document.createElement('div');
+  popup.className='charge-popup';
+  const isText=isNaN(num);
+  const numClass='charge-popup-num'+(isText?' text':'');
+  popup.innerHTML='<div class="'+numClass+'">'+num+'</div><div class="charge-popup-label">'+label+'</div>';
+  document.getElementById('frameWrap').appendChild(popup);
+  await sleep(1800);
+  popup.querySelector('.charge-popup-num').style.animation='numFadeOut .4s ease-in forwards';
+  popup.querySelector('.charge-popup-label').style.animation='numFadeOut .4s ease-in forwards';
+  await sleep(400);
+  popup.remove();
+}
+
+// Charge ability: remove symbol types from grid
+async function chargeAbility25(){
+  const symTypes=Object.keys(S).filter(s=>s!=='wild'&&s!=='scatter');
+  const count=CFG.removeSymMin+Math.floor(Math.random()*(CFG.removeSymMax-CFG.removeSymMin+1));
+
+  // Show the number with animation
+  await showChargeNumber(count, count===1?'SYMBOL REMOVED':count+' SYMBOLS REMOVED');
+
+  // Shuffle and pick
+  const shuffled=symTypes.sort(()=>Math.random()-0.5).slice(0,count);
+
+  // Find all cells to remove
+  const toRemove=[];
+  for(let c=0;c<COLS;c++){for(let r=0;r<ROWS;r++){
+    if(shuffled.includes(getSymAt(c,r)))toRemove.push({c,r});
+  }}
+  if(toRemove.length===0)return;
+
+  // Highlight with dissolve animation
+  for(const p of toRemove){
+    document.getElementById('c'+p.c+'_'+p.r).classList.add('winning');
+  }
+  await sleep(800);
+  for(const p of toRemove){
+    const el=document.getElementById('c'+p.c+'_'+p.r);
+    el.classList.remove('winning');el.classList.add('dissolve');
+  }
+  await sleep(900);
+
+  // Remove from grid and fill new symbols
+  for(let c=0;c<COLS;c++){
+    const wr=toRemove.filter(p=>p.c===c).map(p=>p.r).sort((a,b)=>b-a);
+    for(const r of wr)grid[c].splice(r,1);
+    for(let i=0;i<wr.length;i++)grid[c].unshift(rndSym());
+  }
+
+  // Render and animate drops
+  renderAll();
+  for(let c=0;c<COLS;c++){
+    const dropCount=toRemove.filter(p=>p.c===c).length;
+    for(let r=0;r<dropCount;r++){
+      const el=document.getElementById('c'+c+'_'+r);
+      el.classList.add('drop');
+      el.style.animationDelay=(c*60+r*30)+'ms';
+    }
+  }
+  await sleep(900);
+  document.querySelectorAll('.cell').forEach(c=>{c.classList.remove('dissolve','drop');c.style.animationDelay=''});
+}
+// Charge ability 50: transform all of one symbol type into another
+async function chargeAbility50(){
+  const symTypes=Object.keys(S).filter(s=>s!=='wild'&&s!=='scatter');
+  // Pick source symbol (the one to transform)
+  const srcSym=symTypes[Math.floor(Math.random()*symTypes.length)];
+  // Pick target symbol (different from source)
+  const targets=symTypes.filter(s=>s!==srcSym);
+  const tgtSym=targets[Math.floor(Math.random()*targets.length)];
+
+  // Show popup
+  await showChargeNumber('TRANSFORM', S[srcSym].name+' → '+S[tgtSym].name);
+
+  // Find all cells with source symbol
+  const toTransform=[];
+  for(let c=0;c<COLS;c++){for(let r=0;r<ROWS;r++){
+    if(getSymAt(c,r)===srcSym)toTransform.push({c,r});
+  }}
+  if(toTransform.length===0)return;
+
+  // Highlight source symbols
+  for(const p of toTransform){
+    document.getElementById('c'+p.c+'_'+p.r).classList.add('winning');
+  }
+  await sleep(800);
+
+  // Transform with animation: flash then change
+  for(const p of toTransform){
+    const el=document.getElementById('c'+p.c+'_'+p.r);
+    el.classList.remove('winning');
+    el.classList.add('wild-spawn');
+    // Update grid
+    const v=grid[p.c][p.r];
+    if(v&&v.startsWith&&v.startsWith('B')){
+      // Big symbol: update the bigSymMap
+      const info=bigSymMap[v];
+      if(info)info.sym=tgtSym;
+    }else{
+      grid[p.c][p.r]=tgtSym;
+    }
+  }
+  await sleep(300);
+  renderAll();
+  // Re-apply animation to transformed cells
+  for(const p of toTransform){
+    document.getElementById('c'+p.c+'_'+p.r).classList.add('wild-spawn');
+  }
+  await sleep(900);
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('wild-spawn'));
+}
+
+// Charge ability 75: launch fireballs like meteorites with multipliers
+async function chargeAbility75(){
+  const count=pickFireballCount();
+  await showChargeNumber(count, count===1?'FIREBALL':'FIREBALLS');
+
+  const usedPositions=new Set();
+  let totalFbMulti=0; // sum of all fireball multipliers this round
+
+  for(let i=0;i<count;i++){
+    let tc,tr,attempts=0;
+    do{
+      tc=Math.floor(Math.random()*COLS);
+      tr=Math.floor(Math.random()*ROWS);
+      attempts++;
+    }while((getSymAt(tc,tr)==='wild'||getSymAt(tc,tr)==='scatter'||usedPositions.has(tc+','+tr))&&attempts<30);
+
+    if(usedPositions.has(tc+','+tr))continue;
+    usedPositions.add(tc+','+tr);
+
+    const targetSym=getSymAt(tc,tr);
+    if(targetSym==='wild'||targetSym==='scatter')continue;
+
+    // Pick random multiplier for this fireball (1 = no multiplier)
+    const fbMulti=pickFireballMulti();
+    if(fbMulti>1)totalFbMulti+=fbMulti;
+
+    const frame=document.getElementById('frameWrap');
+    const targetCell=document.getElementById('c'+tc+'_'+tr);
+    const frameRect=frame.getBoundingClientRect();
+    const cellRect=targetCell.getBoundingClientRect();
+    const targetX=cellRect.left-frameRect.left+cellRect.width/2-18;
+    const targetY=cellRect.top-frameRect.top+cellRect.height/2-18;
+
+    // Create fireball starting from top-left (diagonal meteor path)
+    const startX=targetX-120-Math.random()*80;
+    const fb=document.createElement('div');
+    fb.className='fireball';
+    fb.style.position='absolute';
+    fb.style.left=startX+'px';
+    fb.style.top='-60px';
+    fb.style.transition='top 0.45s cubic-bezier(.1,.2,.3,1), left 0.45s cubic-bezier(.1,.2,.3,1), transform 0.45s ease-in';
+    fb.style.transform='scale(0.6)';
+    frame.appendChild(fb);
+
+    // Multiplier badge on fireball (only if > 1x)
+    if(fbMulti>1){
+      const fbBadge=document.createElement('div');
+      fbBadge.className='fb-multi-badge';
+      fbBadge.textContent=fbMulti+'x';
+      fbBadge.style.cssText='position:absolute;top:-8px;right:-12px;background:linear-gradient(135deg,#FFD700,#FF6000);color:#000;font-weight:900;font-size:11px;padding:1px 5px;border-radius:8px;z-index:122;text-shadow:0 0 2px #fff;white-space:nowrap;pointer-events:none;';
+      if(fbMulti>=25)fbBadge.style.background='linear-gradient(135deg,#ff44ff,#FFD700)';
+      if(fbMulti>=50)fbBadge.style.background='linear-gradient(135deg,#44ffff,#ff44ff)';
+      if(fbMulti>=100)fbBadge.style.background='linear-gradient(135deg,#fff,#44ffff,#FFD700)';
+      fb.appendChild(fbBadge);
+    }
+
+    await sleep(50);
+    // Meteor flies diagonally down to target, growing bigger
+    fb.style.left=targetX+'px';
+    fb.style.top=targetY+'px';
+    fb.style.transform='scale(1.3)';
+    await sleep(480);
+
+    // IMPACT! Create crater explosion
+    const crater=document.createElement('div');
+    crater.className='fire-crater';
+    crater.style.position='absolute';
+    crater.style.left=(targetX-62)+'px';
+    crater.style.top=(targetY-62)+'px';
+    frame.appendChild(crater);
+
+    // Show multiplier popup at impact point (only if > 1x)
+    let multiPop=null;
+    if(fbMulti>1){
+      multiPop=document.createElement('div');
+      multiPop.className='fb-multi-pop';
+      multiPop.textContent=fbMulti+'x';
+      const popColor=fbMulti>=50?'#44ffff':fbMulti>=25?'#ff44ff':fbMulti>=10?'#FFD700':'#FF8C00';
+      multiPop.style.cssText=`position:absolute;left:${targetX-20}px;top:${targetY-30}px;color:${popColor};font-size:${fbMulti>=25?'28':'22'}px;font-weight:900;z-index:130;pointer-events:none;text-shadow:0 0 10px ${popColor},0 0 20px ${popColor},0 2px 4px #000;animation:fbMultiFloat 1.2s ease-out forwards;white-space:nowrap;`;
+      frame.appendChild(multiPop);
+    }
+
+    // Shake on impact (shakeWrap only, grid stays fixed)
+    const shakeEl=document.getElementById('shakeWrap');
+    shakeEl.classList.remove('grid-shake');
+    shakeEl.offsetHeight; // reflow
+    shakeEl.classList.add('grid-shake');
+
+    // Impact on target cell
+    targetCell.classList.add('fire-impact');
+    fb.remove();
+
+    await sleep(150);
+
+    // Fire spreads to adjacent cells one by one
+    const adj=[[tc-1,tr],[tc+1,tr],[tc,tr-1],[tc,tr+1]];
+    const toChange=[];
+    for(const[ac,ar]of adj){
+      if(ac>=0&&ac<COLS&&ar>=0&&ar<ROWS){
+        const s=getSymAt(ac,ar);
+        if(s!=='wild'&&s!=='scatter')toChange.push({c:ac,r:ar});
+      }
+    }
+
+    // Stagger fire spread to each adjacent cell
+    for(let j=0;j<toChange.length;j++){
+      const p=toChange[j];
+      const el=document.getElementById('c'+p.c+'_'+p.r);
+      el.classList.add('fire-spread');
+      // Update grid
+      const v=grid[p.c][p.r];
+      if(v&&v.startsWith&&v.startsWith('B')){
+        const info=bigSymMap[v];
+        if(info){
+          for(let dc=0;dc<info.size;dc++)for(let dr=0;dr<info.size;dr++){
+            if(info.c+dc<COLS&&info.r+dr<ROWS)grid[info.c+dc][info.r+dr]=targetSym;
+          }
+          delete bigSymMap[v];
+        }
+      }else{
+        grid[p.c][p.r]=targetSym;
+      }
+      await sleep(120); // stagger each spread
+    }
+
+    await sleep(300);
+    renderAll();
+    // Re-apply effects
+    targetCell.classList.add('fire-impact');
+    for(const p of toChange)document.getElementById('c'+p.c+'_'+p.r).classList.add('fire-spread');
+
+    await sleep(600);
+    crater.remove();
+    if(multiPop)setTimeout(()=>multiPop.remove(),600);
+    const shakeClean=document.getElementById('shakeWrap');
+    if(shakeClean)shakeClean.classList.remove('grid-shake');
+    document.querySelectorAll('.cell').forEach(c=>c.classList.remove('fire-impact','fire-spread'));
+
+    if(i<count-1)await sleep(400);
+  }
+
+  // Apply total fireball multiplier to next cascade
+  if(totalFbMulti>0){
+    fireballMulti=totalFbMulti;
+    await showChargeNumber('x'+totalFbMulti, 'FIREBALL MULTIPLIER');
+  }
+}
+
+// Charge ability: drop giant symbols (2x2 or 3x3)
+async function chargeAbilityBigSymbols(){
+  const count=CFG.bigDropMin+Math.floor(Math.random()*(CFG.bigDropMax-CFG.bigDropMin+1));
+  const sizeLabel=count===1?'1 GIANT SYMBOL':'2 GIANT SYMBOLS';
+  await showChargeNumber(count, sizeLabel);
+
+  for(let i=0;i<count;i++){
+    const size=Math.random()<CFG.bigDrop3x3Chance?3:2;
+    const sym=bigSymTypes[Math.floor(Math.random()*bigSymTypes.length)];
+    const maxC=COLS-size, maxR=ROWS-size;
+    let placed=false, attempts=0;
+    while(!placed&&attempts<30){
+      const c=Math.floor(Math.random()*(maxC+1));
+      const r=Math.floor(Math.random()*(maxR+1));
+      // Check cells are free of big symbols
+      let free=true;
+      for(let dc=0;dc<size;dc++)for(let dr=0;dr<size;dr++){
+        const v=grid[c+dc][r+dr];
+        if(v&&typeof v==='string'&&v.startsWith('B'))free=false;
+      }
+      if(free){
+        // Animate: highlight target area
+        for(let dc=0;dc<size;dc++)for(let dr=0;dr<size;dr++){
+          document.getElementById('c'+(c+dc)+'_'+(r+dr)).classList.add('winning');
+        }
+        await sleep(400);
+        // Place big symbol
+        const id='B'+bigIdCounter++;
+        for(let dc=0;dc<size;dc++)for(let dr=0;dr<size;dr++)grid[c+dc][r+dr]=id;
+        bigSymMap[id]={sym,size,c,r};
+        renderAll();
+        // Animate spawn
+        document.getElementById('c'+c+'_'+r).classList.add('wild-spawn');
+        await sleep(600);
+        document.querySelectorAll('.cell').forEach(el=>el.classList.remove('winning','wild-spawn'));
+        placed=true;
+      }
+      attempts++;
+    }
+    if(i<count-1)await sleep(300);
+  }
+}
+
+// Charge ability 100: turn all of one symbol type into WILD
+async function chargeAbility100(){
+  const symTypes=Object.keys(S).filter(s=>s!=='wild'&&s!=='scatter');
+  const chosen=symTypes[Math.floor(Math.random()*symTypes.length)];
+
+  await showChargeNumber('WILD', 'ALL '+S[chosen].name.toUpperCase()+' → WILD');
+
+  // Find all cells with chosen symbol
+  const toWild=[];
+  for(let c=0;c<COLS;c++){for(let r=0;r<ROWS;r++){
+    if(getSymAt(c,r)===chosen)toWild.push({c,r});
+  }}
+  if(toWild.length===0)return;
+
+  // Highlight
+  for(const p of toWild){
+    document.getElementById('c'+p.c+'_'+p.r).classList.add('winning');
+  }
+  await sleep(800);
+
+  // Transform to wild with animation
+  for(const p of toWild){
+    const el=document.getElementById('c'+p.c+'_'+p.r);
+    el.classList.remove('winning');
+    el.classList.add('wild-spawn');
+    const v=grid[p.c][p.r];
+    if(v&&v.startsWith&&v.startsWith('B')){
+      const info=bigSymMap[v];
+      if(info)info.sym='wild';
+    }else{
+      grid[p.c][p.r]='wild';
+    }
+  }
+  await sleep(300);
+  renderAll();
+  for(const p of toWild){
+    document.getElementById('c'+p.c+'_'+p.r).classList.add('wild-spawn');
+  }
+  await sleep(1000);
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('wild-spawn'));
+}
+
+function fmtNum(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function updBal(){document.getElementById('bal').textContent=fmtNum(balance)}
+function chgBet(d){
+  if(isSpinning)return;
+  betIdx=Math.max(0,Math.min(bets.length-1,betIdx+d));
+  bet=bets[betIdx];
+  document.getElementById('betV').textContent=bet.toFixed(2);
+  updBuyBtns();
+}
+function showWin(a){const el=document.getElementById('winPop');el.textContent='WIN: '+a.toFixed(2);el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000)}
+function hideWin(){document.getElementById('winPop').classList.remove('show')}
+function showBanner(sp){const b=document.getElementById('banner');document.getElementById('bannerTxt').textContent='You won '+sp+' Free Spins!';b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2500)}
+function updFS(){document.getElementById('fsN').textContent=freeSpins;if(inFS)document.getElementById('fs').classList.add('show')}
+
+function particles(amt){
+  const em=['🍀','⭐','💰','🌈','✨','🪙','🍺'];const n=Math.min(Math.floor(amt/bet)+4,25);
+  for(let i=0;i<n;i++){const p=document.createElement('div');p.className='ptcl';p.textContent=em[Math.floor(Math.random()*em.length)];
+    p.style.left=(15+Math.random()*70)+'vw';p.style.top=(5+Math.random()*35)+'vh';
+    p.style.animationDelay=(Math.random()*.6)+'s';p.style.fontSize=(18+Math.random()*22)+'px';
+    document.body.appendChild(p);setTimeout(()=>p.remove(),2600)}
+  if(amt>bet*8){for(let i=0;i<15;i++){const c=document.createElement('div');c.className='coin-rain';
+    c.style.left=(10+Math.random()*80)+'vw';c.style.animationDelay=(Math.random()*.8)+'s';
+    c.style.width=(12+Math.random()*12)+'px';c.style.height=c.style.width;
+    document.body.appendChild(c);setTimeout(()=>c.remove(),2000)}}
+}
+
+// ===== EVENT LISTENERS =====
+// spinBtn onclick is set in HTML; bet buttons:
+document.getElementById('betDown').addEventListener('click',()=>chgBet(-1));
+document.getElementById('betUp').addEventListener('click',()=>chgBet(1));
+document.getElementById('maxBetBtn').addEventListener('click',()=>{
+  if(isSpinning)return;
+  betIdx=bets.length-1;bet=bets[betIdx];
+  document.getElementById('betV').textContent=bet.toFixed(2);
+  updBuyBtns();
+});
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();doSpin()}});
+
+init();updBuyBtns();
+
+// ===== DRAG & DROP EDITOR WITH SLIDERS =====
+(function(){
+let editMode=false, selectedEl=null, dragging=false;
+let dragStartX=0, dragStartY=0, elStartX=0, elStartY=0;
+let resizing=false, resizeHandle='', resizeStartW=0, resizeStartH=0, resizeStartX=0, resizeStartY=0;
+
+// Draggable elements config
+const EDITABLES=[
+  {id:'container',label:'Container',sel:'.frame-container',sliders:[
+    {p:'width',l:'Larghezza',min:200,max:1000,u:'px'}
+  ]},
+  {id:'frame',label:'Cornice',sel:'.frame-img',sliders:[]},
+  {id:'grid',label:'Griglia',sel:'.grid',sliders:[]},
+  {id:'menu',label:'Menu Bonus',sel:'#buyMenu',sliders:[
+    {p:'width',l:'Larghezza',min:50,max:300,u:'px'}
+  ]},
+  {id:'charge',label:'Charge Bar',sel:'#chargeBar',sliders:[
+    {p:'width',l:'Larghezza',min:16,max:60,u:'px'},
+    {p:'height',l:'Altezza',min:100,max:600,u:'px'}
+  ]},
+  {id:'cells',label:'Celle',custom:'cells',sliders:[
+    {p:'cellW',l:'Larg. cella',min:10,max:100,u:'px',d:60},
+    {p:'cellH',l:'Alt. cella',min:10,max:100,u:'px',d:57},
+    {p:'symW',l:'Larg. simbolo',min:10,max:100,u:'px',d:56},
+    {p:'symH',l:'Alt. simbolo',min:10,max:100,u:'px',d:53},
+    {p:'cellGap',l:'Gap',min:0,max:10,u:'px',d:1}
+  ]},
+  {id:'bg',label:'Background',custom:'bg',sliders:[
+    {p:'bgX',l:'Pos X',min:0,max:100,u:'%',d:50},
+    {p:'bgY',l:'Pos Y',min:0,max:100,u:'%',d:50},
+    {p:'bgZoom',l:'Zoom',min:50,max:300,u:'%',d:100}
+  ]}
+];
+
+// Store original positions
+const origPos=new Map();
+
+function getRect(el){
+  const r=el.getBoundingClientRect();
+  return {x:r.left,y:r.top,w:r.width,h:r.height};
+}
+
+function enableDrag(elDef){
+  const el=document.querySelector(elDef.sel);
+  if(!el||el.dataset.edDrag==='1')return;
+  el.dataset.edDrag='1';
+  el.dataset.edId=elDef.id;
+  // Store original position info
+  const cs=getComputedStyle(el);
+  origPos.set(elDef.id,{
+    position:cs.position,
+    transform:cs.transform,
+    tx:0,ty:0
+  });
+}
+
+function buildEditorPanel(){
+  let h='<div id="LP" style="position:fixed;top:0;right:0;width:280px;max-height:100vh;overflow-y:auto;background:rgba(5,5,15,0.97);color:#ddd;font:11px/1.4 sans-serif;z-index:9999;border-left:2px solid #FFD700;display:none;user-select:text">';
+  // Header
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#111;border-bottom:1px solid #FFD700;position:sticky;top:0;z-index:1">';
+  h+='<b style="color:#FFD700;font-size:13px">EDITOR</b>';
+  h+='<div style="display:flex;gap:4px">';
+  h+='<button id="edModeBtn" onclick="edToggleMode()" style="background:#555;color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:bold">EDIT OFF</button>';
+  h+='<button onclick="edSave()" style="background:#00cc55;color:#000;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:bold">SAVE</button>';
+  h+='<button onclick="edReset()" style="background:#cc3333;color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:bold">RESET</button>';
+  h+='<button onclick="edExport()" style="background:#FFD700;color:#000;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:bold">EXPORT</button>';
+  h+='</div></div>';
+
+  // Selected element info
+  h+='<div id="edSelected" style="padding:6px 10px;background:rgba(255,215,0,0.05);border-bottom:1px solid rgba(255,215,0,0.15);display:none">';
+  h+='<div style="color:#FFD700;font-weight:bold;font-size:12px;margin-bottom:4px" id="edSelLabel">Nessuna selezione</div>';
+  h+='<div style="display:flex;gap:6px;margin-bottom:4px">';
+  h+='<span style="color:#aaa;font-size:10px">X: <span id="edPosX">0</span></span>';
+  h+='<span style="color:#aaa;font-size:10px">Y: <span id="edPosY">0</span></span>';
+  h+='</div>';
+  h+='<div id="edSliders"></div>';
+  h+='</div>';
+
+  // All elements list (each clickable to select)
+  h+='<div style="padding:4px 0">';
+  for(const g of EDITABLES){
+    h+='<div class="ed-item" data-edid="'+g.id+'" onclick="edSelectById(\''+g.id+'\')" style="padding:6px 10px;cursor:pointer;border-bottom:1px solid rgba(255,215,0,0.05);display:flex;align-items:center;gap:6px;transition:background 0.15s">';
+    h+='<span style="width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0" id="edDot_'+g.id+'"></span>';
+    h+='<span style="color:#ccc;font-size:11px">'+g.label+'</span>';
+    h+='</div>';
+  }
+  h+='</div>';
+  h+='</div>';
+
+  // Toggle button
+  h+='<button id="LPT" onclick="document.getElementById(\'LP\').style.display=document.getElementById(\'LP\').style.display===\'none\'?\'block\':\'none\'" style="position:fixed;top:10px;right:10px;z-index:10000;background:linear-gradient(145deg,#FFD700,#FF8C00);color:#000;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;box-shadow:0 2px 10px rgba(255,165,0,0.5)">EDITOR</button>';
+
+  document.body.insertAdjacentHTML('beforeend',h);
+
+  // Style for slider tracks
+  const st=document.createElement('style');
+  st.textContent=`
+    .ed-item:hover{background:rgba(255,215,0,0.08)!important}
+    .ed-item.active{background:rgba(255,215,0,0.15)!important}
+    .ed-slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:#222;outline:none;margin:2px 0}
+    .ed-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:#FFD700;cursor:pointer;border:2px solid #111}
+    .ed-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#FFD700;cursor:pointer;border:2px solid #111}
+    .ed-drag-outline{outline:2px dashed #FFD700!important;outline-offset:2px!important;cursor:move!important}
+    .ed-resize-handle{position:absolute;width:10px;height:10px;background:#FFD700;border:1px solid #000;z-index:10001;cursor:nwse-resize;border-radius:2px}
+  `;
+  document.head.appendChild(st);
+}
+
+window.edToggleMode=function(){
+  editMode=!editMode;
+  const btn=document.getElementById('edModeBtn');
+  if(editMode){
+    btn.textContent='EDIT ON';
+    btn.style.background='#FFD700';
+    btn.style.color='#000';
+    // Enable dragging on all elements
+    for(const g of EDITABLES){
+      if(!g.custom) enableDrag(g);
+    }
+    // Allow pointer events on frame-img for dragging
+    const frameImg=document.querySelector('.frame-img');
+    if(frameImg) frameImg.style.pointerEvents='auto';
+    document.getElementById('edSelected').style.display='block';
+  } else {
+    btn.textContent='EDIT OFF';
+    btn.style.background='#555';
+    btn.style.color='#fff';
+    clearSelection();
+    // Restore pointer-events:none on frame-img
+    const frameImg=document.querySelector('.frame-img');
+    if(frameImg) frameImg.style.pointerEvents='none';
+    document.getElementById('edSelected').style.display='none';
+    removeResizeHandles();
+  }
+};
+
+function clearSelection(){
+  if(selectedEl){
+    selectedEl.classList.remove('ed-drag-outline');
+  }
+  selectedEl=null;
+  document.querySelectorAll('.ed-item').forEach(i=>i.classList.remove('active'));
+  document.querySelectorAll('[id^="edDot_"]').forEach(d=>d.style.background='#555');
+  removeResizeHandles();
+}
+
+function removeResizeHandles(){
+  document.querySelectorAll('.ed-resize-handle').forEach(h=>h.remove());
+}
+
+function addResizeHandles(el){
+  removeResizeHandles();
+  const r=el.getBoundingClientRect();
+  const positions=[
+    {name:'se',left:r.right-5,top:r.bottom-5,cursor:'nwse-resize'},
+    {name:'sw',left:r.left-5,top:r.bottom-5,cursor:'nesw-resize'},
+    {name:'ne',left:r.right-5,top:r.top-5,cursor:'nesw-resize'},
+    {name:'nw',left:r.left-5,top:r.top-5,cursor:'nwse-resize'},
+    {name:'e',left:r.right-5,top:r.top+r.height/2-5,cursor:'ew-resize'},
+    {name:'w',left:r.left-5,top:r.top+r.height/2-5,cursor:'ew-resize'},
+  ];
+  positions.forEach(pos=>{
+    const h=document.createElement('div');
+    h.className='ed-resize-handle';
+    h.dataset.handle=pos.name;
+    h.style.position='fixed';
+    h.style.left=pos.left+'px';
+    h.style.top=pos.top+'px';
+    h.style.cursor=pos.cursor;
+    h.addEventListener('mousedown',onResizeStart);
+    document.body.appendChild(h);
+  });
+}
+
+function selectElement(el,defId){
+  if(!editMode)return;
+  clearSelection();
+  selectedEl=el;
+  el.classList.add('ed-drag-outline');
+
+  // Highlight in panel
+  const item=document.querySelector('.ed-item[data-edid="'+defId+'"]');
+  if(item)item.classList.add('active');
+  const dot=document.getElementById('edDot_'+defId);
+  if(dot)dot.style.background='#FFD700';
+
+  // Update label
+  const def=EDITABLES.find(e=>e.id===defId);
+  document.getElementById('edSelLabel').textContent=def?def.label:'Selezionato';
+
+  // Update pos display
+  const orig=origPos.get(defId)||{tx:0,ty:0};
+  document.getElementById('edPosX').textContent=Math.round(orig.tx);
+  document.getElementById('edPosY').textContent=Math.round(orig.ty);
+
+  // Build sliders
+  buildSliders(defId);
+  addResizeHandles(el);
+}
+
+window.edSelectById=function(id){
+  const def=EDITABLES.find(e=>e.id===id);
+  if(!def)return;
+  if(!editMode) edToggleMode();
+  if(def.custom){
+    // For custom items (cells,bg), just show sliders without dragging
+    clearSelection();
+    const item=document.querySelector('.ed-item[data-edid="'+id+'"]');
+    if(item)item.classList.add('active');
+    const dot=document.getElementById('edDot_'+id);
+    if(dot)dot.style.background='#FFD700';
+    document.getElementById('edSelLabel').textContent=def.label;
+    document.getElementById('edSelected').style.display='block';
+    buildSliders(id);
+    return;
+  }
+  const el=document.querySelector(def.sel);
+  if(el) selectElement(el,id);
+};
+
+function buildSliders(defId){
+  const def=EDITABLES.find(e=>e.id===defId);
+  const container=document.getElementById('edSliders');
+  container.innerHTML='';
+  if(!def||!def.sliders||def.sliders.length===0)return;
+
+  for(const s of def.sliders){
+    let curVal=s.d||0;
+    if(!def.custom){
+      const el=document.querySelector(def.sel);
+      if(el){
+        const cv=parseFloat(getComputedStyle(el)[s.p]);
+        if(!isNaN(cv)) curVal=Math.round(cv);
+      }
+    }
+    let row=document.createElement('div');
+    row.style.cssText='margin:4px 0';
+    row.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px">'+
+      '<label style="font-size:10px;color:#aaa">'+s.l+'</label>'+
+      '<span style="font-size:10px;color:#FFD700;min-width:35px;text-align:right" id="edVal_'+defId+'_'+s.p+'">'+curVal+s.u+'</span>'+
+      '</div>'+
+      '<input type="range" class="ed-slider" min="'+s.min+'" max="'+s.max+'" value="'+curVal+'" '+
+      'data-edid="'+defId+'" data-p="'+s.p+'" data-u="'+s.u+'" '+
+      'oninput="edSlide(this)">';
+    container.appendChild(row);
+  }
+}
+
+window.edSlide=function(inp){
+  const v=parseInt(inp.value);
+  const defId=inp.dataset.edid;
+  const prop=inp.dataset.p;
+  const unit=inp.dataset.u;
+  const def=EDITABLES.find(e=>e.id===defId);
+
+  // Update display
+  const valSpan=document.getElementById('edVal_'+defId+'_'+prop);
+  if(valSpan) valSpan.textContent=v+unit;
+
+  if(!def)return;
+
+  // Custom: cells
+  if(def.custom==='cells'){
+    if(prop==='cellW') document.querySelectorAll('.cell').forEach(c=>c.style.width=v+'px');
+    if(prop==='cellH') document.querySelectorAll('.cell').forEach(c=>c.style.height=v+'px');
+    if(prop==='symW') document.querySelectorAll('.cell .sym').forEach(s=>s.style.width=v+'px');
+    if(prop==='symH') document.querySelectorAll('.cell .sym').forEach(s=>s.style.height=v+'px');
+    if(prop==='cellGap'){
+      document.querySelectorAll('.reels').forEach(r=>r.style.gap=v+'px');
+      document.querySelectorAll('.reel').forEach(r=>r.style.gap=v+'px');
+    }
+    return;
+  }
+  // Custom: background
+  if(def.custom==='bg'){
+    const bg=document.querySelector('.bg');
+    if(prop==='bgX'||prop==='bgY'){
+      const xInp=document.querySelector('.ed-slider[data-edid="bg"][data-p="bgX"]');
+      const yInp=document.querySelector('.ed-slider[data-edid="bg"][data-p="bgY"]');
+      bg.style.backgroundPosition=(xInp?xInp.value:50)+'% '+(yInp?yInp.value:50)+'%';
+    }
+    if(prop==='bgZoom') bg.style.backgroundSize=v+'%';
+    return;
+  }
+  // Standard CSS prop
+  const el=document.querySelector(def.sel);
+  if(el) el.style[prop]=v+'px';
+
+  // Update resize handles if this is the selected element
+  if(selectedEl===el) addResizeHandles(el);
+};
+
+// ===== MOUSE HANDLERS FOR DRAG =====
+document.addEventListener('mousedown',function(e){
+  if(!editMode||e.button!==0)return;
+  // Don't intercept slider or panel clicks
+  const lp=document.getElementById('LP');
+  if(lp&&lp.contains(e.target))return;
+  if(e.target.id==='LPT'||e.target.id==='edModeBtn')return;
+  if(e.target.classList.contains('ed-resize-handle'))return;
+
+  // Find if click is on an editable element
+  let found=null, foundDef=null;
+  for(const g of EDITABLES){
+    if(g.custom)continue;
+    const el=document.querySelector(g.sel);
+    if(!el)continue;
+    const r=el.getBoundingClientRect();
+    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+      // Pick the smallest (most specific) match
+      if(!found||r.width*r.height<found.getBoundingClientRect().width*found.getBoundingClientRect().height){
+        found=el;foundDef=g;
+      }
+    }
+  }
+  if(found&&foundDef){
+    e.preventDefault();
+    selectElement(found,foundDef.id);
+    dragging=true;
+    dragStartX=e.clientX;
+    dragStartY=e.clientY;
+    const orig=origPos.get(foundDef.id)||{tx:0,ty:0};
+    elStartX=orig.tx;
+    elStartY=orig.ty;
+  }
+},true);
+
+document.addEventListener('mousemove',function(e){
+  if(dragging&&selectedEl){
+    const dx=e.clientX-dragStartX;
+    const dy=e.clientY-dragStartY;
+    const defId=selectedEl.dataset.edId;
+    const orig=origPos.get(defId);
+    if(orig){
+      orig.tx=elStartX+dx;
+      orig.ty=elStartY+dy;
+      selectedEl.style.transform='translate('+orig.tx+'px,'+orig.ty+'px)';
+      document.getElementById('edPosX').textContent=Math.round(orig.tx);
+      document.getElementById('edPosY').textContent=Math.round(orig.ty);
+      removeResizeHandles(); // hide during drag
+    }
+  }
+  if(resizing&&selectedEl){
+    const dx=e.clientX-resizeStartX;
+    const dy=e.clientY-resizeStartY;
+    let nw=resizeStartW, nh=resizeStartH;
+    if(resizeHandle.includes('e')) nw=resizeStartW+dx;
+    if(resizeHandle.includes('w')) nw=resizeStartW-dx;
+    if(resizeHandle.includes('s')) nh=resizeStartH+dy;
+    if(resizeHandle.includes('n')) nh=resizeStartH-dy;
+    if(nw>30) selectedEl.style.width=nw+'px';
+    if(nh>30) selectedEl.style.height=nh+'px';
+    // Update sliders if present
+    const defId=selectedEl.dataset.edId;
+    const wSlider=document.querySelector('.ed-slider[data-edid="'+defId+'"][data-p="width"]');
+    const hSlider=document.querySelector('.ed-slider[data-edid="'+defId+'"][data-p="height"]');
+    if(wSlider){wSlider.value=Math.round(nw);const vs=document.getElementById('edVal_'+defId+'_width');if(vs)vs.textContent=Math.round(nw)+'px';}
+    if(hSlider){hSlider.value=Math.round(nh);const vs=document.getElementById('edVal_'+defId+'_height');if(vs)vs.textContent=Math.round(nh)+'px';}
+  }
+});
+
+document.addEventListener('mouseup',function(e){
+  if(dragging&&selectedEl){
+    dragging=false;
+    addResizeHandles(selectedEl);
+  }
+  if(resizing){
+    resizing=false;
+    if(selectedEl) addResizeHandles(selectedEl);
+  }
+});
+
+function onResizeStart(e){
+  if(!selectedEl)return;
+  e.preventDefault();
+  e.stopPropagation();
+  resizing=true;
+  resizeHandle=e.target.dataset.handle;
+  const r=selectedEl.getBoundingClientRect();
+  resizeStartW=r.width;
+  resizeStartH=r.height;
+  resizeStartX=e.clientX;
+  resizeStartY=e.clientY;
+}
+
+// ===== EXPORT =====
+window.edExport=function(){
+  const lines=['/* === EXPORTED LAYOUT === */'];
+  for(const g of EDITABLES){
+    lines.push('/* '+g.label+' */');
+    if(!g.custom){
+      const el=document.querySelector(g.sel);
+      if(!el)continue;
+      const pos=origPos.get(g.id);
+      if(pos&&(pos.tx||pos.ty)) lines.push('  transform: translate('+Math.round(pos.tx)+'px, '+Math.round(pos.ty)+'px)');
+      const cs=getComputedStyle(el);
+      for(const s of g.sliders){
+        lines.push('  '+s.p+': '+Math.round(parseFloat(cs[s.p]))+'px');
+      }
+    } else {
+      for(const s of g.sliders){
+        const inp=document.querySelector('.ed-slider[data-edid="'+g.id+'"][data-p="'+s.p+'"]');
+        if(inp) lines.push('  '+s.p+': '+inp.value+s.u);
+      }
+    }
+  }
+  const css=lines.join('\n');
+  navigator.clipboard.writeText(css).then(()=>alert('Layout copiato!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=css;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();alert('Layout copiato!');
+  });
+};
+
+// ===== SAVE / LOAD / RESET LAYOUT =====
+const SAVE_KEY='slotEditorLayout';
+
+window.edSave=function(){
+  const data={};
+  for(const g of EDITABLES){
+    const entry={};
+    if(!g.custom){
+      const el=document.querySelector(g.sel);
+      if(!el)continue;
+      // Save position (transform)
+      const pos=origPos.get(g.id);
+      if(pos){entry._tx=pos.tx;entry._ty=pos.ty;}
+      // Save slider values (computed style)
+      const cs=getComputedStyle(el);
+      for(const s of g.sliders){
+        entry[s.p]=Math.round(parseFloat(cs[s.p]));
+      }
+    }else{
+      // Custom: read from current slider inputs or DOM
+      for(const s of g.sliders){
+        const inp=document.querySelector('.ed-slider[data-edid="'+g.id+'"][data-p="'+s.p+'"]');
+        if(inp){entry[s.p]=parseInt(inp.value);}
+        else{
+          // Read from DOM
+          if(g.custom==='cells'){
+            const cell=document.querySelector('.cell');
+            if(cell){
+              const cs=getComputedStyle(cell);
+              if(s.p==='cellW')entry[s.p]=Math.round(parseFloat(cs.width));
+              if(s.p==='cellH')entry[s.p]=Math.round(parseFloat(cs.height));
+            }
+            const sym=document.querySelector('.cell .sym');
+            if(sym){
+              const ss=getComputedStyle(sym);
+              if(s.p==='symW')entry[s.p]=Math.round(parseFloat(ss.width));
+              if(s.p==='symH')entry[s.p]=Math.round(parseFloat(ss.height));
+            }
+            const reel=document.querySelector('.reel');
+            if(reel&&s.p==='cellGap')entry[s.p]=Math.round(parseFloat(getComputedStyle(reel).gap)||1);
+          }
+          if(g.custom==='bg'){
+            entry[s.p]=s.d; // default
+          }
+        }
+      }
+    }
+    data[g.id]=entry;
+  }
+  localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+  // Visual feedback
+  const btn=document.querySelector('[onclick="edSave()"]');
+  if(btn){const orig=btn.textContent;btn.textContent='SAVED!';btn.style.background='#00ff66';setTimeout(()=>{btn.textContent=orig;btn.style.background='#00cc55'},1200)}
+};
+
+window.edReset=function(){
+  if(!confirm('Sei sicuro? Questo cancellerà tutte le modifiche salvate.'))return;
+  localStorage.removeItem(SAVE_KEY);
+  location.reload();
+};
+
+function edLoadSaved(){
+  const raw=localStorage.getItem(SAVE_KEY);
+  if(!raw)return;
+  let data;
+  try{data=JSON.parse(raw)}catch(e){return}
+
+  for(const g of EDITABLES){
+    const entry=data[g.id];
+    if(!entry)continue;
+
+    if(!g.custom){
+      const el=document.querySelector(g.sel);
+      if(!el)continue;
+      // Apply position
+      if(entry._tx!==undefined||entry._ty!==undefined){
+        const tx=entry._tx||0,ty=entry._ty||0;
+        if(tx||ty){
+          el.style.transform='translate('+tx+'px,'+ty+'px)';
+          // Also set in origPos for drag to work
+          if(!el.dataset.edDrag){
+            el.dataset.edDrag='1';
+            el.dataset.edId=g.id;
+          }
+          origPos.set(g.id,{position:getComputedStyle(el).position,transform:el.style.transform,tx,ty});
+        }
+      }
+      // Apply slider props
+      for(const s of g.sliders){
+        if(entry[s.p]!==undefined){
+          el.style[s.p]=entry[s.p]+'px';
+        }
+      }
+    }else if(g.custom==='cells'){
+      if(entry.cellW)document.querySelectorAll('.cell').forEach(c=>c.style.width=entry.cellW+'px');
+      if(entry.cellH)document.querySelectorAll('.cell').forEach(c=>c.style.height=entry.cellH+'px');
+      if(entry.symW)document.querySelectorAll('.cell .sym').forEach(s=>s.style.width=entry.symW+'px');
+      if(entry.symH)document.querySelectorAll('.cell .sym').forEach(s=>s.style.height=entry.symH+'px');
+      if(entry.cellGap!==undefined){
+        document.querySelectorAll('.reels').forEach(r=>r.style.gap=entry.cellGap+'px');
+        document.querySelectorAll('.reel').forEach(r=>r.style.gap=entry.cellGap+'px');
+      }
+    }else if(g.custom==='bg'){
+      const bg=document.querySelector('.bg');
+      if(bg){
+        if(entry.bgX!==undefined&&entry.bgY!==undefined)bg.style.backgroundPosition=entry.bgX+'% '+entry.bgY+'%';
+        if(entry.bgZoom!==undefined)bg.style.backgroundSize=entry.bgZoom+'%';
+      }
+    }
+  }
+}
+
+buildEditorPanel();
+// Load saved layout after DOM is ready
+edLoadSaved();
+})();
+
+// ===== OVERLAY DRAG SYSTEM =====
+// Makes .sb-num and .sb-click elements draggable when drag mode is on
+(function(){
+  const DRAG_KEY='slotOverlayPositions';
+  let dragMode=false;
+  let dragTarget=null, dragStartX=0, dragStartY=0, elStartLeft=0, elStartTop=0;
+  let parentRect=null;
+
+  // All draggable overlays
+  function getOverlays(){
+    return document.querySelectorAll('.sb-num, .sb-click');
+  }
+
+  function toggleDragMode(){
+    dragMode=!dragMode;
+    const btn=document.getElementById('dragModeBtn');
+    if(dragMode){
+      btn.textContent='DRAG ON';btn.style.background='#ff0';btn.style.color='#000';
+      getOverlays().forEach(el=>el.classList.add('draggable'));
+    }else{
+      btn.textContent='DRAG OFF';btn.style.background='#555';btn.style.color='#fff';
+      getOverlays().forEach(el=>el.classList.remove('draggable'));
+    }
+  }
+
+  function getOverlayKey(el){
+    // Use the most specific sb- class (e.g. sb-num-bal, sb-click-spin) as unique key
+    const classes=Array.from(el.classList);
+    // Prefer the longest sb- class (most specific), excluding 'draggable'
+    const sbClasses=classes.filter(c=>c.startsWith('sb-')&&c!=='sb-num'&&c!=='sb-click');
+    if(sbClasses.length>0) return sbClasses[0];
+    // Fallback to id
+    if(el.id) return el.id;
+    // Last resort: generic sb- class
+    return classes.find(c=>c.startsWith('sb-'))||'';
+  }
+
+  function saveOverlayPositions(){
+    const data={};
+    getOverlays().forEach(el=>{
+      const id=getOverlayKey(el);
+      if(!id)return;
+      data[id]={
+        left:el.style.left||getComputedStyle(el).left,
+        top:el.style.top||getComputedStyle(el).top,
+        width:el.style.width||'',
+        height:el.style.height||'',
+        fontSize:el.style.fontSize||''
+      };
+    });
+    localStorage.setItem(DRAG_KEY,JSON.stringify(data));
+    const btn=document.getElementById('dragSaveBtn');
+    if(btn){btn.textContent='SAVED!';btn.style.background='#0f0';
+      setTimeout(()=>{btn.textContent='SALVA POS';btn.style.background='#0a0'},1000)}
+  }
+
+  function loadOverlayPositions(){
+    const raw=localStorage.getItem(DRAG_KEY);
+    if(!raw)return;
+    let data;try{data=JSON.parse(raw)}catch(e){return}
+    getOverlays().forEach(el=>{
+      const id=getOverlayKey(el);
+      if(!id||!data[id])return;
+      const d=data[id];
+      if(d.left)el.style.left=d.left;
+      if(d.top)el.style.top=d.top;
+      if(d.width)el.style.width=d.width;
+      if(d.height)el.style.height=d.height;
+      if(d.fontSize)el.style.fontSize=d.fontSize;
+    });
+  }
+
+  function resetOverlayPositions(){
+    if(!confirm('Reset posizioni overlay?'))return;
+    localStorage.removeItem(DRAG_KEY);
+    location.reload();
+  }
+
+  function exportPositions(){
+    const lines=['/* Overlay positions */'];
+    getOverlays().forEach(el=>{
+      const cls=getOverlayKey(el);
+      const cs=getComputedStyle(el);
+      lines.push(`.${cls}{left:${el.style.left||cs.left};top:${el.style.top||cs.top};width:${el.style.width||cs.width};height:${el.style.height||cs.height}}`);
+    });
+    const txt=lines.join('\n');
+    navigator.clipboard.writeText(txt).then(()=>alert('Posizioni copiate!')).catch(()=>alert(txt));
+  }
+
+  // Mouse drag + resize handlers
+  let resizeTarget=null, resizeDir='', resizeStartX=0, resizeStartY=0, resizeStartW=0, resizeStartH=0;
+
+  document.addEventListener('mousedown',function(e){
+    if(!dragMode||e.button!==0)return;
+
+    // Check if clicking a resize handle
+    const handle=e.target.closest('.ov-handle');
+    if(handle){
+      e.preventDefault();e.stopPropagation();
+      resizeTarget=handle.parentElement;
+      parentRect=resizeTarget.parentElement.getBoundingClientRect();
+      resizeStartX=e.clientX;
+      resizeStartY=e.clientY;
+      const cs=getComputedStyle(resizeTarget);
+      resizeStartW=parseFloat(cs.width)/parentRect.width*100;
+      resizeStartH=parseFloat(cs.height)/parentRect.height*100;
+      if(handle.classList.contains('ov-handle-e'))resizeDir='e';
+      else if(handle.classList.contains('ov-handle-s'))resizeDir='s';
+      else resizeDir='se';
+      return;
+    }
+
+    const el=e.target.closest('.draggable');
+    if(!el)return;
+    e.preventDefault();e.stopPropagation();
+    dragTarget=el;
+    parentRect=el.parentElement.getBoundingClientRect();
+    dragStartX=e.clientX;
+    dragStartY=e.clientY;
+    const cs=getComputedStyle(el);
+    elStartLeft=parseFloat(cs.left)/parentRect.width*100;
+    elStartTop=parseFloat(cs.top)/parentRect.height*100;
+  },true);
+
+  document.addEventListener('mousemove',function(e){
+    // Resize
+    if(resizeTarget&&parentRect){
+      const dx=e.clientX-resizeStartX;
+      const dy=e.clientY-resizeStartY;
+      if(resizeDir==='e'||resizeDir==='se'){
+        resizeTarget.style.width=Math.max(0.5,resizeStartW+dx/parentRect.width*100).toFixed(1)+'%';
+      }
+      if(resizeDir==='s'||resizeDir==='se'){
+        resizeTarget.style.height=Math.max(0.3,resizeStartH+dy/parentRect.height*100).toFixed(1)+'%';
+      }
+      return;
+    }
+    // Drag
+    if(!dragTarget||!parentRect)return;
+    const dx=e.clientX-dragStartX;
+    const dy=e.clientY-dragStartY;
+    const newLeft=elStartLeft+(dx/parentRect.width*100);
+    const newTop=elStartTop+(dy/parentRect.height*100);
+    dragTarget.style.left=newLeft.toFixed(1)+'%';
+    dragTarget.style.top=newTop.toFixed(1)+'%';
+  });
+
+  document.addEventListener('mouseup',function(){
+    dragTarget=null;resizeTarget=null;parentRect=null;resizeDir='';
+  });
+
+  // Shift+scroll: change font size
+  document.addEventListener('wheel',function(e){
+    if(!dragMode||!e.shiftKey)return;
+    const el=e.target.closest('.draggable');
+    if(!el)return;
+    e.preventDefault();
+    const curFS=parseFloat(getComputedStyle(el).fontSize)||11;
+    el.style.fontSize=Math.max(4,curFS+(e.deltaY>0?-1:1))+'px';
+  },{passive:false});
+
+  // Build drag control panel (small bar at bottom)
+  const bar=document.createElement('div');
+  bar.innerHTML=`
+    <div style="position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:10000;
+      display:flex;gap:6px;background:rgba(0,0,0,0.85);padding:6px 12px;border-radius:10px;
+      border:1px solid #FFD700;font:11px sans-serif">
+      <button id="dragModeBtn" style="background:#555;color:#fff;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px">DRAG OFF</button>
+      <button id="dragSaveBtn" style="background:#0a0;color:#fff;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px">SALVA POS</button>
+      <button style="background:#c00;color:#fff;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="this.closest('div').querySelector('#dragModeBtn').click();window._resetOverlay()">RESET</button>
+      <button style="background:#f0f;color:#000;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="window._showAllOverlay()">MOSTRA</button>
+      <button style="background:#FFD700;color:#000;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="window._exportOverlay()">EXPORT CSS</button>
+      <button id="featTogBtn" style="background:linear-gradient(145deg,#1a1a2e,#0d0d1a);color:#FFD700;border:2px solid #FFD700;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="window._toggleFeatPanel()">FUNZIONI</button>
+      <span style="color:#888;font-size:9px;align-self:center">Scroll=resize | Shift+scroll=font</span>
+    </div>`;
+  document.body.appendChild(bar);
+  document.getElementById('dragModeBtn').addEventListener('click',toggleDragMode);
+  document.getElementById('dragSaveBtn').addEventListener('click',saveOverlayPositions);
+  window._resetOverlay=resetOverlayPositions;
+  window._exportOverlay=exportPositions;
+  window._showAllOverlay=function(){
+    // Move all overlays to clearly visible stacked positions
+    if(!dragMode) toggleDragMode();
+    const nums=document.querySelectorAll('.sb-num');
+    const clicks=document.querySelectorAll('.sb-click');
+    let y=30;
+    nums.forEach((el,i)=>{
+      el.style.left='5%';
+      el.style.top=y+'%';
+      el.style.width='20%';
+      el.style.height='4%';
+      y+=6;
+    });
+    clicks.forEach((el,i)=>{
+      el.style.left='60%';
+      el.style.top=(30+i*6)+'%';
+      el.style.width='15%';
+      el.style.height='5%';
+    });
+  };
+
+  // Load saved positions on init
+  loadOverlayPositions();
+})();
+
+// ===== FEATURE CONTROL PANEL =====
+(function(){
+  // CSS for the panel
+  const st=document.createElement('style');
+  st.textContent=`
+  .feat-panel{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:9999;
+    background:rgba(5,5,20,0.97);border:2px solid #FFD700;border-radius:12px;
+    max-height:0;overflow:hidden;transition:max-height .4s ease;font:11px/1.5 sans-serif;color:#ddd;
+    width:92vw;max-width:900px}
+  .feat-panel.open{max-height:70vh;overflow-y:auto}
+  .feat-header{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;
+    background:#111;border-bottom:1px solid rgba(255,215,0,0.3);position:sticky;top:0;z-index:1}
+  .feat-header h3{color:#FFD700;font-family:'Cinzel Decorative',cursive;font-size:14px;margin:0}
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0;padding:0}
+  .feat-section{border-right:1px solid rgba(255,215,0,0.1);border-bottom:1px solid rgba(255,215,0,0.1);padding:10px 14px}
+  .feat-section h4{color:#FFD700;font-size:12px;margin:0 0 8px 0;font-family:'MedievalSharp',cursive;
+    border-bottom:1px solid rgba(255,215,0,0.15);padding-bottom:4px}
+  .feat-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0;gap:8px}
+  .feat-row label{color:#aaa;font-size:10px;flex:1;min-width:0}
+  .feat-row input[type="range"]{width:80px;-webkit-appearance:none;height:5px;border-radius:3px;
+    background:#222;outline:none}
+  .feat-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;
+    border-radius:50%;background:#FFD700;cursor:pointer;border:1px solid #111}
+  .feat-row input[type="number"]{width:50px;background:#1a1a2e;border:1px solid #444;color:#FFD700;
+    border-radius:4px;padding:2px 4px;font-size:10px;text-align:center}
+  .feat-row .feat-val{color:#FFD700;font-weight:bold;font-size:10px;min-width:35px;text-align:right}
+  .feat-row input[type="checkbox"]{accent-color:#FFD700;width:14px;height:14px}
+  .feat-btn{background:linear-gradient(145deg,#FFD700,#FF8C00);color:#000;border:none;padding:4px 12px;
+    border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px;transition:all .15s}
+  .feat-btn:hover{filter:brightness(1.2)}
+  .feat-btn.danger{background:linear-gradient(145deg,#cc3333,#aa1111);color:#fff}
+  .feat-rtp{font-size:10px;color:#4dff88;font-weight:bold;padding:2px 8px;background:rgba(0,255,100,0.08);
+    border-radius:4px;border:1px solid rgba(0,255,100,0.2)}
+  .feat-info{color:#666;font-size:9px;margin-top:2px;font-style:italic}
+  `;
+  document.head.appendChild(st);
+
+  // Load saved config BEFORE building panel HTML so sliders show saved values
+  (function(){
+    try{
+      const raw=localStorage.getItem('elfSlotConfig');
+      if(!raw)return;
+      const data=JSON.parse(raw);
+      if(data.cfg)for(const k of Object.keys(data.cfg))CFG[k]=data.cfg[k];
+      if(data.weights){for(const k of Object.keys(data.weights))W[k]=data.weights[k];
+        WT=Object.values(W).reduce((a,b)=>a+b,0);}
+      if(data.fireballMultis)CFG.fireballMultis=data.fireballMultis;
+      if(data.fireballCounts)CFG.fireballCounts=data.fireballCounts;
+      console.log('Config caricato da localStorage');
+    }catch(e){}
+  })();
+
+  // Panel (toggled from editor bar button)
+  const panel=document.createElement('div');
+  panel.className='feat-panel';
+  panel.innerHTML=buildPanelHTML();
+  document.body.appendChild(panel);
+
+  window._toggleFeatPanel=function(){
+    panel.classList.toggle('open');
+    const btn=document.getElementById('featTogBtn');
+    if(btn){
+      if(panel.classList.contains('open')){btn.style.background='#FFD700';btn.style.color='#000'}
+      else{btn.style.background='';btn.style.color=''}
+    }
+  };
+
+  function buildFbCountInfo(){
+    const cs=CFG.fireballCounts.filter(c=>c.w>0);
+    const tot=cs.reduce((a,c)=>a+c.w,0);
+    if(tot===0)return '<span style="color:#ff4444">Nessun conteggio attivo!</span>';
+    return cs.map(c=>`<span style="color:#FF8C00">${c.n}fb</span>: ${(c.w/tot*100).toFixed(1)}%`).join(' | ');
+  }
+  function fbMultiLabel(v){return v===1?'Nessuno':v+'x'}
+  function buildFbMultiInfo(){
+    const ms=CFG.fireballMultis;
+    const tot=ms.reduce((a,m)=>a+m.w,0);
+    return ms.map(m=>`<span style="color:${m.v===1?'#aaa':'#FFD700'}">${fbMultiLabel(m.v)}</span>: ${(m.w/tot*100).toFixed(1)}%`).join(' | ');
+  }
+
+  function buildPanelHTML(){
+    return `
+    <div class="feat-header">
+      <h3>Pannello Funzioni</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="feat-rtp" id="rtpDisplay">RTP Target: 95%</span>
+        <button class="feat-btn" onclick="featSimRTP()">SIMULA RTP</button>
+        <button class="feat-btn" style="background:linear-gradient(145deg,#00aa44,#006622);color:#fff" onclick="featSaveCFG()">SALVA</button>
+        <button class="feat-btn danger" onclick="featResetCFG()">RESET</button>
+        <button class="feat-btn" onclick="window._toggleFeatPanel()">CHIUDI</button>
+      </div>
+    </div>
+    <div class="feat-grid">
+
+      <!-- PESI SIMBOLI -->
+      <div class="feat-section">
+        <h4>Pesi Simboli (Frequenza)</h4>
+        <div class="feat-info">Peso maggiore = appare pi\u00f9 spesso. Simboli rari pagano di pi\u00f9.</div>
+        ${symWeightRow('potOfGold','Pentola d\'Oro',1,40)}
+        ${symWeightRow('greenAcorn','Ghianda Verde',1,40)}
+        ${symWeightRow('crystalBell','Campana Vetro',1,40)}
+        ${symWeightRow('redMushroom','Fungo Rosso',1,40)}
+        ${symWeightRow('blueMushroom','Fungo Blu',1,40)}
+        ${symWeightRow('celticKnot','Medaglione',1,40)}
+        ${symWeightRow('scatter','BONUS (Scatter)',0,5)}
+        <div class="feat-info" id="totalWeightInfo">Peso totale: ${WT}</div>
+      </div>
+
+      <!-- FREE SPINS -->
+      <div class="feat-section">
+        <h4>Free Spins</h4>
+        <div class="feat-info">Drop rate scatter ~0.25% per cella. Con 48 celle: ~0.24% per 3+ scatter/spin</div>
+        ${cfgRow('scatterForFS','Scatter per FS',2,5,1)}
+        ${cfgRow('fsSpins','Giri (3 scatter)',3,20,1)}
+        ${cfgRow('fsSpins4','Giri (4 scatter)',3,30,1)}
+        ${cfgRow('fsSpins5','Giri (5+ scatter)',3,40,1)}
+        ${cfgRow('fsRetriggerExtra','Extra giri retrigger',1,10,1)}
+        <div class="feat-row">
+          <label>Attiva FS manualmente</label>
+          <button class="feat-btn" onclick="featTriggerFS()">AVVIA FS</button>
+        </div>
+      </div>
+
+      <!-- FIREBALLS -->
+      <div class="feat-section">
+        <h4>Fireballs (Palle di Fuoco)</h4>
+        <div class="feat-info">Peso = frequenza. Metti 0 per disabilitare un numero.</div>
+        ${CFG.fireballCounts.map((c,idx)=>`<div class="feat-row">
+          <label>${c.n} fireball</label>
+          <input type="range" min="0" max="100" value="${c.w}" step="0.5"
+            oninput="featSetFbCount(${idx},parseFloat(this.value));this.nextElementSibling.textContent=this.value">
+          <span class="feat-val">${c.w}</span>
+        </div>`).join('')}
+        <div class="feat-info" id="fbCountInfo">${buildFbCountInfo()}</div>
+        ${cfgRow('fireballBuyMin','Min (acquisto)',1,6,1)}
+        ${cfgRow('fireballBuyMax','Max (acquisto)',1,8,1)}
+        <div class="feat-row">
+          <label>Lancia fireballs ora</label>
+          <input type="number" id="featFireN" value="2" min="1" max="8" style="width:40px">
+          <button class="feat-btn" onclick="featFireNow()">LANCIA</button>
+        </div>
+      </div>
+
+      <!-- FIREBALL MULTIPLIERS -->
+      <div class="feat-section">
+        <h4>Moltiplicatori Fireball</h4>
+        <div class="feat-info">Peso = frequenza relativa. Pi\u00f9 alto = esce pi\u00f9 spesso.</div>
+        ${CFG.fireballMultis.map((m,idx)=>`<div class="feat-row">
+          <label>${fbMultiLabel(m.v)}</label>
+          <input type="range" min="0" max="100" value="${m.w}" step="0.5"
+            oninput="featSetFbMulti(${idx},parseFloat(this.value));this.nextElementSibling.textContent=this.value">
+          <span class="feat-val">${m.w}</span>
+        </div>`).join('')}
+        <div class="feat-info" id="fbMultiInfo">${buildFbMultiInfo()}</div>
+      </div>
+
+      <!-- BIG SYMBOLS -->
+      <div class="feat-section">
+        <h4>Simboli Giganti</h4>
+        ${cfgRowFloat('bigSym2x2Chance','Chance 2x2 per spin',0,0.30,0.01)}
+        ${cfgRowFloat('bigSym3x3Chance','Chance 3x3 per spin',0,0.20,0.01)}
+        ${cfgRow('bigSymBuyMin','Min quando acquistato',1,5,1)}
+        ${cfgRow('bigDropMin','Min drop (abilit\u00e0)',1,4,1)}
+        ${cfgRow('bigDropMax','Max drop (abilit\u00e0)',1,6,1)}
+        ${cfgRowFloat('bigDrop3x3Chance','Chance 3x3 vs 2x2',0,1,0.1)}
+      </div>
+
+      <!-- CHARGE BAR -->
+      <div class="feat-section">
+        <h4>Barra Carica</h4>
+        ${cfgRow('chargeMax','Punti max barra',30,300,10)}
+        ${cfgRow('chargeTh1','Soglia 1 (abilit\u00e0)',10,100,5)}
+        ${cfgRow('chargeTh2','Soglia 2',20,200,5)}
+        ${cfgRow('chargeTh3','Soglia 3',30,250,5)}
+        ${cfgRow('chargeTh4','Soglia 4 (WILD+Multi)',40,300,10)}
+        ${cfgRow('chargeMultiStep','Incremento moltiplicatore',1,5,1)}
+      </div>
+
+      <!-- ABILITA CARICA -->
+      <div class="feat-section">
+        <h4>Abilit\u00e0 Carica</h4>
+        ${cfgRow('removeSymMin','Min tipi rimossi',1,6,1)}
+        ${cfgRow('removeSymMax','Max tipi rimossi',1,6,1)}
+        ${cfgCheckbox('transformEnabled','Trasformazione simboli')}
+        ${cfgCheckbox('wildPerCluster','Wild per cluster (cascade)')}
+        <div class="feat-row">
+          <label>Forza abilit\u00e0 ora</label>
+          <select id="featAbilSel" style="background:#1a1a2e;border:1px solid #444;color:#FFD700;border-radius:4px;padding:2px;font-size:10px">
+            <option value="25">Rimuovi Simboli</option>
+            <option value="50">Trasforma</option>
+            <option value="75">Fireballs</option>
+            <option value="big">Simboli Giganti</option>
+            <option value="100">WILD Transform</option>
+          </select>
+          <button class="feat-btn" onclick="featForceAbility()">ESEGUI</button>
+        </div>
+      </div>
+
+      <!-- RTP SIMULATOR -->
+      <div class="feat-section" style="grid-column:1/-1">
+        <h4>Simulatore RTP</h4>
+        <div class="feat-info">Simula N giri per calcolare RTP. Ogni simulazione include cascade + wild spawn + charge bar + abilit&agrave;.</div>
+        <div class="feat-row" style="margin-bottom:6px">
+          <label>N. giri</label>
+          <select id="featSimN" style="background:#1a1a2e;border:1px solid #444;color:#FFD700;border-radius:4px;padding:2px;font-size:10px">
+            <option value="1000">1,000</option>
+            <option value="10000" selected>10,000</option>
+            <option value="100000">100,000</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+          <button class="feat-btn" onclick="featSimRTP()">SIMULA TUTTO</button>
+          <button class="feat-btn" style="background:linear-gradient(145deg,#888,#555);color:#fff" onclick="featSimFeature('baseonly')">SOLO BASE</button>
+        </div>
+        <div style="font-size:9px;color:#888;margin-bottom:4px">Funzioni comprate (simula costo + vincita + RTP):</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+          <button class="feat-btn" style="background:linear-gradient(145deg,#0088ff,#0055cc);color:#fff" onclick="featSimFeature('findBonus')">FIND BONUS (2x)</button>
+          <button class="feat-btn" style="background:linear-gradient(145deg,#0099cc,#006688);color:#fff" onclick="featSimFeature('removeSymbols')">REMOVE SYM (10x)</button>
+          <button class="feat-btn" style="background:linear-gradient(145deg,#ff6600,#cc3300);color:#fff" onclick="featSimFeature('fireballs')">FIREBALLS (180x)</button>
+          <button class="feat-btn" style="background:linear-gradient(145deg,#6633ff,#4400cc);color:#fff" onclick="featSimFeature('bigSymbols')">BIG SYMBOLS (10x)</button>
+          <button class="feat-btn" style="background:linear-gradient(145deg,#cc00cc,#880088);color:#fff" onclick="featSimFeature('buyFSFull')">FS FULL (1600x)</button>
+          <button class="feat-btn" style="background:linear-gradient(145deg,#ff0066,#cc0044);color:#fff" onclick="featSimFeature('buyFSAuto')">FS AUTO (3000x)</button>
+        </div>
+        <div id="rtpResult" style="font-size:10px;color:#aaa;min-height:20px"></div>
+      </div>
+
+    </div>`;
+  }
+
+  function symWeightRow(key,label,min,max){
+    return `<div class="feat-row">
+      <label>${label}</label>
+      <input type="range" min="${min}" max="${max}" value="${W[key]}" step="1"
+        oninput="featSetWeight('${key}',this.value);this.nextElementSibling.textContent=this.value">
+      <span class="feat-val">${W[key]}</span>
+    </div>`;
+  }
+
+  function cfgRow(key,label,min,max,step){
+    return `<div class="feat-row">
+      <label>${label}</label>
+      <input type="range" min="${min}" max="${max}" value="${CFG[key]}" step="${step}"
+        oninput="featSetCFG('${key}',parseInt(this.value));this.nextElementSibling.textContent=this.value">
+      <span class="feat-val">${CFG[key]}</span>
+    </div>`;
+  }
+
+  function cfgRowFloat(key,label,min,max,step){
+    return `<div class="feat-row">
+      <label>${label}</label>
+      <input type="range" min="${min}" max="${max}" value="${CFG[key]}" step="${step}"
+        oninput="featSetCFG('${key}',parseFloat(this.value));this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+      <span class="feat-val">${CFG[key].toFixed(2)}</span>
+    </div>`;
+  }
+
+  function cfgCheckbox(key,label){
+    return `<div class="feat-row">
+      <label>${label}</label>
+      <input type="checkbox" ${CFG[key]?'checked':''}
+        onchange="featSetCFG('${key}',this.checked)">
+    </div>`;
+  }
+
+  // Global functions for controls
+  window.featSetWeight=function(key,val){
+    W[key]=parseInt(val);
+    WT=Object.values(W).reduce((a,b)=>a+b,0);
+    const info=document.getElementById('totalWeightInfo');
+    if(info)info.textContent='Peso totale: '+WT;
+  };
+
+  window.featSetCFG=function(key,val){
+    CFG[key]=val;
+  };
+
+  window.featSetFbMulti=function(idx,val){
+    CFG.fireballMultis[idx].w=val;
+    const info=document.getElementById('fbMultiInfo');
+    if(info)info.innerHTML=buildFbMultiInfo();
+  };
+
+  window.featSetFbCount=function(idx,val){
+    CFG.fireballCounts[idx].w=val;
+    const info=document.getElementById('fbCountInfo');
+    if(info)info.innerHTML=buildFbCountInfo();
+  };
+
+  window.featSaveCFG=function(){
+    try{
+      const data={cfg:{},weights:{},fireballMultis:CFG.fireballMultis,fireballCounts:CFG.fireballCounts};
+      // Save all CFG scalar values
+      for(const k of Object.keys(CFG)){
+        if(k==='fireballMultis'||k==='fireballCounts')continue;
+        data.cfg[k]=CFG[k];
+      }
+      // Save symbol weights
+      for(const k of Object.keys(W))data.weights[k]=W[k];
+      localStorage.setItem('elfSlotConfig',JSON.stringify(data));
+      // Flash the save button green
+      const btns=document.querySelectorAll('.feat-btn');
+      for(const b of btns){if(b.textContent==='SALVA'){
+        b.style.boxShadow='0 0 20px rgba(0,255,100,0.8)';b.textContent='SALVATO!';
+        setTimeout(()=>{b.style.boxShadow='';b.textContent='SALVA'},1200);
+        break;
+      }}
+    }catch(e){alert('Errore salvataggio: '+e.message)}
+  };
+
+  window.featLoadCFG=function(){
+    try{
+      const raw=localStorage.getItem('elfSlotConfig');
+      if(!raw)return false;
+      const data=JSON.parse(raw);
+      // Restore CFG scalars
+      if(data.cfg)for(const k of Object.keys(data.cfg))CFG[k]=data.cfg[k];
+      // Restore weights
+      if(data.weights){for(const k of Object.keys(data.weights))W[k]=data.weights[k];
+        WT=Object.values(W).reduce((a,b)=>a+b,0);}
+      // Restore fireball multis
+      if(data.fireballMultis)CFG.fireballMultis=data.fireballMultis;
+      if(data.fireballCounts)CFG.fireballCounts=data.fireballCounts;
+      return true;
+    }catch(e){return false}
+  };
+
+  // Auto-load is done earlier, before panel HTML build
+
+  window.featResetCFG=function(){
+    if(!confirm('Reset tutti i parametri ai valori originali?'))return;
+    localStorage.removeItem('elfSlotConfig');
+    location.reload();
+  };
+
+  window.featTriggerFS=function(){
+    if(isSpinning)return;
+    freeSpins=CFG.fsSpins;inFS=true;fsTotalWin=0;
+    updFS();document.getElementById('fs').classList.add('show');
+    showBanner(CFG.fsSpins);
+    setTimeout(()=>doSpin(),1500);
+  };
+
+  window.featFireNow=async function(){
+    if(isSpinning)return;
+    const n=parseInt(document.getElementById('featFireN').value)||2;
+    const origMin=CFG.fireballMin, origMax=CFG.fireballMax;
+    CFG.fireballMin=n;CFG.fireballMax=n;
+    isSpinning=true;
+    await chargeAbility75();
+    await cascade();
+    CFG.fireballMin=origMin;CFG.fireballMax=origMax;
+    isSpinning=false;
+  };
+
+  window.featForceAbility=async function(){
+    if(isSpinning)return;
+    const sel=document.getElementById('featAbilSel').value;
+    isSpinning=true;
+    if(sel==='25') await chargeAbility25();
+    else if(sel==='50') await chargeAbility50();
+    else if(sel==='75') await chargeAbility75();
+    else if(sel==='big') await chargeAbilityBigSymbols();
+    else if(sel==='100') await chargeAbility100();
+    await cascade();
+    isSpinning=false;
+  };
+
+  // ===== SHARED SIM HELPERS =====
+  const _symKeys=Object.keys(S).filter(s=>s!=='wild'&&s!=='scatter');
+  const _simBet=1;
+
+  function _simRnd(){
+    let r=Math.random()*WT;
+    for(const[s,w]of Object.entries(W)){r-=w;if(r<=0)return s;}
+    return'celticKnot';
+  }
+  function _simGrid(){
+    const gr=[];
+    for(let c=0;c<COLS;c++){gr[c]=[];for(let r=0;r<ROWS;r++)gr[c][r]=_simRnd();}
+    return gr;
+  }
+  function _simClusters(gr){
+    const cls=[];const used=new Set();
+    for(const st of _symKeys){
+      const vis=Array.from({length:COLS},()=>Array(ROWS).fill(false));
+      for(let c=0;c<COLS;c++){for(let r=0;r<ROWS;r++){
+        if(vis[c][r])continue;
+        const cs=gr[c][r];
+        if(cs!==st&&cs!=='wild')continue;
+        const cl=[],q=[{c,r}];vis[c][r]=true;
+        while(q.length){const p=q.shift();cl.push(p);
+          for(const[dc,dr]of[[-1,0],[1,0],[0,-1],[0,1]]){
+            const nc=p.c+dc,nr=p.r+dr;
+            if(nc>=0&&nc<COLS&&nr>=0&&nr<ROWS&&!vis[nc][nr]){
+              const ns=gr[nc][nr];
+              if(ns===st||ns==='wild'){vis[nc][nr]=true;q.push({c:nc,r:nr})}
+            }
+          }
+        }
+        const nonWild=cl.filter(p=>gr[p.c][p.r]!=='wild');
+        if(cl.length>=5&&nonWild.length>=1){
+          const hasNew=nonWild.some(p=>!used.has(p.c+','+p.r));
+          if(hasNew){for(const p of nonWild)used.add(p.c+','+p.r);cls.push({sym:st,cells:cl})}
+        }
+      }}
+    }
+    return cls;
+  }
+  function _simCalcWin(cls,multi){
+    let t=0;
+    for(const cl of cls){const ti=getTierIdx(cl.cells.length);if(ti<0)continue;t+=(S[cl.sym]?.tiers?.[ti]||0)*_simBet*multi;}
+    return t;
+  }
+  function _simCascade(gr,ch,stats){
+    let totalW=0,n=0;
+    let cls=_simClusters(gr);
+    while(cls.length>0&&n<20){
+      n++;const w=_simCalcWin(cls,ch.multi);totalW+=w;
+      const clSet=new Set();const wps=[];
+      for(const cl of cls){
+        const hw=cl.cells.some(p=>gr[p.c][p.r]==='wild');
+        if(!hw&&CFG.wildPerCluster){const wp=cl.cells[Math.floor(Math.random()*cl.cells.length)];wps.push(wp)}
+        for(const p of cl.cells)clSet.add(p.c+','+p.r);
+      }
+      const ws=new Set(wps.map(p=>p.c+','+p.r));
+      ch.points=Math.min(CFG.chargeMax,ch.points+clSet.size);
+      for(let c=0;c<COLS;c++){
+        const rem=[];for(let r=ROWS-1;r>=0;r--){if(clSet.has(c+','+r)&&!ws.has(c+','+r))rem.push(r)}
+        rem.sort((a,b)=>b-a);for(const r of rem)gr[c].splice(r,1);
+        for(let i=0;i<rem.length;i++)gr[c].unshift(_simRnd());
+      }
+      for(const wp of wps)gr[wp.c][wp.r]='wild';
+      cls=_simClusters(gr);
+    }
+    if(stats)stats.cascades+=n;
+    return totalW;
+  }
+  // Individual ability simulators
+  function _simAbilRemove(gr){
+    const count=CFG.removeSymMin+Math.floor(Math.random()*(CFG.removeSymMax-CFG.removeSymMin+1));
+    const shuffled=[..._symKeys].sort(()=>Math.random()-0.5).slice(0,count);
+    for(let c=0;c<COLS;c++){
+      const rem=[];for(let r=ROWS-1;r>=0;r--){if(shuffled.includes(gr[c][r]))rem.push(r)}
+      rem.sort((a,b)=>b-a);for(const r of rem)gr[c].splice(r,1);
+      for(let i=0;i<rem.length;i++)gr[c].unshift(_simRnd());
+    }
+  }
+  function _simAbilTransform(gr){
+    const src=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+    const tgt=_symKeys.filter(s=>s!==src)[Math.floor(Math.random()*(_symKeys.length-1))];
+    for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){if(gr[c][r]===src)gr[c][r]=tgt}
+  }
+  function _simPickFbMulti(){
+    const ms=CFG.fireballMultis;
+    const totalW=ms.reduce((a,m)=>a+m.w,0);
+    let rn=Math.random()*totalW,cum=0;
+    for(const m of ms){cum+=m.w;if(rn<cum)return m.v;}
+    return ms[0].v;
+  }
+  function _simPickFbCount(){
+    const cs=CFG.fireballCounts.filter(c=>c.w>0);
+    if(cs.length===0)return CFG.fireballMin;
+    const totalW=cs.reduce((a,c)=>a+c.w,0);
+    let rn=Math.random()*totalW,cum=0;
+    for(const c of cs){cum+=c.w;if(rn<cum)return c.n;}
+    return cs[0].n;
+  }
+  function _simAbilFireball(gr){
+    const n=_simPickFbCount();
+    let totalMulti=0;
+    for(let f=0;f<n;f++){
+      const tc=Math.floor(Math.random()*COLS),tr=Math.floor(Math.random()*ROWS);
+      const ts=gr[tc][tr];if(ts==='wild'||ts==='scatter')continue;
+      const m=_simPickFbMulti();
+      if(m>1)totalMulti+=m; // 1x = nessun moltiplicatore
+      for(const[dc,dr]of[[-1,0],[1,0],[0,-1],[0,1]]){
+        const nc=tc+dc,nr=tr+dr;
+        if(nc>=0&&nc<COLS&&nr>=0&&nr<ROWS&&gr[nc][nr]!=='wild'&&gr[nc][nr]!=='scatter')gr[nc][nr]=ts;
+      }
+    }
+    return totalMulti||1; // se tutte 1x, ritorna 1 (nessun bonus)
+  }
+  function _simAbilBigDrop(gr){
+    const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+    const sz=Math.random()<CFG.bigDrop3x3Chance?3:2;
+    const c=Math.floor(Math.random()*(COLS-sz+1)),r=Math.floor(Math.random()*(ROWS-sz+1));
+    for(let dc=0;dc<sz;dc++)for(let dr=0;dr<sz;dr++)gr[c+dc][r+dr]=sym;
+  }
+  function _simAbilWildTransform(gr){
+    const chosen=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+    for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){if(gr[c][r]===chosen)gr[c][r]='wild'}
+  }
+  function _simPlaceBig(gr){
+    if(Math.random()<CFG.bigSym3x3Chance){
+      const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+      const c=Math.floor(Math.random()*(COLS-2)),r=Math.floor(Math.random()*(ROWS-2));
+      for(let dc=0;dc<3;dc++)for(let dr=0;dr<3;dr++)gr[c+dc][r+dr]=sym;
+    }
+    if(Math.random()<CFG.bigSym2x2Chance){
+      const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+      const c=Math.floor(Math.random()*(COLS-1)),r=Math.floor(Math.random()*(ROWS-1));
+      for(let dc=0;dc<2;dc++)for(let dr=0;dr<2;dr++)gr[c+dc][r+dr]=sym;
+    }
+  }
+
+  function _simChargeAbilities(gr,ch,stats,forceAbility){
+    let pay=0;const ths=[CFG.chargeTh1,CFG.chargeTh2,CFG.chargeTh3];const trig=new Set();
+
+    let _fbMulti=1; // fireball multiplier for current ability round
+    function pickAndRunAbility(thLabel){
+      _fbMulti=1;
+      if(forceAbility){const r=forceAbility(gr);if(typeof r==='number'&&r>1)_fbMulti=r;return}
+      const pool=[];
+      pool.push({fn:_simAbilRemove,key:'removesym'});
+      if(CFG.transformEnabled)pool.push({fn:_simAbilTransform,key:'transform'});
+      pool.push({fn:_simAbilFireball,key:'fireball'});
+      pool.push({fn:_simAbilBigDrop,key:'bigdrop'});
+      const pick=pool[Math.floor(Math.random()*pool.length)];
+      const result=pick.fn(gr);
+      if(pick.key==='fireball'&&typeof result==='number'&&result>1)_fbMulti=result;
+      if(stats){
+        if(!stats.abilDetail)stats.abilDetail={};
+        const k=thLabel+'_'+pick.key;
+        stats.abilDetail[k]=(stats.abilDetail[k]||{count:0,pay:0});
+        stats.abilDetail[k].count++;
+        stats._lastAbilKey=k;
+      }
+    }
+
+    function check(){
+      for(let i=0;i<ths.length;i++){
+        const th=ths[i];
+        if(ch.points>=th&&!trig.has(th)){
+          trig.add(th);if(stats)stats.abilities++;
+          const thLabel='th'+(i+1);
+          if(stats){
+            stats['th'+(i+1)+'_count']=(stats['th'+(i+1)+'_count']||0)+1;
+          }
+          pickAndRunAbility(thLabel);
+          const cascPay=_simCascade(gr,ch,stats)*_fbMulti;_fbMulti=1;
+          pay+=cascPay;
+          if(stats){
+            stats['th'+(i+1)+'_pay']=(stats['th'+(i+1)+'_pay']||0)+cascPay;
+            if(stats._lastAbilKey&&stats.abilDetail[stats._lastAbilKey]){
+              stats.abilDetail[stats._lastAbilKey].pay+=cascPay;
+            }
+          }
+          check();return;
+        }
+      }
+      if(ch.points>=CFG.chargeTh4&&!trig.has(CFG.chargeTh4)){
+        trig.add(CFG.chargeTh4);if(stats)stats.abilities++;
+        if(stats){
+          stats.th4_count=(stats.th4_count||0)+1;
+          if(!stats.abilDetail)stats.abilDetail={};
+          const k='th4_wildtransform';
+          stats.abilDetail[k]=(stats.abilDetail[k]||{count:0,pay:0});
+          stats.abilDetail[k].count++;
+          stats._lastAbilKey=k;
+        }
+        _simAbilWildTransform(gr);
+        ch.points-=CFG.chargeMax;ch.multi+=CFG.chargeMultiStep;trig.clear();
+        const cascPay=_simCascade(gr,ch,stats);
+        pay+=cascPay;
+        if(stats){
+          stats.th4_pay=(stats.th4_pay||0)+cascPay;
+          if(stats._lastAbilKey&&stats.abilDetail[stats._lastAbilKey]){
+            stats.abilDetail[stats._lastAbilKey].pay+=cascPay;
+          }
+        }
+        check();
+      }
+    }
+    check();return pay;
+  }
+
+  function _simFullSpin(opts,stats){
+    opts=opts||{};
+    const gr=_simGrid();
+    if(opts.bigSym!==false)_simPlaceBig(gr);
+
+    const ch={points:0,multi:1};
+    let cascadePay=0, chargePay=0;
+
+    if(opts.preAbility){opts.preAbility(gr)}
+
+    cascadePay=_simCascade(gr,ch,stats);
+    if(stats){stats.cascadePay=(stats.cascadePay||0)+cascadePay}
+    if(opts.charge!==false&&ch.points>=CFG.chargeTh1){
+      chargePay=_simChargeAbilities(gr,ch,stats,opts.forceAbilityFn||null);
+      if(stats)stats.chargePay=(stats.chargePay||0)+chargePay;
+    }
+
+    let scatN=0;
+    for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
+    return{pay:cascadePay+chargePay,scatN};
+  }
+
+  // ===== FULL RTP SIMULATOR =====
+  window.featSimRTP=function(){
+    const N=parseInt(document.getElementById('featSimN')?.value||10000);
+    const res=document.getElementById('rtpResult');
+    if(res)res.innerHTML='<span style="color:#FFD700">Simulazione in corso...</span>';
+    setTimeout(()=>{
+      let totalBet=0,totalPay=0,payBase=0,payFS=0,fsTriggered=0,fsTotalSpins=0;
+      const stats={cascades:0,abilities:0,cascadePay:0,chargePay:0,
+        th1_count:0,th1_pay:0,th2_count:0,th2_pay:0,th3_count:0,th3_pay:0,th4_count:0,th4_pay:0,
+        abilDetail:{}};
+
+      for(let i=0;i<N;i++){
+        totalBet+=_simBet;
+        const r=_simFullSpin({},stats);
+        payBase+=r.pay;let sp=r.pay;
+        if(r.scatN>=CFG.scatterForFS){
+          fsTriggered++;
+          let fsLeft=r.scatN===3?CFG.fsSpins:r.scatN===4?CFG.fsSpins4:CFG.fsSpins5;
+          let fp=0;
+          while(fsLeft>0){fsLeft--;fsTotalSpins++;
+            const fr=_simFullSpin({},stats);fp+=fr.pay;
+            if(fr.scatN>=CFG.scatterForFS)fsLeft+=CFG.fsRetriggerExtra;
+          }
+          payFS+=fp;sp+=fp;
+        }
+        totalPay+=sp;
+      }
+
+      const rtp=(totalPay/totalBet*100).toFixed(2);
+      const cascRtp=(stats.cascadePay/totalBet*100).toFixed(2);
+      const chargeRtp=(stats.chargePay/totalBet*100).toFixed(2);
+      const fsRtp=(payFS/totalBet*100).toFixed(2);
+      const fsRate=(fsTriggered/N*100).toFixed(3);
+      const th1Rtp=(stats.th1_pay/totalBet*100).toFixed(2);
+      const th2Rtp=(stats.th2_pay/totalBet*100).toFixed(2);
+      const th3Rtp=(stats.th3_pay/totalBet*100).toFixed(2);
+      const th4Rtp=(stats.th4_pay/totalBet*100).toFixed(2);
+
+      // Build ability detail rows
+      const abilNames={removesym:'Rimuovi Simboli',transform:'Trasforma',fireball:'Fireball',bigdrop:'Big Symbol Drop',wildtransform:'WILD Transform'};
+      const thNames={th1:'Soglia 1 ('+CFG.chargeTh1+')',th2:'Soglia 2 ('+CFG.chargeTh2+')',th3:'Soglia 3 ('+CFG.chargeTh3+')',th4:'Soglia 4 ('+CFG.chargeTh4+')'};
+      let abilRows='';
+      const sortedKeys=Object.keys(stats.abilDetail).sort();
+      for(const k of sortedKeys){
+        const d=stats.abilDetail[k];
+        const parts=k.split('_');
+        const thKey=parts[0];
+        const abilKey=parts.slice(1).join('_');
+        const label=(thNames[thKey]||thKey)+' → '+(abilNames[abilKey]||abilKey);
+        const abilRtp=(d.pay/totalBet*100).toFixed(3);
+        abilRows+=`<tr><td style="padding:1px 4px 1px 12px;color:#888;font-size:9px">${label}</td>
+          <td style="text-align:center;font-size:9px;color:#aaa">${d.count.toLocaleString()}</td>
+          <td style="text-align:right;font-size:9px;color:#aaa">${d.pay.toFixed(2)}</td>
+          <td style="text-align:right;font-size:9px;color:#4dff88">${abilRtp}%</td></tr>`;
+      }
+
+      if(res)res.innerHTML=`
+        <div style="color:#4dff88;font-size:16px;font-weight:bold;margin-bottom:6px">RTP TOTALE: ${rtp}%</div>
+        <table style="font-size:10px;color:#aaa;border-collapse:collapse;width:100%">
+          <tr style="border-bottom:1px solid #333"><td style="padding:2px 4px;font-weight:bold;color:#FFD700" colspan="3">RIEPILOGO</td><td></td></tr>
+          <tr><td style="padding:2px 4px">Giri simulati</td><td colspan="2" style="text-align:right">${N.toLocaleString()}</td><td></td></tr>
+          <tr><td style="padding:2px 4px">Totale puntato</td><td colspan="2" style="color:#FFD700;text-align:right">${totalBet.toLocaleString()}</td><td></td></tr>
+          <tr><td style="padding:2px 4px">Totale pagato</td><td colspan="2" style="color:#FFD700;text-align:right">${totalPay.toFixed(2)}</td><td></td></tr>
+
+          <tr><td colspan="4" style="border-top:1px solid #333;padding-top:6px"></td></tr>
+          <tr style="border-bottom:1px solid #333">
+            <td style="padding:2px 4px;font-weight:bold;color:#FFD700">SCOMPOSIZIONE RTP</td>
+            <td style="text-align:center;color:#888;font-size:9px">Attivazioni</td>
+            <td style="text-align:right;color:#888;font-size:9px">Pagato</td>
+            <td style="text-align:right;color:#888;font-size:9px">RTP</td>
+          </tr>
+          <tr><td style="padding:2px 4px">Cascade Base (cluster+wild)</td>
+            <td style="text-align:center">${stats.cascades.toLocaleString()}</td>
+            <td style="text-align:right">${stats.cascadePay.toFixed(2)}</td>
+            <td style="text-align:right;color:#4dff88;font-weight:bold">${cascRtp}%</td></tr>
+
+          <tr><td colspan="4" style="border-top:1px solid #222;padding-top:4px"></td></tr>
+          <tr><td style="padding:2px 4px;font-weight:bold">Charge Bar (totale)</td>
+            <td style="text-align:center">${stats.abilities.toLocaleString()}</td>
+            <td style="text-align:right">${stats.chargePay.toFixed(2)}</td>
+            <td style="text-align:right;color:#4dff88;font-weight:bold">${chargeRtp}%</td></tr>
+
+          <tr><td style="padding:2px 4px;padding-left:8px;color:#ccc">Soglia 1 (${CFG.chargeTh1} pt)</td>
+            <td style="text-align:center">${stats.th1_count.toLocaleString()}</td>
+            <td style="text-align:right">${stats.th1_pay.toFixed(2)}</td>
+            <td style="text-align:right;color:#4dff88">${th1Rtp}%</td></tr>
+          <tr><td style="padding:2px 4px;padding-left:8px;color:#ccc">Soglia 2 (${CFG.chargeTh2} pt)</td>
+            <td style="text-align:center">${stats.th2_count.toLocaleString()}</td>
+            <td style="text-align:right">${stats.th2_pay.toFixed(2)}</td>
+            <td style="text-align:right;color:#4dff88">${th2Rtp}%</td></tr>
+          <tr><td style="padding:2px 4px;padding-left:8px;color:#ccc">Soglia 3 (${CFG.chargeTh3} pt)</td>
+            <td style="text-align:center">${stats.th3_count.toLocaleString()}</td>
+            <td style="text-align:right">${stats.th3_pay.toFixed(2)}</td>
+            <td style="text-align:right;color:#4dff88">${th3Rtp}%</td></tr>
+          <tr><td style="padding:2px 4px;padding-left:8px;color:#ccc">Soglia 4 WILD+Multi (${CFG.chargeTh4} pt)</td>
+            <td style="text-align:center">${stats.th4_count.toLocaleString()}</td>
+            <td style="text-align:right">${stats.th4_pay.toFixed(2)}</td>
+            <td style="text-align:right;color:#4dff88">${th4Rtp}%</td></tr>
+
+          <tr><td colspan="4" style="border-top:1px solid #222;padding-top:4px"></td></tr>
+          <tr style="border-bottom:1px solid #333">
+            <td style="padding:2px 4px;font-weight:bold;color:#FFD700">DETTAGLIO ABILIT&Agrave;</td>
+            <td style="text-align:center;color:#888;font-size:9px">Volte</td>
+            <td style="text-align:right;color:#888;font-size:9px">Pagato</td>
+            <td style="text-align:right;color:#888;font-size:9px">RTP</td>
+          </tr>
+          ${abilRows}
+
+          <tr><td colspan="4" style="border-top:1px solid #333;padding-top:6px"></td></tr>
+          <tr><td style="padding:2px 4px;font-weight:bold">Free Spins</td>
+            <td style="text-align:center">${fsTriggered.toLocaleString()} sess (${fsTotalSpins.toLocaleString()} giri)</td>
+            <td style="text-align:right">${payFS.toFixed(2)}</td>
+            <td style="text-align:right;color:#4dff88;font-weight:bold">${fsRtp}%</td></tr>
+          <tr><td style="padding:1px 4px 1px 12px;color:#888;font-size:9px">Drop rate FS</td>
+            <td colspan="2"></td>
+            <td style="text-align:right;font-size:9px;color:#aaa">${fsRate}%</td></tr>
+          <tr><td style="padding:1px 4px 1px 12px;color:#888;font-size:9px">Media giri per sessione</td>
+            <td colspan="2"></td>
+            <td style="text-align:right;font-size:9px;color:#aaa">${fsTriggered>0?(fsTotalSpins/fsTriggered).toFixed(1):'-'}</td></tr>
+          <tr><td style="padding:1px 4px 1px 12px;color:#888;font-size:9px">Vincita media per sessione</td>
+            <td colspan="2"></td>
+            <td style="text-align:right;font-size:9px;color:#FFD700">${fsTriggered>0?(payFS/fsTriggered).toFixed(2)+'x':'-'}</td></tr>
+        </table>`;
+      const d=document.getElementById('rtpDisplay');
+      if(d)d.textContent='RTP: '+rtp+'%';
+    },50);
+  };
+
+
+  // ===== BUY BONUS SIMULATORS =====
+  window.featSimFeature=function(feat){
+    const N=parseInt(document.getElementById('featSimN')?.value||10000);
+    const res=document.getElementById('rtpResult');
+    if(res)res.innerHTML='<span style="color:#FFD700">Simulazione BUY '+feat+' in corso...</span>';
+    setTimeout(()=>{
+      const cost=buyCosts[feat]||1;
+      let totalSpent=0,totalWon=0,wins=0,maxWin=0;
+      const stats={cascades:0,abilities:0,cascadePay:0,chargePay:0,
+        th1_count:0,th1_pay:0,th2_count:0,th2_pay:0,th3_count:0,th3_pay:0,th4_count:0,th4_pay:0,
+        abilDetail:{},fsTotalSpins:0,fsRetriggers:0};
+
+      const labels={
+        findBonus:'FIND BONUS ('+cost+'x)',
+        removeSymbols:'REMOVE SYMBOLS ('+cost+'x)',
+        fireballs:'FIREBALLS ('+cost+'x)',
+        bigSymbols:'BIG SYMBOLS ('+cost+'x)',
+        buyFSFull:'FS FULL ('+cost+'x)',
+        buyFSAuto:'FS AUTO ('+cost+'x)'
+      };
+
+      for(let i=0;i<N;i++){
+        totalSpent+=cost*_simBet;
+        let pay=0;
+
+        if(feat==='findBonus'){
+          // Raddoppia peso scatter per questo spin, simula spin completo
+          const origW=W.scatter||CFG.scatterWeight;
+          const boostedW=origW*2;
+          const gr=[];
+          const tmpWT=WT-origW+boostedW;
+          for(let c=0;c<COLS;c++){gr[c]=[];for(let r=0;r<ROWS;r++){
+            let rn=Math.random()*tmpWT,cum=0;let picked='celticKnot';
+            for(const k of Object.keys(W)){
+              const w=(k==='scatter')?boostedW:W[k];
+              cum+=w;if(rn<cum){picked=k;break;}
+            }
+            gr[c][r]=picked;
+          }}
+          _simPlaceBig(gr);
+          const ch={points:0,multi:1};
+          pay=_simCascade(gr,ch,stats);
+          if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,stats);
+          let scatN=0;
+          for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
+          if(scatN>=CFG.scatterForFS){
+            let fsLeft=scatN===3?CFG.fsSpins:scatN===4?CFG.fsSpins4:CFG.fsSpins5;
+            while(fsLeft>0){fsLeft--;stats.fsTotalSpins++;
+              const fr=_simFullSpin({},stats);pay+=fr.pay;
+              if(fr.scatN>=CFG.scatterForFS){fsLeft+=CFG.fsRetriggerExtra;stats.fsRetriggers++;}
+            }
+          }
+
+        }else if(feat==='removeSymbols'){
+          const gr=_simGrid();_simPlaceBig(gr);
+          _simAbilRemove(gr);
+          const ch={points:0,multi:1};
+          pay=_simCascade(gr,ch,stats);
+          if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,stats);
+          let scatN=0;
+          for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
+          if(scatN>=CFG.scatterForFS){
+            let fsLeft=scatN===3?CFG.fsSpins:scatN===4?CFG.fsSpins4:CFG.fsSpins5;
+            while(fsLeft>0){fsLeft--;stats.fsTotalSpins++;
+              const fr=_simFullSpin({},stats);pay+=fr.pay;
+              if(fr.scatN>=CFG.scatterForFS){fsLeft+=CFG.fsRetriggerExtra;stats.fsRetriggers++;}
+            }
+          }
+
+        }else if(feat==='fireballs'){
+          const gr=_simGrid();_simPlaceBig(gr);
+          const fbCount=CFG.fireballBuyMin+Math.floor(Math.random()*(CFG.fireballBuyMax-CFG.fireballBuyMin+1));
+          let fbM=0;
+          for(let f=0;f<fbCount;f++){const m=_simAbilFireball(gr);fbM+=m;}
+          if(fbM<1)fbM=1;
+          const ch={points:0,multi:1};
+          pay=_simCascade(gr,ch,stats)*fbM;
+          if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,stats);
+          let scatN=0;
+          for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
+          if(scatN>=CFG.scatterForFS){
+            let fsLeft=scatN===3?CFG.fsSpins:scatN===4?CFG.fsSpins4:CFG.fsSpins5;
+            while(fsLeft>0){fsLeft--;stats.fsTotalSpins++;
+              const fr=_simFullSpin({},stats);pay+=fr.pay;
+              if(fr.scatN>=CFG.scatterForFS){fsLeft+=CFG.fsRetriggerExtra;stats.fsRetriggers++;}
+            }
+          }
+
+        }else if(feat==='bigSymbols'){
+          const gr=_simGrid();
+          const numBig=CFG.bigSymBuyMin+Math.floor(Math.random()*2);
+          for(let b=0;b<numBig;b++){
+            const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+            const sz=Math.random()<CFG.bigDrop3x3Chance?3:2;
+            const c=Math.floor(Math.random()*(COLS-sz+1)),r=Math.floor(Math.random()*(ROWS-sz+1));
+            for(let dc=0;dc<sz;dc++)for(let dr=0;dr<sz;dr++)gr[c+dc][r+dr]=sym;
+          }
+          const ch={points:0,multi:1};
+          pay=_simCascade(gr,ch,stats);
+          if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,stats);
+          let scatN=0;
+          for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
+          if(scatN>=CFG.scatterForFS){
+            let fsLeft=scatN===3?CFG.fsSpins:scatN===4?CFG.fsSpins4:CFG.fsSpins5;
+            while(fsLeft>0){fsLeft--;stats.fsTotalSpins++;
+              const fr=_simFullSpin({},stats);pay+=fr.pay;
+              if(fr.scatN>=CFG.scatterForFS){fsLeft+=CFG.fsRetriggerExtra;stats.fsRetriggers++;}
+            }
+          }
+
+        }else if(feat==='buyFSFull'){
+          let fsLeft=CFG.fsSpins;
+          while(fsLeft>0){fsLeft--;stats.fsTotalSpins++;
+            const gr=_simGrid();_simPlaceBig(gr);
+            const ch={points:CFG.chargeMax,multi:CFG.chargeMultiStart+4*CFG.chargeMultiStep};
+            const cascPay=_simCascade(gr,ch,stats);
+            const chargePay=_simChargeAbilities(gr,ch,stats);
+            pay+=cascPay+chargePay;
+            let scatN=0;
+            for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
+            if(scatN>=CFG.scatterForFS){fsLeft+=CFG.fsRetriggerExtra;stats.fsRetriggers++;}
+          }
+
+        }else if(feat==='buyFSAuto'){
+          let fsLeft=CFG.fsSpins;
+          while(fsLeft>0){fsLeft--;stats.fsTotalSpins++;
+            const gr=_simGrid();_simPlaceBig(gr);
+            _simAbilWildTransform(gr);
+            const ch={points:CFG.chargeMax,multi:CFG.chargeMultiStart+4*CFG.chargeMultiStep};
+            const cascPay=_simCascade(gr,ch,stats);
+            const chargePay=_simChargeAbilities(gr,ch,stats);
+            pay+=cascPay+chargePay;
+            let scatN=0;
+            for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
+            if(scatN>=CFG.scatterForFS){fsLeft+=CFG.fsRetriggerExtra;stats.fsRetriggers++;}
+          }
+        }
+
+        totalWon+=pay;
+        if(pay>0)wins++;
+        if(pay>maxWin)maxWin=pay;
+      }
+
+      const avgWin=(totalWon/N).toFixed(4);
+      const rtp=(totalWon/totalSpent*100).toFixed(2);
+      const hitRate=(wins/N*100).toFixed(1);
+      const avgPerBuy=(totalWon/N).toFixed(2);
+      const profitLoss=(totalWon-totalSpent).toFixed(2);
+      const isFS=feat==='buyFSFull'||feat==='buyFSAuto';
+
+      let extra='';
+      if(isFS){
+        const avgSpins=(stats.fsTotalSpins/N).toFixed(1);
+        const retrigs=(stats.fsRetriggers/N*100).toFixed(2);
+        extra=`<tr><td style="padding:2px 4px">Spin FS medi per sessione</td><td style="color:#FFD700;text-align:right">${avgSpins}</td></tr>
+               <tr><td style="padding:2px 4px">Retrigger rate</td><td style="color:#4dff88;text-align:right">${retrigs}%</td></tr>`;
+      }
+      if(stats.cascadePay>0||stats.chargePay>0){
+        extra+=`<tr><td style="padding:2px 4px">Vincite da cascade</td><td style="text-align:right">${stats.cascadePay.toFixed(2)}</td></tr>
+                <tr><td style="padding:2px 4px">Vincite da charge bar</td><td style="color:#FFD700;text-align:right">${stats.chargePay.toFixed(2)}</td></tr>`;
+      }
+
+      let abilRows='';
+      const ad=stats.abilDetail;
+      for(const key of Object.keys(ad).sort()){
+        const d=ad[key];
+        abilRows+=`<tr><td style="padding:1px 6px;color:#aaa;font-size:9px">${key}</td><td style="text-align:right;font-size:9px">${d.count}x</td><td style="text-align:right;font-size:9px;color:#4dff88">${d.pay.toFixed(2)}</td></tr>`;
+      }
+
+      const col=parseFloat(rtp)>=100?'#4dff88':parseFloat(rtp)>=80?'#FFD700':'#ff4444';
+
+      if(res)res.innerHTML=`
+        <div style="color:#FFD700;font-size:13px;font-weight:bold;margin-bottom:4px">${labels[feat]||feat} \u2014 ${N.toLocaleString()} acquisti</div>
+        <table style="font-size:10px;color:#aaa;border-collapse:collapse;width:100%">
+          <tr><td style="padding:2px 4px;font-weight:bold">COSTO per acquisto</td><td style="color:#ff6666;text-align:right;font-weight:bold">${cost}x bet</td></tr>
+          <tr><td style="padding:2px 4px;font-weight:bold">TOTALE SPESO</td><td style="color:#ff6666;text-align:right;font-weight:bold">${totalSpent.toFixed(2)}</td></tr>
+          <tr><td style="padding:2px 4px;font-weight:bold">TOTALE VINTO</td><td style="color:#4dff88;text-align:right;font-weight:bold">${totalWon.toFixed(2)}</td></tr>
+          <tr><td style="padding:2px 4px;font-weight:bold">RTP BUY BONUS</td><td style="color:${col};text-align:right;font-weight:bold;font-size:12px">${rtp}%</td></tr>
+          <tr><td colspan="2" style="border-top:1px solid #444;padding-top:4px"></td></tr>
+          <tr><td style="padding:2px 4px">Vincita media per acquisto</td><td style="text-align:right">${avgPerBuy}x</td></tr>
+          <tr><td style="padding:2px 4px">Max singola vincita</td><td style="color:#FFD700;text-align:right">${maxWin.toFixed(2)}x</td></tr>
+          <tr><td style="padding:2px 4px">Hit rate (vincita > 0)</td><td style="text-align:right">${hitRate}%</td></tr>
+          <tr><td style="padding:2px 4px">Profitto/Perdita</td><td style="color:${parseFloat(profitLoss)>=0?'#4dff88':'#ff4444'};text-align:right;font-weight:bold">${profitLoss}</td></tr>
+          ${extra}
+        </table>
+        ${abilRows?`<div style="margin-top:4px;color:#FFD700;font-size:10px;font-weight:bold">Dettaglio abilit\u00e0:</div>
+        <table style="font-size:9px;color:#aaa;border-collapse:collapse;width:100%">
+          <tr style="color:#888"><td style="padding:1px 6px">Tipo</td><td style="text-align:right">Attivazioni</td><td style="text-align:right">Pagato</td></tr>
+          ${abilRows}
+        </table>`:''}
+        <div style="color:#888;font-size:9px;margin-top:4px">Simula l'acquisto del bonus con costo ${cost}x bet. RTP = totale vinto / totale speso.</div>`;
+    },50);
+  };
+})();
+
+// ===== PAYTABLE POPUP =====
+(function(){
+  // Create button
+  const btn=document.createElement('button');
+  btn.className='paytable-btn';
+  btn.textContent='PAGAMENTI';
+  document.body.appendChild(btn);
+
+  // Create overlay
+  const ov=document.createElement('div');
+  ov.className='paytable-overlay';
+  ov.innerHTML=`
+    <div class="paytable-box">
+      <button class="paytable-close">&times;</button>
+      <div class="paytable-title">Tabella Pagamenti</div>
+      <div class="paytable-subtitle" style="text-align:center;color:#aaa;font-size:11px;margin-bottom:14px">
+        RTP 95% &middot; Pagamenti per scommessa &times;1
+      </div>
+      <div class="paytable-grid" id="paytableGrid"></div>
+      <div style="text-align:center;margin-top:14px;color:#666;font-size:10px">
+        I pagamenti mostrati sono moltiplicati per la puntata corrente.
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  // Populate grid
+  const grid=document.getElementById('paytableGrid');
+  const paySymbols=['potOfGold','greenAcorn','crystalBell','redMushroom','blueMushroom','celticKnot'];
+  paySymbols.forEach(key=>{
+    const s=S[key];
+    if(!s)return;
+    const card=document.createElement('div');
+    card.className='paytable-card';
+    let rows='';
+    TIER_LABELS.forEach((label,i)=>{
+      rows+=`<div class="paytable-row">
+        <span class="tier">${label}</span>
+        <span class="payout">${s.tiers[i].toFixed(2)}x</span>
+      </div>`;
+    });
+    card.innerHTML=`
+      <img src="img/${s.img}.png" alt="${s.name}">
+      <div class="sym-name">${s.name}</div>
+      ${rows}`;
+    grid.appendChild(card);
+  });
+
+  // Open/close
+  btn.addEventListener('click',()=>ov.classList.add('show'));
+  ov.querySelector('.paytable-close').addEventListener('click',()=>ov.classList.remove('show'));
+  ov.addEventListener('click',(e)=>{if(e.target===ov)ov.classList.remove('show')});
+})();
+</script>
+</body>
+</html>

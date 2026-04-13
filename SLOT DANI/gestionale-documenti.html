@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestionale Documenti di Identità</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #1e293b; min-height: 100vh; }
+
+  /* Header */
+  .header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-icon { width: 40px; height: 40px; background: #2563eb; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .header-icon svg { color: #fff; }
+  .header h1 { font-size: 18px; font-weight: 700; line-height: 1.2; }
+  .header p { font-size: 12px; color: #64748b; }
+  .header-actions { display: flex; gap: 8px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-secondary { background: #fff; color: #374151; border: 1px solid #d1d5db; }
+  .btn-secondary:hover { background: #f9fafb; }
+  .btn-danger { background: #fff; color: #dc2626; border: 1px solid #fca5a5; }
+  .btn-danger:hover { background: #fef2f2; }
+  .btn-sm { padding: 4px 8px; font-size: 12px; border-radius: 6px; }
+  .btn-icon { padding: 6px; border-radius: 6px; background: none; border: none; cursor: pointer; color: #9ca3af; transition: color .15s; }
+  .btn-icon:hover { color: #2563eb; }
+  .btn-icon.delete:hover { color: #dc2626; }
+
+  /* Main container */
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px 24px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { border-radius: 10px; padding: 16px; border: 1px solid; }
+  .stat-card .value { font-size: 28px; font-weight: 700; }
+  .stat-card .label { font-size: 12px; font-weight: 600; opacity: .75; margin-top: 2px; }
+  .stat-total { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+  .stat-valid { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+  .stat-warning { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+  .stat-expired { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+
+  /* Search & Filters */
+  .toolbar { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .toolbar-row { display: flex; gap: 12px; align-items: center; }
+  .search-box { flex: 1; position: relative; }
+  .search-box input { width: 100%; padding: 10px 12px 10px 38px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; transition: border-color .15s; }
+  .search-box input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+  .search-box svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; }
+  .filter-toggle { position: relative; }
+  .filter-dot { width: 7px; height: 7px; background: #2563eb; border-radius: 50%; position: absolute; top: 6px; right: 6px; }
+  .filters-panel { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9; gap: 12px; }
+  .filters-panel.open { display: flex; }
+  .filter-group { flex: 1; }
+  .filter-group label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: 4px; }
+  .filter-group select { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+  .filter-group select:focus { border-color: #2563eb; }
+
+  /* Table */
+  .table-wrapper { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: #f8fafc; }
+  thead th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #64748b; border-bottom: 1px solid #e2e8f0; cursor: pointer; white-space: nowrap; user-select: none; transition: background .1s; }
+  thead th:hover { background: #f1f5f9; }
+  thead th .sort-icon { display: inline-block; margin-left: 4px; opacity: .3; }
+  thead th.sorted .sort-icon { opacity: 1; }
+  tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .1s; }
+  tbody tr:hover { background: #f8fafc; }
+  tbody td { padding: 10px 12px; white-space: nowrap; }
+  td.name { font-weight: 600; color: #0f172a; }
+  td.mono { font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 12px; color: #64748b; }
+  .table-footer { padding: 10px 16px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }
+
+  /* Row highlights */
+  tr.expired { background: rgba(254,202,202,.2); }
+  tr.expired:hover { background: rgba(254,202,202,.35); }
+  tr.expiring-soon { background: rgba(254,215,170,.2); }
+  tr.expiring-soon:hover { background: rgba(254,215,170,.35); }
+  tr.expiring-warning { background: rgba(254,240,138,.15); }
+  tr.expiring-warning:hover { background: rgba(254,240,138,.3); }
+
+  /* Status badge */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid; }
+  .badge-valid { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+  .badge-warning { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+  .badge-soon { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+  .badge-expired { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+  .badge-unknown { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+
+  /* Empty state */
+  .empty-state { padding: 60px 20px; text-align: center; color: #94a3b8; }
+  .empty-state svg { margin-bottom: 12px; opacity: .4; }
+  .empty-state p { font-size: 14px; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.2); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; }
+  .modal-header h2 { font-size: 16px; font-weight: 700; }
+  .modal-body { padding: 20px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: 4px; }
+  .form-group input, .form-group select { padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; }
+  .form-group input:focus, .form-group select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 20px; border-top: 1px solid #e2e8f0; }
+
+  /* JSON load section */
+  .load-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .load-section .info { font-size: 13px; color: #64748b; margin-bottom: 12px; }
+  .file-input-wrapper { display: flex; gap: 8px; align-items: center; }
+  .file-input-wrapper input[type="file"] { font-size: 13px; }
+
+  @media (max-width: 768px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .toolbar-row { flex-direction: column; }
+    .filters-panel { flex-direction: column; }
+    .form-grid { grid-template-columns: 1fr; }
+    .header { flex-direction: column; gap: 12px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+    </div>
+    <div>
+      <h1>Gestionale Documenti</h1>
+      <p>Gestione documenti di identità</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <label class="btn btn-secondary" for="jsonInput">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Carica JSON
+    </label>
+    <input type="file" id="jsonInput" accept=".json" style="display:none" onchange="loadJSON(event)">
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuovo Documento
+    </button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card stat-total"><div class="value" id="statTotal">0</div><div class="label">Totale</div></div>
+    <div class="stat-card stat-valid"><div class="value" id="statValid">0</div><div class="label">Validi</div></div>
+    <div class="stat-card stat-warning"><div class="value" id="statWarning">0</div><div class="label">In scadenza</div></div>
+    <div class="stat-card stat-expired"><div class="value" id="statExpired">0</div><div class="label">Scaduti</div></div>
+  </div>
+
+  <!-- Search & Filters -->
+  <div class="toolbar">
+    <div class="toolbar-row">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Cerca per nome o cognome..." oninput="renderTable()">
+      </div>
+      <div class="filter-toggle">
+        <button class="btn btn-secondary" onclick="toggleFilters()" id="filterBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"/></svg>
+          Filtri
+        </button>
+      </div>
+    </div>
+    <div class="filters-panel" id="filtersPanel">
+      <div class="filter-group">
+        <label>Stato scadenza</label>
+        <select id="filterStatus" onchange="renderTable()">
+          <option value="all">Tutti gli stati</option>
+          <option value="valid">Validi</option>
+          <option value="expiring-warning">In scadenza (90gg)</option>
+          <option value="expiring-soon">In scadenza (30gg)</option>
+          <option value="expired">Scaduti</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Tipo documento</label>
+        <select id="filterType" onchange="renderTable()">
+          <option value="all">Tutti i tipi</option>
+          <option value="Carta d'identità">Carta d'identità</option>
+          <option value="Passaporto">Passaporto</option>
+          <option value="Patente di guida">Patente di guida</option>
+          <option value="Codice fiscale">Codice fiscale</option>
+          <option value="Permesso di soggiorno">Permesso di soggiorno</option>
+          <option value="Tessera sanitaria">Tessera sanitaria</option>
+        </select>
+      </div>
+      <div class="filter-group" style="flex:0; align-self:flex-end;">
+        <button class="btn btn-sm btn-secondary" onclick="resetFilters()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('cognome')">Cognome <span class="sort-icon">&#9650;</span></th>
+            <th onclick="sortBy('nome')">Nome <span class="sort-icon">&#9650;</span></th>
+            <th onclick="sortBy('dataNascita')">Data Nascita <span class="sort-icon">&#9650;</span></th>
+            <th onclick="sortBy('codiceFiscale')">Codice Fiscale <span class="sort-icon">&#9650;</span></th>
+            <th onclick="sortBy('tipoDocumento')">Tipo <span class="sort-icon">&#9650;</span></th>
+            <th onclick="sortBy('numeroDocumento')">N° Documento <span class="sort-icon">&#9650;</span></th>
+            <th onclick="sortBy('dataEmissione')">Emissione <span class="sort-icon">&#9650;</span></th>
+            <th onclick="sortBy('dataScadenza')">Scadenza <span class="sort-icon">&#9650;</span></th>
+            <th onclick="sortBy('enteEmittente')">Ente <span class="sort-icon">&#9650;</span></th>
+            <th>Stato</th>
+            <th style="width:70px"></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="table-footer" id="tableFooter"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Nuovo Documento</h2>
+      <button class="btn-icon" onclick="closeModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form onsubmit="saveDocument(event)">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label>Nome *</label><input id="fNome" required placeholder="Mario"></div>
+          <div class="form-group"><label>Cognome *</label><input id="fCognome" required placeholder="Rossi"></div>
+          <div class="form-group"><label>Data di nascita</label><input type="date" id="fDataNascita"></div>
+          <div class="form-group"><label>Codice Fiscale</label><input id="fCF" placeholder="RSSMRA85M01H501Z" maxlength="16" style="text-transform:uppercase"></div>
+          <div class="form-group"><label>Tipo Documento *</label>
+            <select id="fTipo" required>
+              <option>Carta d'identità</option>
+              <option>Passaporto</option>
+              <option>Patente di guida</option>
+              <option>Codice fiscale</option>
+              <option>Permesso di soggiorno</option>
+              <option>Tessera sanitaria</option>
+            </select>
+          </div>
+          <div class="form-group"><label>N° Documento *</label><input id="fNumero" required placeholder="CA12345AB" style="text-transform:uppercase"></div>
+          <div class="form-group"><label>Data Emissione</label><input type="date" id="fEmissione"></div>
+          <div class="form-group"><label>Data Scadenza *</label><input type="date" id="fScadenza" required></div>
+          <div class="form-group full"><label>Ente Emittente</label><input id="fEnte" placeholder="Comune di Roma"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Aggiungi</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────
+let documents = [];
+let sortField = 'cognome';
+let sortDir = 'asc';
+let editingId = null;
+
+// ─── Date utils ──────────────────────────────────────────────────────────
+function formatDate(d) {
+  if (!d) return '—';
+  const parts = d.split('-');
+  if (parts.length !== 3) return d;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function getExpiryStatus(d) {
+  if (!d) return 'unknown';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const exp = new Date(d);
+  const diff = Math.ceil((exp - today) / 86400000);
+  if (diff < 0) return 'expired';
+  if (diff <= 30) return 'expiring-soon';
+  if (diff <= 90) return 'expiring-warning';
+  return 'valid';
+}
+
+function statusBadge(status) {
+  const map = {
+    'valid':           { label: 'Valido',          cls: 'badge-valid',   icon: '&#10003;' },
+    'expiring-warning':{ label: 'Scade entro 90gg', cls: 'badge-warning', icon: '&#9888;' },
+    'expiring-soon':   { label: 'Scade entro 30gg', cls: 'badge-soon',   icon: '&#9888;' },
+    'expired':         { label: 'Scaduto',          cls: 'badge-expired', icon: '&#10007;' },
+    'unknown':         { label: 'N/D',              cls: 'badge-unknown', icon: '—' },
+  };
+  const s = map[status] || map.unknown;
+  return `<span class="badge ${s.cls}">${s.icon} ${s.label}</span>`;
+}
+
+// ─── Stats ───────────────────────────────────────────────────────────────
+function updateStats() {
+  let total = documents.length, valid = 0, warning = 0, expired = 0;
+  documents.forEach(d => {
+    const s = getExpiryStatus(d.dataScadenza);
+    if (s === 'valid') valid++;
+    else if (s === 'expiring-soon' || s === 'expiring-warning') warning++;
+    else if (s === 'expired') expired++;
+  });
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statValid').textContent = valid;
+  document.getElementById('statWarning').textContent = warning;
+  document.getElementById('statExpired').textContent = expired;
+}
+
+// ─── Sort ────────────────────────────────────────────────────────────────
+function sortBy(field) {
+  if (sortField === field) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortField = field; sortDir = 'asc'; }
+  renderTable();
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────
+function renderTable() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  const fStatus = document.getElementById('filterStatus').value;
+  const fType = document.getElementById('filterType').value;
+
+  let filtered = documents.filter(d => {
+    // Search
+    if (query) {
+      const full = `${d.nome} ${d.cognome}`.toLowerCase();
+      const rev = `${d.cognome} ${d.nome}`.toLowerCase();
+      if (!full.includes(query) && !rev.includes(query) &&
+          !d.nome.toLowerCase().includes(query) && !d.cognome.toLowerCase().includes(query)) return false;
+    }
+    // Status filter
+    if (fStatus !== 'all' && getExpiryStatus(d.dataScadenza) !== fStatus) return false;
+    // Type filter
+    if (fType !== 'all' && d.tipoDocumento !== fType) return false;
+    return true;
+  });
+
+  // Sort
+  filtered.sort((a, b) => {
+    let va = a[sortField] || '', vb = b[sortField] || '';
+    if (['dataScadenza','dataEmissione','dataNascita'].includes(sortField)) {
+      va = va ? new Date(va).getTime() : 0;
+      vb = vb ? new Date(vb).getTime() : 0;
+      return sortDir === 'asc' ? va - vb : vb - va;
+    }
+    va = String(va).toLowerCase(); vb = String(vb).toLowerCase();
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Update column headers
+  document.querySelectorAll('thead th').forEach(th => {
+    th.classList.remove('sorted');
+    const icon = th.querySelector('.sort-icon');
+    if (icon) icon.innerHTML = '&#9650;';
+  });
+  const ths = document.querySelectorAll('thead th');
+  const cols = ['cognome','nome','dataNascita','codiceFiscale','tipoDocumento','numeroDocumento','dataEmissione','dataScadenza','enteEmittente'];
+  const idx = cols.indexOf(sortField);
+  if (idx >= 0 && ths[idx]) {
+    ths[idx].classList.add('sorted');
+    ths[idx].querySelector('.sort-icon').innerHTML = sortDir === 'asc' ? '&#9650;' : '&#9660;';
+  }
+
+  const tbody = document.getElementById('tableBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <p>${documents.length === 0 ? 'Nessun documento. Clicca "Nuovo Documento" o carica un file JSON.' : 'Nessun risultato per i filtri selezionati.'}</p>
+    </div></td></tr>`;
+  } else {
+    tbody.innerHTML = filtered.map(d => {
+      const status = getExpiryStatus(d.dataScadenza);
+      return `<tr class="${status}">
+        <td class="name">${esc(d.cognome)}</td>
+        <td>${esc(d.nome)}</td>
+        <td>${formatDate(d.dataNascita)}</td>
+        <td class="mono">${esc(d.codiceFiscale) || '—'}</td>
+        <td>${esc(d.tipoDocumento)}</td>
+        <td class="mono">${esc(d.numeroDocumento)}</td>
+        <td>${formatDate(d.dataEmissione)}</td>
+        <td style="font-weight:600">${formatDate(d.dataScadenza)}</td>
+        <td>${esc(d.enteEmittente) || '—'}</td>
+        <td>${statusBadge(status)}</td>
+        <td>
+          <button class="btn-icon" onclick="editDoc(${d.id})" title="Modifica">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-icon delete" onclick="deleteDoc(${d.id})" title="Elimina">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('tableFooter').textContent =
+    `${filtered.length} di ${documents.length} document${documents.length !== 1 ? 'i' : 'o'}`;
+  updateStats();
+}
+
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ─── JSON Load ───────────────────────────────────────────────────────────
+function loadJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      let docs = [];
+      if (Array.isArray(data)) docs = data;
+      else if (data.documenti && Array.isArray(data.documenti)) docs = data.documenti;
+      else { alert('Formato JSON non riconosciuto.'); return; }
+
+      // Assign IDs
+      const maxId = documents.reduce((m, d) => Math.max(m, d.id || 0), 0);
+      docs.forEach((d, i) => {
+        if (!d.id) d.id = maxId + i + 1;
+        // Clean up extra fields from scraping
+        delete d.testoGrezzo;
+        delete d.fileOrigine;
+      });
+
+      documents = documents.concat(docs);
+      renderTable();
+      alert(`Caricati ${docs.length} documenti con successo!`);
+    } catch (err) {
+      alert('Errore nel file JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // reset for re-upload
+}
+
+// ─── Export JSON ─────────────────────────────────────────────────────────
+function exportJSON() {
+  const data = JSON.stringify({ documenti: documents }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'documenti_estratti.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Modal ───────────────────────────────────────────────────────────────
+function openModal(id) {
+  editingId = id || null;
+  document.getElementById('modalTitle').textContent = editingId ? 'Modifica Documento' : 'Nuovo Documento';
+  document.getElementById('submitBtn').textContent = editingId ? 'Salva Modifiche' : 'Aggiungi';
+
+  if (editingId) {
+    const d = documents.find(x => x.id === editingId);
+    if (d) {
+      document.getElementById('fNome').value = d.nome || '';
+      document.getElementById('fCognome').value = d.cognome || '';
+      document.getElementById('fDataNascita').value = d.dataNascita || '';
+      document.getElementById('fCF').value = d.codiceFiscale || '';
+      document.getElementById('fTipo').value = d.tipoDocumento || "Carta d'identità";
+      document.getElementById('fNumero').value = d.numeroDocumento || '';
+      document.getElementById('fEmissione').value = d.dataEmissione || '';
+      document.getElementById('fScadenza').value = d.dataScadenza || '';
+      document.getElementById('fEnte').value = d.enteEmittente || '';
+    }
+  } else {
+    document.querySelectorAll('.modal input').forEach(i => i.value = '');
+    document.getElementById('fTipo').value = "Carta d'identità";
+  }
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  editingId = null;
+}
+
+function saveDocument(e) {
+  e.preventDefault();
+  const doc = {
+    nome: document.getElementById('fNome').value.trim(),
+    cognome: document.getElementById('fCognome').value.trim(),
+    dataNascita: document.getElementById('fDataNascita').value,
+    codiceFiscale: document.getElementById('fCF').value.toUpperCase().trim(),
+    tipoDocumento: document.getElementById('fTipo').value,
+    numeroDocumento: document.getElementById('fNumero').value.toUpperCase().trim(),
+    dataEmissione: document.getElementById('fEmissione').value,
+    dataScadenza: document.getElementById('fScadenza').value,
+    enteEmittente: document.getElementById('fEnte').value.trim(),
+  };
+
+  if (editingId) {
+    const idx = documents.findIndex(d => d.id === editingId);
+    if (idx >= 0) { doc.id = editingId; documents[idx] = doc; }
+  } else {
+    doc.id = Date.now();
+    documents.push(doc);
+  }
+
+  closeModal();
+  renderTable();
+}
+
+function editDoc(id) { openModal(id); }
+
+function deleteDoc(id) {
+  if (confirm('Eliminare questo documento?')) {
+    documents = documents.filter(d => d.id !== id);
+    renderTable();
+  }
+}
+
+// ─── Filters toggle ─────────────────────────────────────────────────────
+function toggleFilters() {
+  const panel = document.getElementById('filtersPanel');
+  panel.classList.toggle('open');
+}
+
+function resetFilters() {
+  document.getElementById('filterStatus').value = 'all';
+  document.getElementById('filterType').value = 'all';
+  renderTable();
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────
+renderTable();
+
+// Close modal on overlay click
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Keyboard shortcut
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+</script>
+</body>
+</html>

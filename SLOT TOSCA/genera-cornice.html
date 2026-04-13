@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Genera Cornice Slot - Gemini AI</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;color:#eee;font-family:Arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding:30px;min-height:100vh}
+h1{color:#FFD700;margin-bottom:10px;font-size:24px}
+.subtitle{color:#aaa;margin-bottom:25px;font-size:14px}
+.controls{display:flex;flex-direction:column;gap:12px;width:600px;max-width:95vw}
+label{color:#FFD700;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:1px}
+textarea{background:#1a1a2e;color:#eee;border:1px solid #333;border-radius:8px;padding:12px;font-size:13px;resize:vertical;min-height:100px;font-family:inherit}
+textarea:focus{border-color:#FFD700;outline:none}
+.btn{padding:14px 30px;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;transition:all 0.2s}
+.btn-gen{background:linear-gradient(145deg,#FFD700,#FF8C00);color:#000}
+.btn-gen:hover{transform:scale(1.02);box-shadow:0 4px 20px rgba(255,165,0,0.4)}
+.btn-gen:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.btn-save{background:#00cc55;color:#000;display:none}
+.btn-save:hover{background:#00ff66}
+.status{padding:10px;border-radius:6px;font-size:13px;display:none}
+.status.loading{display:block;background:#1a1a3e;color:#7788ff;border:1px solid #334}
+.status.error{display:block;background:#3e1a1a;color:#ff7788;border:1px solid #433}
+.status.success{display:block;background:#1a3e1a;color:#77ff88;border:1px solid #343}
+.preview{margin-top:20px;display:none;flex-direction:column;align-items:center;gap:10px}
+.preview img{max-width:500px;border:2px solid #FFD700;border-radius:8px;background:repeating-conic-gradient(#333 0% 25%, #222 0% 50%) 50% / 20px 20px}
+.preview.show{display:flex}
+.row{display:flex;gap:10px;align-items:center}
+.size-input{background:#1a1a2e;color:#eee;border:1px solid #333;border-radius:6px;padding:8px;width:80px;font-size:13px;text-align:center}
+.info{color:#888;font-size:11px;margin-top:5px}
+</style>
+</head>
+<body>
+<h1>Genera Cornice con Gemini AI</h1>
+<p class="subtitle">Usa l'API di Google Gemini per generare una cornice premium per la slot</p>
+
+<div class="controls">
+  <div>
+    <label>Dimensioni (px)</label>
+    <div class="row" style="margin-top:6px">
+      <input type="number" class="size-input" id="imgW" value="860" min="200" max="2000"> x
+      <input type="number" class="size-input" id="imgH" value="754" min="200" max="2000">
+      <span class="info">(doppio della cornice 430x377 per alta qualita, verra ridimensionata)</span>
+    </div>
+  </div>
+
+  <div>
+    <label>Prompt</label>
+    <textarea id="prompt">A premium ornate golden Celtic frame border for a slot machine game. Dark aged wood background with rich mahogany texture. Elaborate interwoven Celtic knotwork patterns in polished gold along all four borders. Large glowing emerald gemstones at each corner set in ornate gold bezels. Smaller emeralds at the middle of each edge. Golden rivets and studs along the border. Intricate gold filigree and vine patterns between the studs. The center area must be completely empty and transparent (for game reels). Top edge should have a decorative arch or banner area for the game title. Rich metallic gold with light reflections and specular highlights. Fantasy RPG medieval Irish style. Professional slot game UI quality. Transparent PNG with transparent center. No text, no letters, no words. 4K detail level.</textarea>
+  </div>
+
+  <div>
+    <label>API Key</label>
+    <input type="text" class="size-input" id="apiKey" value="AIzaSyCpn8qh1YyXqL9QgN1Jep3D_9FfIJaccOY" style="width:100%">
+  </div>
+
+  <button class="btn btn-gen" id="genBtn" onclick="generate()">GENERA CORNICE</button>
+  <div class="status" id="status"></div>
+
+  <div class="preview" id="preview">
+    <img id="previewImg" alt="Preview">
+    <div class="row">
+      <button class="btn btn-save" id="saveBtn" onclick="saveImage()">SALVA COME frame.png</button>
+      <button class="btn btn-gen" onclick="generate()" style="font-size:13px;padding:10px 20px">RIGENERA</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let generatedBlob = null;
+
+async function generate() {
+  const btn = document.getElementById('genBtn');
+  const status = document.getElementById('status');
+  const preview = document.getElementById('preview');
+  const prompt = document.getElementById('prompt').value;
+  const apiKey = document.getElementById('apiKey').value;
+
+  btn.disabled = true;
+  status.className = 'status loading';
+  status.textContent = 'Generazione in corso... (puo richiedere 15-30 secondi)';
+  preview.classList.remove('show');
+
+  try {
+    // Try gemini-2.0-flash-preview-image-generation first, then fallback
+    const models = [
+      'gemini-2.0-flash-exp',
+      'gemini-2.0-flash-preview-image-generation',
+      'imagen-3.0-generate-002'
+    ];
+
+    let response = null;
+    let usedModel = '';
+
+    for (const model of models) {
+      try {
+        status.textContent = 'Provando modello: ' + model + '...';
+
+        let body;
+        if (model.startsWith('imagen')) {
+          // Imagen API format
+          body = JSON.stringify({
+            instances: [{ prompt: prompt }],
+            parameters: { sampleCount: 1, aspectRatio: "4:3" }
+          });
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`;
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+          });
+          if (!resp.ok) { const err = await resp.text(); console.log(model, err); continue; }
+          const data = await resp.json();
+          const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+          if (b64) {
+            response = b64;
+            usedModel = model;
+            break;
+          }
+        } else {
+          // Gemini generateContent with image output
+          body = JSON.stringify({
+            contents: [{
+              parts: [{ text: prompt }]
+            }],
+            generationConfig: {
+              responseModalities: ["TEXT", "IMAGE"]
+            }
+          });
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+          });
+          if (!resp.ok) { const err = await resp.text(); console.log(model, err); continue; }
+          const data = await resp.json();
+          // Find image part in response
+          const parts = data.candidates?.[0]?.content?.parts || [];
+          for (const part of parts) {
+            if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
+              response = part.inlineData.data;
+              usedModel = model;
+              break;
+            }
+          }
+          if (response) break;
+        }
+      } catch (e) {
+        console.log('Model ' + model + ' failed:', e);
+        continue;
+      }
+    }
+
+    if (!response) {
+      throw new Error('Nessun modello ha generato un\'immagine. Controlla la API key e riprova.');
+    }
+
+    // Convert base64 to blob
+    const byteChars = atob(response);
+    const byteArray = new Uint8Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+    generatedBlob = new Blob([byteArray], { type: 'image/png' });
+
+    // Show preview
+    const imgUrl = URL.createObjectURL(generatedBlob);
+    document.getElementById('previewImg').src = imgUrl;
+    preview.classList.add('show');
+    document.getElementById('saveBtn').style.display = 'block';
+
+    status.className = 'status success';
+    status.textContent = 'Immagine generata con ' + usedModel + '! Clicca SALVA per scaricarla.';
+
+  } catch (e) {
+    status.className = 'status error';
+    status.textContent = 'Errore: ' + e.message;
+  }
+
+  btn.disabled = false;
+}
+
+function saveImage() {
+  if (!generatedBlob) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(generatedBlob);
+  a.download = 'frame.png';
+  a.click();
+
+  const status = document.getElementById('status');
+  status.className = 'status success';
+  status.textContent = 'frame.png scaricato! Copialo nella cartella img/ della slot per sostituire la cornice.';
+}
+</script>
+</body>
+</html>

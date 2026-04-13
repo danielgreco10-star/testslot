@@ -1,0 +1,17 @@
+SPINNING...
+STATE AFTER SPIN: {
+  "spinning": true,
+  "cascLvl": 1,
+  "bal": 999,
+  "spinWin": 2.8200000000000003,
+  "trace": [
+    "  → J ×5: base=0.08 wild=×1 casc=×1.0 = 0",
+    "  → alieno ×6: base=2.6 wild=×1 casc=×1.0 = 3",
+    "Polvere +3 (J)",
+    "Polvere +60 (alieno ×2sym)",
+    "Cascata 1: +3",
+    "  → Q ×5: base=0.14 wild=×1 casc=×1.0 = 0",
+    "Polvere +5 (Q)",
+    "Cascata 2: +0"
+  ]
+}

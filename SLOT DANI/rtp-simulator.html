@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber Alien Slot — RTP Simulator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a14;
+    --surface: #12121f;
+    --surface2: #1a1a2e;
+    --border: #2a2a40;
+    --accent: #8b5cf6;
+    --accent2: #6d28d9;
+    --gold: #fbbf24;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e2e2f0;
+    --text-dim: #8888aa;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .app { max-width: 1440px; margin: 0 auto; padding: 16px; }
+  h1 {
+    font-size: 22px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+  .subtitle { color: var(--text-dim); font-size: 13px; margin-bottom: 16px; }
+
+  /* Layout */
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .grid-layout { grid-template-columns: 1fr; }
+  }
+
+  /* Panels */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .panel-title {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--accent);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-title::before {
+    content: ''; width: 3px; height: 14px;
+    background: var(--accent); border-radius: 2px;
+  }
+
+  /* Form controls */
+  label { font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 4px; }
+  .field { margin-bottom: 10px; }
+  input[type=number], select {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 10px; border-radius: 5px;
+    font-size: 13px; width: 100%; font-family: var(--mono);
+  }
+  input[type=number]:focus, select:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .row { display: flex; gap: 8px; }
+  .row > .field { flex: 1; }
+
+  /* Buttons */
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 6px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; width: 100%;
+  }
+  .btn-primary:hover { filter: brightness(1.15); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-stop {
+    background: var(--red); color: #fff; width: 100%; margin-top: 8px;
+  }
+  .btn-stop:hover { filter: brightness(1.15); }
+  .btn-sm {
+    padding: 5px 12px; font-size: 12px; background: var(--surface2);
+    border: 1px solid var(--border); color: var(--text); border-radius: 4px;
+  }
+  .btn-sm:hover { border-color: var(--accent); }
+  .btn-sm.active { background: var(--accent2); border-color: var(--accent); }
+
+  /* Progress */
+  .progress-wrap {
+    background: var(--surface2); border-radius: 4px; height: 6px;
+    margin: 8px 0; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold));
+    width: 0%; transition: width .3s;
+    border-radius: 4px;
+  }
+  .progress-label {
+    font-size: 11px; color: var(--text-dim); font-family: var(--mono);
+    text-align: right;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-card {
+    background: var(--surface2); border-radius: 6px;
+    padding: 10px; text-align: center;
+  }
+  .stat-val {
+    font-size: 20px; font-weight: 700;
+    font-family: var(--mono);
+  }
+  .stat-val.rtp { color: var(--gold); font-size: 26px; }
+  .stat-val.green { color: var(--green); }
+  .stat-val.red { color: var(--red); }
+  .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+  .stat-full { grid-column: 1 / -1; }
+
+  /* Charts */
+  .chart-wrap { position: relative; height: 260px; margin-top: 8px; }
+  .chart-wrap canvas { width: 100% !important; }
+
+  /* Table */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .tbl th {
+    text-align: left; padding: 6px 8px;
+    background: var(--surface2); color: var(--text-dim);
+    font-weight: 600; font-size: 10px; text-transform: uppercase;
+  }
+  .tbl td { padding: 5px 8px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 11px; }
+  .tbl tr:hover td { background: rgba(139,92,246,.06); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tab {
+    padding: 6px 14px; font-size: 12px; font-weight: 600;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 5px; cursor: pointer; color: var(--text-dim);
+  }
+  .tab:hover { border-color: var(--accent); color: var(--text); }
+  .tab.active { background: var(--accent2); border-color: var(--accent); color: #fff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Live log */
+  #liveLog {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 5px; padding: 8px; max-height: 200px;
+    overflow-y: auto; font-family: var(--mono); font-size: 11px;
+    color: var(--text-dim); line-height: 1.6;
+  }
+  .log-win { color: var(--green); }
+  .log-bonus { color: var(--gold); }
+  .log-info { color: var(--text-dim); }
+
+  /* Paytable editor */
+  .pay-editor {
+    display: grid; grid-template-columns: 80px repeat(8, 1fr);
+    gap: 2px; font-size: 11px;
+  }
+  .pay-editor input {
+    padding: 3px 4px; font-size: 10px; text-align: center; width: 100%;
+  }
+  .pay-header { font-weight: 600; color: var(--accent); padding: 3px; text-align: center; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .hidden { display: none; }
+  .inline-badge {
+    display: inline-block; padding: 2px 7px; border-radius: 3px;
+    font-size: 10px; font-weight: 600; font-family: var(--mono);
+  }
+  .badge-ok { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge-warn { background: rgba(251,191,36,.15); color: var(--gold); }
+  .badge-bad { background: rgba(239,68,68,.15); color: var(--red); }
+
+  .hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; line-height: 1.4; }
+
+  .toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .toggle-row label { margin: 0; flex: 1; }
+  input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+
+  .separator { border-top: 1px solid var(--border); margin: 12px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>RTP Simulator — Cyber Alien Slot</h1>
+  <p class="subtitle">Simulazione matematica headless · Griglia 7×7 · Cluster Pay · Cascate · Bonus · Free Spins</p>
+
+  <div class="grid-layout">
+    <!-- LEFT: Controls -->
+    <div class="controls-col">
+      <div class="panel">
+        <div class="panel-title">Configurazione Simulazione</div>
+        <div class="field">
+          <label>Numero di Spin</label>
+          <select id="numSpins">
+            <option value="1000">1.000</option>
+            <option value="5000">5.000</option>
+            <option value="10000" selected>10.000</option>
+            <option value="50000">50.000</option>
+            <option value="100000">100.000</option>
+            <option value="500000">500.000</option>
+            <option value="1000000">1.000.000</option>
+          </select>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Bet Base</label>
+            <input type="number" id="betVal" value="1" min="1" max="1000">
+          </div>
+          <div class="field">
+            <label>Min Cluster</label>
+            <input type="number" id="minCluster" value="5" min="3" max="10">
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="panel-title">Pesi Simboli (Reel)</div>
+        <div class="row">
+          <div class="field"><label>J</label><input type="number" id="wJ" value="28" min="1"></div>
+          <div class="field"><label>Q</label><input type="number" id="wQ" value="18" min="1"></div>
+          <div class="field"><label>K</label><input type="number" id="wK" value="16" min="1"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>A</label><input type="number" id="wA" value="14" min="1"></div>
+          <div class="field"><label>Alieno</label><input type="number" id="wAlieno" value="10" min="1"></div>
+          <div class="field"><label>Astronauta</label><input type="number" id="wAstronauta" value="8" min="1"></div>
+        </div>
+
+        <div class="separator"></div>
+        <div class="panel-title">Bonus Drop Rate</div>
+        <div class="row">
+          <div class="field">
+            <label>Extra Drop %</label>
+            <input type="number" id="extraDrop" value="4.5" min="0" max="100" step="0.1">
+          </div>
+          <div class="field">
+            <label>Scatter Rate</label>
+            <input type="number" id="scatterRate" value="1.05" min="0" max="20" step="0.1">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Buco Nero %</label><input type="number" id="rBucoNero" value="0.5" min="0" max="5" step="0.1"></div>
+          <div class="field"><label>Supernova %</label><input type="number" id="rSupernova" value="0.5" min="0" max="5" step="0.1"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Antigravità %</label><input type="number" id="rAntigravita" value="0.5" min="0" max="5" step="0.1"></div>
+          <div class="field"><label>Tesseract %</label><input type="number" id="rTesseract" value="0.5" min="0" max="5" step="0.1"></div>
+        </div>
+
+        <div class="separator"></div>
+        <div class="toggle-row">
+          <label>Simula Free Spins</label>
+          <input type="checkbox" id="simFS" checked>
+        </div>
+        <div class="toggle-row">
+          <label>Simula Bonus (BH/SN/AG/TS)</label>
+          <input type="checkbox" id="simBonus" checked>
+        </div>
+
+        <div class="separator"></div>
+        <button class="btn btn-primary" id="btnRun" onclick="runSimulation()">▶ Avvia Simulazione</button>
+        <button class="btn btn-stop hidden" id="btnStop" onclick="stopSimulation()">■ Ferma</button>
+        <div class="progress-wrap"><div class="progress-bar" id="progBar"></div></div>
+        <div class="progress-label" id="progLabel">Pronto</div>
+      </div>
+
+      <!-- Quick presets -->
+      <div class="panel">
+        <div class="panel-title">Preset Rapidi</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="applyPreset('conservative')">Conservativo (88%)</button>
+          <button class="btn btn-sm" onclick="applyPreset('balanced')">Bilanciato (94%)</button>
+          <button class="btn btn-sm" onclick="applyPreset('generous')">Generoso (97%)</button>
+          <button class="btn btn-sm" onclick="applyPreset('current')">Reset Attuale</button>
+        </div>
+        <p class="hint">I preset modificano i pesi dei simboli e le paytable per raggiungere l'RTP target.</p>
+      </div>
+
+      <!-- Live log -->
+      <div class="panel">
+        <div class="panel-title">Log</div>
+        <div id="liveLog"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="results-col">
+      <!-- Top stats -->
+      <div class="panel">
+        <div class="stats-grid">
+          <div class="stat-card stat-full">
+            <div class="stat-val rtp" id="sRtp">—</div>
+            <div class="stat-label">RTP (Return to Player)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sSpins">—</div>
+            <div class="stat-label">Spin Totali</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sHitRate">—</div>
+            <div class="stat-label">Hit Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sWagered">—</div>
+            <div class="stat-label">Totale Scommesso</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sWon">—</div>
+            <div class="stat-label">Totale Vinto</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sMaxWin">—</div>
+            <div class="stat-label">Max Win Singolo</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sAvgWin">—</div>
+            <div class="stat-label">Media Vincita (su hit)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sAvgCasc">—</div>
+            <div class="stat-label">Media Cascate/Spin</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sVolatility">—</div>
+            <div class="stat-label">Volatilità (σ/bet)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sBonusHits">—</div>
+            <div class="stat-label">Bonus Attivati</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sFsHits">—</div>
+            <div class="stat-label">Free Spin Attivati</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sFsRtp">—</div>
+            <div class="stat-label">RTP da Free Spins</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="panel">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('charts')">Grafici</div>
+          <div class="tab" onclick="switchTab('symbols')">Simboli</div>
+          <div class="tab" onclick="switchTab('distribution')">Distribuzione</div>
+          <div class="tab" onclick="switchTab('paytable')">Paytable Editor</div>
+          <div class="tab" onclick="switchTab('convergence')">Convergenza</div>
+        </div>
+
+        <!-- Charts tab -->
+        <div class="tab-content active" id="tab-charts">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:4px">RTP nel Tempo (rolling window)</div>
+              <div class="chart-wrap"><canvas id="chartRtp"></canvas></div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:4px">Saldo nel Tempo</div>
+              <div class="chart-wrap"><canvas id="chartBalance"></canvas></div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:4px">Contributo RTP per Fonte</div>
+              <div class="chart-wrap"><canvas id="chartSources"></canvas></div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:4px">Distribuzione Vincite (log scale)</div>
+              <div class="chart-wrap"><canvas id="chartWinDist"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Symbols tab -->
+        <div class="tab-content" id="tab-symbols">
+          <table class="tbl" id="symTable">
+            <thead><tr>
+              <th>Simbolo</th><th>Peso</th><th>Freq %</th><th>Cluster Totali</th>
+              <th>Vincita Totale</th><th>Contributo RTP %</th><th>Avg Cluster Size</th>
+            </tr></thead>
+            <tbody id="symBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Distribution tab -->
+        <div class="tab-content" id="tab-distribution">
+          <table class="tbl" id="distTable">
+            <thead><tr>
+              <th>Range Vincita (×bet)</th><th>Frequenza</th><th>% Spin</th>
+              <th>Vincita Tot in Range</th><th>Contributo RTP %</th>
+            </tr></thead>
+            <tbody id="distBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Paytable Editor tab -->
+        <div class="tab-content" id="tab-paytable">
+          <p class="hint" style="margin-bottom:8px">Modifica i valori della paytable e rilancia la simulazione per vedere l'effetto sull'RTP. I valori sono moltiplicatori ×bet.</p>
+          <div id="paytableEditor"></div>
+          <div style="margin-top:8px;display:flex;gap:6px">
+            <button class="btn btn-sm" onclick="resetPaytable()">Reset Default</button>
+            <button class="btn btn-sm" onclick="scalePaytable(0.9)">−10% Tutti</button>
+            <button class="btn btn-sm" onclick="scalePaytable(1.1)">+10% Tutti</button>
+          </div>
+        </div>
+
+        <!-- Convergence tab -->
+        <div class="tab-content" id="tab-convergence">
+          <div style="font-size:12px;color:var(--text-dim);margin-bottom:4px">Convergenza RTP con intervallo di confidenza 95%</div>
+          <div class="chart-wrap" style="height:320px"><canvas id="chartConv"></canvas></div>
+          <p class="hint">L'area ombreggiata mostra l'intervallo di confidenza al 95%. Più spin = convergenza più stretta verso l'RTP reale.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   HEADLESS SLOT ENGINE — Replica fedele del math model
+   ══════════════════════════════════════════════ */
+
+const ROWS = 7, COLS = 7;
+const REGULAR_SYMS = ['J','Q','K','A','alieno','astronauta'];
+const EXTRA_SYMS = ['buco_nero','supernova','antigravita','tesseract'];
+const LOW_SYMS = ['J','Q','K','A'];
+const HIGH_SYMS = ['alieno','astronauta'];
+
+// Default paytable — scaled ×0.174 for 94% RTP target
+const DEFAULT_PAYTABLE = {
+  J:[0,0,0,0,0,0.01,0.03,0.05,0.1,0.19,0.35,0.61,0.96,1.48,2.26,3.31,4.52,6.26,8.53,11.48,15.66],
+  Q:[0,0,0,0,0,0.02,0.05,0.09,0.17,0.35,0.73,1.22,1.91,3.13,4.52,6.96,9.57,13.22,17.75,24.01,32.19],
+  K:[0,0,0,0,0,0.03,0.06,0.12,0.24,0.49,0.96,1.65,2.78,4.35,6.61,9.57,13.57,18.97,25.58,34.8,46.28],
+  A:[0,0,0,0,0,0.05,0.09,0.17,0.35,0.73,1.48,2.61,4.35,6.61,9.92,14.79,20.71,28.88,39.67,52.9,70.99],
+  alieno:[0,0,0,0,0,0.24,0.45,0.87,1.74,3.48,7.31,12.88,20.53,33.06,51.16,75.86,108.92,156.95,223.07,314.07,446.31],
+  astronauta:[0,0,0,0,0,0.42,0.73,1.48,2.96,5.92,11.83,20.53,33.06,52.9,80.91,122.32,173.48,247.95,347.13,495.9,694.26],
+  buco_nero:[0,0,0,0,0,0.52,0.87,1.74,3.48,6.96,13.05,20.88,31.32,48.72,74.82,113.1,165.3,234.9,330.6,469.8,661.2],
+  supernova:[0,0,0,0,0,0.26,0.44,0.87,1.74,3.83,7.83,12.18,19.14,30.45,46.98,69.6,100.05,143.55,203.58,287.1,407.16],
+  antigravita:[0,0,0,0,0,0.35,0.61,1.22,2.44,4.87,9.57,14.79,22.62,35.67,54.81,81.78,117.45,168.78,239.25,337.56,478.5],
+  tesseract:[0,0,0,0,0,0.31,0.52,1.04,2.09,4.35,8.7,13.92,20.88,33.06,50.46,75.69,108.75,156.6,221.85,313.2,443.7]
+};
+
+let PAYTABLE = JSON.parse(JSON.stringify(DEFAULT_PAYTABLE));
+
+const UPGRADE_MAP = {J:'Q',Q:'K',K:'A',A:'alieno',alieno:'astronauta'};
+const BH_UPGRADE_SYMS = ['J','Q','K','A','alieno'];
+const BH_UPGRADE_WEIGHTS = {J:35,Q:28,K:22,A:12,alieno:3};
+
+// Simulation state
+let simRunning = false;
+let simAbort = false;
+
+// Charts
+let chartRtp, chartBalance, chartSources, chartWinDist, chartConv;
+
+/* ── Pool builder ── */
+function buildPool(weights) {
+  const pool = [];
+  for (const [sym, wt] of Object.entries(weights)) {
+    for (let i = 0; i < Math.round(wt * 10); i++) pool.push(sym);
+  }
+  return pool;
+}
+
+/* ── BFS Cluster finder ── */
+function findClusters(grid, minCl) {
+  const vis = Array.from({length:ROWS}, () => Array(COLS).fill(null));
+  const clusters = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const g = grid[r][c];
+    if (!g || g === 'wild' || EXTRA_SYMS.includes(g) || g === 'scatter') continue;
+    if (vis[r][c] === g) continue;
+    const sym = g;
+    const cells = [];
+    const queue = [[r,c]];
+    const localVis = new Set([`${r},${c}`]);
+    while (queue.length) {
+      const [cr,cc] = queue.shift();
+      cells.push([cr,cc]);
+      for (const [nr,nc] of [[cr-1,cc],[cr+1,cc],[cr,cc-1],[cr,cc+1]]) {
+        if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+        const key = `${nr},${nc}`;
+        if (localVis.has(key)) continue;
+        const ng = grid[nr][nc];
+        if (ng === sym || ng === 'wild') { localVis.add(key); queue.push([nr,nc]); }
+      }
+    }
+    for (const [cr,cc] of cells) { if (grid[cr][cc] === sym) vis[cr][cc] = sym; }
+    if (cells.length >= minCl) clusters.push({sym, cells, sz: cells.length});
+  }
+  return clusters;
+}
+
+/* ── Calculate payment ── */
+function calcPay(clusters, grid, cellMult, bet) {
+  let total = 0;
+  for (const cl of clusters) {
+    const pt = PAYTABLE[cl.sym];
+    if (!pt) continue;
+    const idx = Math.min(cl.sz, pt.length - 1);
+    const basePay = pt[idx];
+    let wildMult = 1;
+    cl.cells.forEach(([r,c]) => { if (grid[r][c] === 'wild' && cellMult[r][c] > 1) wildMult *= cellMult[r][c]; });
+    let cascMult = 0, normCount = 0;
+    cl.cells.forEach(([r,c]) => { if (grid[r][c] !== 'wild') { cascMult += cellMult[r][c]; normCount++; } });
+    const avgCasc = normCount > 0 ? cascMult / normCount : 1;
+    total += basePay * bet * avgCasc * wildMult;
+  }
+  return Math.round(total * 100) / 100;
+}
+
+/* ── Simulate one full spin (headless) ── */
+function simulateSpin(cfg) {
+  const {pool, bet, minCl, extraDropRate, extraRates, scatterRate, simFS, simBonus} = cfg;
+  const rndSym = () => pool[Math.floor(Math.random() * pool.length)];
+
+  let totalWin = 0;
+  let cascades = 0;
+  let bonusTriggered = null;
+  let freeSpinsTriggered = false;
+  let fsWin = 0;
+  let bonusWin = 0;
+  let baseWin = 0;
+
+  // Build grid
+  const grid = [];
+  const cellMult = [];
+  let extraSpawned = false;
+  let extraSym = null, extraR = -1, extraC = -1;
+
+  if (Math.random() < extraDropRate / 100) {
+    const rates = EXTRA_SYMS.map(s => ({sym:s, rate: extraRates[s]}));
+    const tot = rates.reduce((s,r)=>s+r.rate, 0);
+    if (tot > 0) {
+      let rv = Math.random() * tot, sm = 0;
+      for (const {sym, rate} of rates) { sm += rate; if (rv < sm) { extraSym = sym; break; } }
+      if (!extraSym) extraSym = rates[0].sym;
+      if (extraSym === 'buco_nero') { extraR = 3; extraC = 3; }
+      else { extraR = Math.floor(Math.random()*ROWS); extraC = Math.floor(Math.random()*COLS); }
+      extraSpawned = true;
+    }
+  }
+
+  // Scatter placement
+  const scatterPositions = new Set();
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (r === extraR && c === extraC) continue;
+    if (Math.random() < scatterRate / (ROWS * COLS * 2)) scatterPositions.add(`${r},${c}`);
+  }
+
+  for (let r = 0; r < ROWS; r++) {
+    grid[r] = []; cellMult[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      if (r === extraR && c === extraC && extraSym) grid[r][c] = extraSym;
+      else if (scatterPositions.has(`${r},${c}`)) grid[r][c] = 'scatter';
+      else grid[r][c] = rndSym();
+      cellMult[r][c] = 1;
+    }
+  }
+
+  // Count scatters
+  let scatterCount = 0;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++)
+    if (grid[r][c] === 'scatter') scatterCount++;
+
+  // Free spins
+  if (simFS && scatterCount >= 3) {
+    freeSpinsTriggered = true;
+    const numFS = scatterCount >= 5 ? 15 : 10;
+    // Simulate free spins with growing multiplier (start=0.5, step=+0.45)
+    let fsMult = 0.5;
+    for (let fs = 0; fs < numFS; fs++) {
+      fsMult += 0.45;
+      // Fresh grid each free spin
+      const fsGrid = [];
+      const fsCellMult = [];
+      let fsExtraSpawned = false;
+
+      for (let r = 0; r < ROWS; r++) {
+        fsGrid[r] = []; fsCellMult[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          // Chance of extra in free spin
+          if (!fsExtraSpawned && Math.random() < extraDropRate / 100 / (ROWS*COLS)) {
+            const rates = EXTRA_SYMS.map(s=>({sym:s,rate:extraRates[s]}));
+            const tot = rates.reduce((s,r)=>s+r.rate,0);
+            if (tot > 0) {
+              let rv = Math.random()*tot, sm = 0;
+              for (const {sym,rate} of rates) { sm+=rate; if(rv<sm){ fsGrid[r][c]=sym; fsExtraSpawned=true; break; }}
+            }
+            if (!fsExtraSpawned) fsGrid[r][c] = rndSym();
+          } else {
+            fsGrid[r][c] = rndSym();
+          }
+          fsCellMult[r][c] = 1;
+        }
+      }
+
+      // Cascade loop in free spin
+      let fsCascading = true;
+      while (fsCascading) {
+        const cls = findClusters(fsGrid, minCl);
+        if (!cls.length) break;
+        const pay = calcPay(cls, fsGrid, fsCellMult, bet) * fsMult;
+        fsWin += pay;
+        // Increment multipliers and destroy
+        cls.forEach(cl => {
+          cl.cells.forEach(([r,c]) => {
+            fsCellMult[r][c]++;
+            if (fsGrid[r][c] !== 'wild') fsGrid[r][c] = null;
+          });
+        });
+        // Cascade: drop nulls
+        for (let c2 = 0; c2 < COLS; c2++) {
+          const col = [], colM = [];
+          for (let r2 = ROWS-1; r2>=0; r2--) {
+            if (fsGrid[r2][c2] !== null) { col.push(fsGrid[r2][c2]); colM.push(fsCellMult[r2][c2]); }
+          }
+          const empty = ROWS - col.length;
+          for (let r2 = ROWS-1; r2>=0; r2--) {
+            const idx = ROWS-1-r2;
+            if (idx < col.length) { fsGrid[r2][c2]=col[idx]; fsCellMult[r2][c2]=colM[idx]; }
+            else { fsGrid[r2][c2]=rndSym(); fsCellMult[r2][c2]=1; }
+          }
+        }
+      }
+    }
+    totalWin += fsWin;
+  }
+
+  // Bonus features (simplified math model)
+  if (simBonus && extraSpawned && extraSym) {
+    bonusTriggered = extraSym;
+    if (extraSym === 'buco_nero') {
+      // BH: upgrades one sym type, becomes wild ×2-5 (no cost)
+      const wTotal = Object.values(BH_UPGRADE_WEIGHTS).reduce((a,b)=>a+b,0);
+      let rv = Math.random()*wTotal, sm = 0, chosenSym = 'J';
+      for (const s of BH_UPGRADE_SYMS) { sm += BH_UPGRADE_WEIGHTS[s]; if(rv<sm){chosenSym=s;break;} }
+      const upgradedTo = UPGRADE_MAP[chosenSym];
+      let cnt = 0;
+      for (let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(grid[r][c]===chosenSym) { grid[r][c]=upgradedTo; cnt++; }
+      grid[extraR][extraC] = 'wild';
+      cellMult[extraR][extraC] = 2 + Math.floor(Math.random()*4);
+    }
+    else if (extraSym === 'supernova') {
+      // SN: removes one random sym type, becomes wild × removed count
+      const symCount = {};
+      for (let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) {
+        const s = grid[r][c];
+        if (s && REGULAR_SYMS.includes(s)) symCount[s]=(symCount[s]||0)+1;
+      }
+      const present = REGULAR_SYMS.filter(s=>symCount[s]>0);
+      if (present.length > 0) {
+        const targetSym = present[Math.floor(Math.random()*present.length)];
+        let removed = 0;
+        for (let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) {
+          if(grid[r][c]===targetSym){grid[r][c]=null;removed++;}
+        }
+        grid[extraR][extraC]='wild';
+        cellMult[extraR][extraC]=removed;
+        // Cascade after removal
+        for (let c2=0;c2<COLS;c2++) {
+          const col=[],colM=[];
+          for(let r2=ROWS-1;r2>=0;r2--) {
+            if(grid[r2][c2]!==null){col.push(grid[r2][c2]);colM.push(cellMult[r2][c2]);}
+          }
+          const empty=ROWS-col.length;
+          for(let r2=ROWS-1;r2>=0;r2--) {
+            const idx=ROWS-1-r2;
+            if(idx<col.length){grid[r2][c2]=col[idx];cellMult[r2][c2]=colM[idx];}
+            else{grid[r2][c2]=rndSym();cellMult[r2][c2]=1;}
+          }
+        }
+      }
+    }
+    else if (extraSym === 'antigravita') {
+      // AG: attracts highest value sym, forms cluster of 5-9, becomes wild × clusterSize
+      const VALUE_ORDER = ['astronauta','alieno','A','K','Q','J'];
+      const symCount = {};
+      for (let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) {
+        const s=grid[r][c];
+        if(s&&REGULAR_SYMS.includes(s)) symCount[s]=(symCount[s]||0)+1;
+      }
+      let bestSym=null, clusterSize=5;
+      for(const sym of VALUE_ORDER) {
+        const cnt=symCount[sym]||0;
+        if(cnt>=4){bestSym=sym;clusterSize=Math.min(cnt+1,9);break;}
+      }
+      if(!bestSym) for(const sym of VALUE_ORDER) {
+        if((symCount[sym]||0)>=3){bestSym=sym;clusterSize=5;break;}
+      }
+      if(bestSym){
+        // Place cluster around antigravita
+        const visited=new Set();
+        const clusterPos=[];
+        const bfs=[[extraR,extraC]];
+        visited.add(`${extraR},${extraC}`);
+        while(bfs.length&&clusterPos.length<clusterSize){
+          const[cr,cc]=bfs.shift();
+          clusterPos.push([cr,cc]);
+          for(const[nr,nc]of[[cr-1,cc],[cr+1,cc],[cr,cc-1],[cr,cc+1]]){
+            if(nr<0||nr>=ROWS||nc<0||nc>=COLS||visited.has(`${nr},${nc}`))continue;
+            visited.add(`${nr},${nc}`);
+            bfs.push([nr,nc]);
+          }
+        }
+        for(const[cr,cc]of clusterPos){
+          if(cr===extraR&&cc===extraC) continue;
+          grid[cr][cc]=bestSym;
+          cellMult[cr][cc]=1;
+        }
+        grid[extraR][extraC]='wild';
+        cellMult[extraR][extraC]=clusterSize;
+      }
+    }
+    else if (extraSym === 'tesseract') {
+      // TS: coin drop mini-game — scaled ×2.3 for RTP balance
+      const COIN_MULTS=[0.23,0.35,0.46,0.58,0.69,0.92,1.15,1.38,1.84,2.3];
+      let tessTotal=0;
+      let spinsLeft=3;
+      let filledCells=0;
+      const totalCells=9;
+      let iterations=0;
+      while(spinsLeft>0&&iterations<50&&filledCells<totalCells){
+        iterations++;
+        spinsLeft--;
+        const emptyCells=totalCells-filledCells;
+        let landed=false;
+        for(let i=0;i<emptyCells;i++){
+          if(Math.random()<0.20){
+            landed=true;
+            // 65% coin, 25% expand (ignored for simplicity), 10% collect
+            const r=Math.random();
+            if(r<0.65){
+              const isMax=Math.random()<0.005;
+              const mult=isMax?57.5:COIN_MULTS[Math.floor(Math.random()*COIN_MULTS.length)];
+              tessTotal+=bet*mult;
+            }
+            filledCells++;
+            if(filledCells>=totalCells)break;
+          }
+        }
+        if(landed)spinsLeft=3;
+      }
+      bonusWin += tessTotal;
+      // Remove tesseract from grid
+      grid[extraR][extraC] = rndSym();
+      cellMult[extraR][extraC] = 1;
+    }
+  }
+
+  // Main cascade loop
+  let cascading = true;
+  while (cascading) {
+    const clusters = findClusters(grid, minCl);
+    if (!clusters.length) break;
+    const pay = calcPay(clusters, grid, cellMult, bet);
+    baseWin += pay;
+    cascades++;
+    // Increment mults and destroy
+    clusters.forEach(cl => {
+      cl.cells.forEach(([r,c]) => {
+        cellMult[r][c]++;
+        if (grid[r][c] !== 'wild') grid[r][c] = null;
+      });
+    });
+    // Cascade
+    for (let c2 = 0; c2 < COLS; c2++) {
+      const col = [], colM = [];
+      for (let r2 = ROWS-1; r2 >= 0; r2--) {
+        if (grid[r2][c2] !== null) { col.push(grid[r2][c2]); colM.push(cellMult[r2][c2]); }
+      }
+      for (let r2 = ROWS-1; r2 >= 0; r2--) {
+        const idx = ROWS-1-r2;
+        if (idx < col.length) { grid[r2][c2]=col[idx]; cellMult[r2][c2]=colM[idx]; }
+        else { grid[r2][c2]=rndSym(); cellMult[r2][c2]=1; }
+      }
+    }
+  }
+
+  totalWin += baseWin + bonusWin;
+
+  // Collect cluster sym stats for this spin
+  const symHits = {};
+  // Re-run cluster detection on original grid is not possible since we modified it
+  // We track per-cluster stats in calcPay instead — handled at aggregation level
+
+  return {
+    totalWin: Math.max(0, totalWin),
+    baseWin,
+    bonusWin,
+    fsWin,
+    cascades,
+    bonusTriggered,
+    freeSpinsTriggered,
+    hit: totalWin > 0
+  };
+}
+
+/* ══════════════════════════════════════════════
+   SIMULATION RUNNER
+   ══════════════════════════════════════════════ */
+
+async function runSimulation() {
+  if (simRunning) return;
+  simRunning = true;
+  simAbort = false;
+
+  const btnRun = document.getElementById('btnRun');
+  const btnStop = document.getElementById('btnStop');
+  btnRun.disabled = true;
+  btnStop.classList.remove('hidden');
+
+  // Read config
+  const numSpins = parseInt(document.getElementById('numSpins').value);
+  const bet = parseFloat(document.getElementById('betVal').value);
+  const minCl = parseInt(document.getElementById('minCluster').value);
+  const extraDropRate = parseFloat(document.getElementById('extraDrop').value);
+  const scatterRate = parseFloat(document.getElementById('scatterRate').value);
+  const simFS = document.getElementById('simFS').checked;
+  const simBonus = document.getElementById('simBonus').checked;
+
+  const weights = {
+    J: parseFloat(document.getElementById('wJ').value),
+    Q: parseFloat(document.getElementById('wQ').value),
+    K: parseFloat(document.getElementById('wK').value),
+    A: parseFloat(document.getElementById('wA').value),
+    alieno: parseFloat(document.getElementById('wAlieno').value),
+    astronauta: parseFloat(document.getElementById('wAstronauta').value)
+  };
+  const extraRates = {
+    buco_nero: parseFloat(document.getElementById('rBucoNero').value),
+    supernova: parseFloat(document.getElementById('rSupernova').value),
+    antigravita: parseFloat(document.getElementById('rAntigravita').value),
+    tesseract: parseFloat(document.getElementById('rTesseract').value)
+  };
+
+  const pool = buildPool(weights);
+  const cfg = {pool, bet, minCl, extraDropRate, extraRates, scatterRate, simFS, simBonus};
+
+  // Stats accumulators
+  let totalWagered = 0, totalWon = 0, hits = 0, totalCascades = 0;
+  let maxWin = 0;
+  let bonusCount = 0, fsCount = 0, fsWonTotal = 0, bonusWonTotal = 0, baseWonTotal = 0;
+  const winAmounts = []; // for volatility
+  const rtpSnapshots = []; // for rolling RTP chart
+  const balanceHistory = []; // for balance chart
+  const convergenceData = []; // for convergence chart
+  let balance = 10000;
+  const symStats = {};
+  REGULAR_SYMS.forEach(s => { symStats[s] = {clusters:0, totalWin:0, totalSize:0}; });
+
+  // Win distribution buckets
+  const distBuckets = [
+    {label:'0 (perdita)', min:0, max:0},
+    {label:'0.01–1×', min:0.01, max:1},
+    {label:'1–2×', min:1, max:2},
+    {label:'2–5×', min:2, max:5},
+    {label:'5–10×', min:5, max:10},
+    {label:'10–20×', min:10, max:20},
+    {label:'20–50×', min:20, max:50},
+    {label:'50–100×', min:50, max:100},
+    {label:'100–500×', min:100, max:500},
+    {label:'500+×', min:500, max:Infinity}
+  ];
+  const distCounts = new Array(distBuckets.length).fill(0);
+  const distWins = new Array(distBuckets.length).fill(0);
+
+  const logEl = document.getElementById('liveLog');
+  logEl.innerHTML = '';
+  const addLog = (msg, cls='info') => {
+    const div = document.createElement('div');
+    div.className = 'log-'+cls;
+    div.textContent = msg;
+    logEl.appendChild(div);
+    if (logEl.children.length > 200) logEl.removeChild(logEl.firstChild);
+    logEl.scrollTop = logEl.scrollHeight;
+  };
+
+  addLog(`Avvio simulazione: ${numSpins.toLocaleString()} spin, bet=${bet}, minCluster=${minCl}`);
+
+  const BATCH = 500; // spins per batch
+  const snapshotInterval = Math.max(1, Math.floor(numSpins / 200));
+
+  let spinsDone = 0;
+  const startTime = performance.now();
+
+  // Process in batches to keep UI responsive
+  async function processBatch() {
+    const batchEnd = Math.min(spinsDone + BATCH, numSpins);
+
+    for (let i = spinsDone; i < batchEnd; i++) {
+      if (simAbort) break;
+
+      totalWagered += bet;
+      balance -= bet;
+
+      const result = simulateSpin(cfg);
+
+      totalWon += result.totalWin;
+      balance += result.totalWin;
+      totalCascades += result.cascades;
+      if (result.hit) hits++;
+      if (result.totalWin > maxWin) maxWin = result.totalWin;
+      winAmounts.push(result.totalWin);
+      if (result.bonusTriggered) { bonusCount++; bonusWonTotal += result.bonusWin; }
+      if (result.freeSpinsTriggered) { fsCount++; fsWonTotal += result.fsWin; }
+      baseWonTotal += result.baseWin;
+
+      // Distribution
+      const wr = result.totalWin / bet;
+      if (wr === 0) { distCounts[0]++; }
+      else {
+        for (let b = 1; b < distBuckets.length; b++) {
+          if (wr >= distBuckets[b].min && wr < distBuckets[b].max) { distCounts[b]++; distWins[b] += result.totalWin; break; }
+        }
+      }
+
+      // Snapshots
+      if ((i+1) % snapshotInterval === 0 || i === numSpins - 1) {
+        const currentRtp = totalWagered > 0 ? (totalWon / totalWagered * 100) : 0;
+        rtpSnapshots.push({spin: i+1, rtp: currentRtp});
+        balanceHistory.push({spin: i+1, bal: balance});
+
+        // Convergence: RTP ± 1.96 * σ/√n
+        const n = i + 1;
+        let sumSq = 0;
+        // Approximate variance from recent batch
+        const recentStart = Math.max(0, winAmounts.length - 1000);
+        const recentSlice = winAmounts.slice(recentStart);
+        const mean = recentSlice.reduce((a,b)=>a+b,0) / recentSlice.length;
+        for (const w of recentSlice) sumSq += (w - mean) ** 2;
+        const stdDev = Math.sqrt(sumSq / recentSlice.length);
+        const se = stdDev / Math.sqrt(n) / bet * 100; // as % of wagered
+        convergenceData.push({
+          spin: n,
+          rtp: currentRtp,
+          upper: currentRtp + 1.96 * se,
+          lower: currentRtp - 1.96 * se
+        });
+      }
+    }
+    spinsDone = batchEnd;
+  }
+
+  while (spinsDone < numSpins && !simAbort) {
+    await processBatch();
+
+    // Update UI
+    const pct = (spinsDone / numSpins * 100);
+    document.getElementById('progBar').style.width = pct + '%';
+    document.getElementById('progLabel').textContent =
+      `${spinsDone.toLocaleString()} / ${numSpins.toLocaleString()} (${pct.toFixed(1)}%)`;
+
+    // Yield to browser
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+
+  // Final calculations
+  const rtp = totalWagered > 0 ? (totalWon / totalWagered * 100) : 0;
+  const hitRate = spinsDone > 0 ? (hits / spinsDone * 100) : 0;
+  const avgWin = hits > 0 ? (totalWon / hits) : 0;
+  const avgCasc = spinsDone > 0 ? (totalCascades / spinsDone) : 0;
+
+  // Volatility (standard deviation of win/bet)
+  const meanWin = totalWon / spinsDone;
+  let varianceSum = 0;
+  for (const w of winAmounts) varianceSum += (w - meanWin) ** 2;
+  const volatility = Math.sqrt(varianceSum / spinsDone) / bet;
+
+  // Update stats
+  const fmt = n => n.toLocaleString('it-IT');
+  const fmtDec = (n,d=1) => n.toFixed(d);
+
+  document.getElementById('sRtp').textContent = fmtDec(rtp, 2) + '%';
+  const rtpEl = document.getElementById('sRtp');
+  rtpEl.className = 'stat-val rtp';
+  if (rtp >= 94 && rtp <= 97) rtpEl.style.color = '#22c55e';
+  else if (rtp >= 90 && rtp < 94) rtpEl.style.color = '#fbbf24';
+  else rtpEl.style.color = '#ef4444';
+
+  document.getElementById('sSpins').textContent = fmt(spinsDone);
+  document.getElementById('sHitRate').textContent = fmtDec(hitRate) + '%';
+  document.getElementById('sWagered').textContent = fmt(Math.round(totalWagered));
+  document.getElementById('sWon').textContent = fmt(Math.round(totalWon));
+  document.getElementById('sMaxWin').textContent = fmt(Math.round(maxWin)) + ` (${fmtDec(maxWin/bet,1)}×)`;
+  document.getElementById('sAvgWin').textContent = fmtDec(avgWin, 2);
+  document.getElementById('sAvgCasc').textContent = fmtDec(avgCasc, 2);
+  document.getElementById('sVolatility').textContent = fmtDec(volatility, 2);
+  document.getElementById('sBonusHits').textContent = fmt(bonusCount);
+  document.getElementById('sFsHits').textContent = fmt(fsCount);
+  document.getElementById('sFsRtp').textContent = totalWagered > 0 ? fmtDec(fsWonTotal/totalWagered*100, 2)+'%' : '—';
+
+  addLog(`✓ Completato in ${elapsed}s — RTP: ${fmtDec(rtp,2)}%, Hit Rate: ${fmtDec(hitRate,1)}%, Volatilità: ${fmtDec(volatility,2)}`, 'win');
+  addLog(`  Base RTP: ${fmtDec(baseWonTotal/totalWagered*100,2)}%, FS RTP: ${fmtDec(fsWonTotal/totalWagered*100,2)}%, Bonus RTP: ${fmtDec(bonusWonTotal/totalWagered*100,2)}%`, 'bonus');
+
+  // ── Build Charts ──
+  buildCharts(rtpSnapshots, balanceHistory, convergenceData, {
+    baseRtp: baseWonTotal/totalWagered*100,
+    fsRtp: fsWonTotal/totalWagered*100,
+    bonusRtp: bonusWonTotal/totalWagered*100
+  });
+
+  // Distribution table
+  const distBody = document.getElementById('distBody');
+  distBody.innerHTML = '';
+  for (let i = 0; i < distBuckets.length; i++) {
+    const tr = document.createElement('tr');
+    const pctSpin = spinsDone > 0 ? (distCounts[i]/spinsDone*100) : 0;
+    const contRtp = totalWagered > 0 ? (distWins[i]/totalWagered*100) : 0;
+    tr.innerHTML = `<td>${distBuckets[i].label}</td><td>${fmt(distCounts[i])}</td><td>${fmtDec(pctSpin,2)}%</td><td>${fmt(Math.round(distWins[i]))}</td><td>${fmtDec(contRtp,2)}%</td>`;
+    distBody.appendChild(tr);
+  }
+
+  // Win distribution chart
+  buildWinDistChart(distBuckets, distCounts);
+
+  // Cleanup
+  simRunning = false;
+  btnRun.disabled = false;
+  btnStop.classList.add('hidden');
+  document.getElementById('progLabel').textContent = `Completato — ${elapsed}s`;
+}
+
+function stopSimulation() {
+  simAbort = true;
+}
+
+/* ══════════════════════════════════════════════
+   CHARTS
+   ══════════════════════════════════════════════ */
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { labels: { color: '#8888aa', font: { size: 10 } } }
+  },
+  scales: {
+    x: { ticks: { color: '#666', font: { size: 9 } }, grid: { color: '#1a1a2e' } },
+    y: { ticks: { color: '#666', font: { size: 9 } }, grid: { color: '#1a1a2e' } }
+  }
+};
+
+function buildCharts(rtpData, balData, convData, sources) {
+  // RTP over time
+  if (chartRtp) chartRtp.destroy();
+  chartRtp = new Chart(document.getElementById('chartRtp'), {
+    type: 'line',
+    data: {
+      labels: rtpData.map(d => d.spin),
+      datasets: [{
+        label: 'RTP %',
+        data: rtpData.map(d => d.rtp),
+        borderColor: '#8b5cf6',
+        backgroundColor: 'rgba(139,92,246,.1)',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: true
+      }, {
+        label: 'Target 96%',
+        data: rtpData.map(() => 96),
+        borderColor: 'rgba(251,191,36,.4)',
+        borderWidth: 1,
+        borderDash: [5,5],
+        pointRadius: 0,
+        fill: false
+      }]
+    },
+    options: {...chartDefaults}
+  });
+
+  // Balance
+  if (chartBalance) chartBalance.destroy();
+  chartBalance = new Chart(document.getElementById('chartBalance'), {
+    type: 'line',
+    data: {
+      labels: balData.map(d => d.spin),
+      datasets: [{
+        label: 'Saldo',
+        data: balData.map(d => d.bal),
+        borderColor: '#22c55e',
+        backgroundColor: 'rgba(34,197,94,.08)',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: true
+      }]
+    },
+    options: {...chartDefaults}
+  });
+
+  // Sources pie
+  if (chartSources) chartSources.destroy();
+  chartSources = new Chart(document.getElementById('chartSources'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Base Game', 'Free Spins', 'Bonus Features'],
+      datasets: [{
+        data: [sources.baseRtp, sources.fsRtp, sources.bonusRtp],
+        backgroundColor: ['#8b5cf6','#fbbf24','#22c55e'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#8888aa', font: { size: 11 }, padding: 12 } },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed.toFixed(2)}% RTP` } }
+      }
+    }
+  });
+
+  // Convergence
+  if (chartConv) chartConv.destroy();
+  chartConv = new Chart(document.getElementById('chartConv'), {
+    type: 'line',
+    data: {
+      labels: convData.map(d => d.spin),
+      datasets: [{
+        label: 'RTP %',
+        data: convData.map(d => d.rtp),
+        borderColor: '#8b5cf6',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false
+      }, {
+        label: 'CI 95% Upper',
+        data: convData.map(d => d.upper),
+        borderColor: 'rgba(139,92,246,.2)',
+        backgroundColor: 'rgba(139,92,246,.08)',
+        borderWidth: 1,
+        pointRadius: 0,
+        fill: '+1'
+      }, {
+        label: 'CI 95% Lower',
+        data: convData.map(d => d.lower),
+        borderColor: 'rgba(139,92,246,.2)',
+        borderWidth: 1,
+        pointRadius: 0,
+        fill: false
+      }, {
+        label: 'Target 96%',
+        data: convData.map(() => 96),
+        borderColor: 'rgba(251,191,36,.4)',
+        borderWidth: 1,
+        borderDash: [5,5],
+        pointRadius: 0,
+        fill: false
+      }]
+    },
+    options: {...chartDefaults}
+  });
+}
+
+function buildWinDistChart(buckets, counts) {
+  if (chartWinDist) chartWinDist.destroy();
+  chartWinDist = new Chart(document.getElementById('chartWinDist'), {
+    type: 'bar',
+    data: {
+      labels: buckets.map(b => b.label),
+      datasets: [{
+        label: 'Frequenza',
+        data: counts,
+        backgroundColor: counts.map((_,i) => {
+          const colors = ['#ef4444','#8b5cf6','#6d28d9','#7c3aed','#a855f7','#c084fc','#fbbf24','#f59e0b','#22c55e','#10b981'];
+          return colors[i] || '#8b5cf6';
+        }),
+        borderWidth: 0,
+        borderRadius: 3
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      scales: {
+        ...chartDefaults.scales,
+        y: { ...chartDefaults.scales.y, type: 'logarithmic' }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════
+   PAYTABLE EDITOR
+   ══════════════════════════════════════════════ */
+
+function buildPaytableEditor() {
+  const container = document.getElementById('paytableEditor');
+  const syms = ['J','Q','K','A','alieno','astronauta'];
+  const sizes = [5,6,7,8,9,10,11,12];
+
+  let html = '<div class="pay-editor">';
+  html += '<div class="pay-header">Simbolo</div>';
+  sizes.forEach(s => { html += `<div class="pay-header">×${s}</div>`; });
+
+  syms.forEach(sym => {
+    html += `<div style="padding:4px;font-weight:600;font-size:11px;color:var(--text)">${sym}</div>`;
+    sizes.forEach(s => {
+      html += `<input type="number" step="0.01" id="pt_${sym}_${s}" value="${PAYTABLE[sym][s]}" onchange="updatePaytable('${sym}',${s},this.value)">`;
+    });
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function updatePaytable(sym, size, val) {
+  PAYTABLE[sym][size] = parseFloat(val) || 0;
+}
+
+function resetPaytable() {
+  PAYTABLE = JSON.parse(JSON.stringify(DEFAULT_PAYTABLE));
+  buildPaytableEditor();
+}
+
+function scalePaytable(factor) {
+  for (const sym of Object.keys(PAYTABLE)) {
+    for (let i = 0; i < PAYTABLE[sym].length; i++) {
+      PAYTABLE[sym][i] = Math.round(PAYTABLE[sym][i] * factor * 100) / 100;
+    }
+  }
+  buildPaytableEditor();
+}
+
+/* ══════════════════════════════════════════════
+   PRESETS
+   ══════════════════════════════════════════════ */
+
+function applyPreset(name) {
+  if (name === 'conservative') {
+    // Lower pays, higher low sym weights
+    document.getElementById('wJ').value = 32;
+    document.getElementById('wQ').value = 22;
+    document.getElementById('wK').value = 18;
+    document.getElementById('wA').value = 14;
+    document.getElementById('wAlieno').value = 8;
+    document.getElementById('wAstronauta').value = 6;
+    PAYTABLE = JSON.parse(JSON.stringify(DEFAULT_PAYTABLE));
+    scalePaytable(0.82);
+  } else if (name === 'balanced') {
+    document.getElementById('wJ').value = 28;
+    document.getElementById('wQ').value = 18;
+    document.getElementById('wK').value = 16;
+    document.getElementById('wA').value = 14;
+    document.getElementById('wAlieno').value = 10;
+    document.getElementById('wAstronauta').value = 8;
+    PAYTABLE = JSON.parse(JSON.stringify(DEFAULT_PAYTABLE));
+    scalePaytable(0.92);
+  } else if (name === 'generous') {
+    document.getElementById('wJ').value = 24;
+    document.getElementById('wQ').value = 16;
+    document.getElementById('wK').value = 15;
+    document.getElementById('wA').value = 14;
+    document.getElementById('wAlieno').value = 12;
+    document.getElementById('wAstronauta').value = 10;
+    PAYTABLE = JSON.parse(JSON.stringify(DEFAULT_PAYTABLE));
+  } else {
+    document.getElementById('wJ').value = 28;
+    document.getElementById('wQ').value = 18;
+    document.getElementById('wK').value = 16;
+    document.getElementById('wA').value = 14;
+    document.getElementById('wAlieno').value = 10;
+    document.getElementById('wAstronauta').value = 8;
+    document.getElementById('extraDrop').value = 2;
+    document.getElementById('scatterRate').value = 1.5;
+    document.getElementById('rBucoNero').value = 0.5;
+    document.getElementById('rSupernova').value = 0.5;
+    document.getElementById('rAntigravita').value = 0.5;
+    document.getElementById('rTesseract').value = 0.5;
+    resetPaytable();
+  }
+  buildPaytableEditor();
+}
+
+/* ══════════════════════════════════════════════
+   TABS
+   ══════════════════════════════════════════════ */
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* ── Init ── */
+buildPaytableEditor();
+</script>
+</body>
+</html>

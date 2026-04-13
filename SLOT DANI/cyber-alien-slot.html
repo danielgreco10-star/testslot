@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cyber-Alien Odyssey: 7×7 Grid</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div id="app">
+<div class="starfield"></div>
+<div class="bg-nebula-pulse"></div>
+<div class="parallax-layer parallax-far"></div>
+<div class="parallax-layer parallax-mid"></div>
+<div class="parallax-layer parallax-near"></div>
+<div class="grid-glow"></div>
+<div class="cinema-bar cinema-bar-top"></div>
+<div class="cinema-bar cinema-bar-bottom"></div>
+<div class="shop-overlay" id="shopOverlay" onclick="if(event.target===this)closeShop()">
+  <div class="shop-modal">
+    <div class="shop-header">
+      <span class="shop-title">NEGOZIO COSMICO</span>
+      <button class="shop-close" onclick="closeShop()">✕</button>
+    </div>
+    <div class="shop-section">
+      <div class="shop-section-title">Bonus Round</div>
+      <div class="shop-card" onclick="buyBonus('freespin')">
+        <div class="shop-card-icon bonus-bg">🌀</div>
+        <div class="shop-card-info"><div class="shop-card-name">Free Spin ×10</div><div class="shop-card-desc">Attiva 10 giri gratuiti con moltiplicatore crescente</div></div>
+        <div class="shop-card-price">50×</div>
+      </div>
+      <div class="shop-card" onclick="buyBonus('bonusround')">
+        <div class="shop-card-icon bonus-bg">⚡</div>
+        <div class="shop-card-info"><div class="shop-card-name">Bonus Round</div><div class="shop-card-desc">Accedi direttamente al round bonus con premi garantiti</div></div>
+        <div class="shop-card-price">80×</div>
+      </div>
+      <div class="shop-card shop-card-legendary" onclick="buyBonus('megaspin')">
+        <div class="shop-card-icon dust-bg">💎</div>
+        <div class="shop-card-info"><div class="shop-card-name">Mega Spin</div><div class="shop-card-desc">Spin con tutti i wild attivi e moltiplicatore ×5 garantito</div></div>
+        <div class="shop-card-price">150×</div>
+      </div>
+    </div>
+    <div class="shop-section">
+      <div class="shop-section-title">Polvere Stellare</div>
+      <div class="shop-card" onclick="buyDust(50)">
+        <div class="shop-card-icon dust-bg">✨</div>
+        <div class="shop-card-info"><div class="shop-card-name">Polvere ×50</div><div class="shop-card-desc">Pacchetto base di polvere stellare cosmica</div></div>
+        <div class="shop-card-price">25×</div>
+      </div>
+      <div class="shop-card" onclick="buyDust(200)">
+        <div class="shop-card-icon dust-bg">🌟</div>
+        <div class="shop-card-info"><div class="shop-card-name">Polvere ×200</div><div class="shop-card-desc">Pacchetto premium con bonus 20% extra</div></div>
+        <div class="shop-card-price">80×</div>
+      </div>
+      <div class="shop-card shop-card-legendary" onclick="buyDust(500)">
+        <div class="shop-card-icon dust-bg">🔮</div>
+        <div class="shop-card-info"><div class="shop-card-name">Polvere ×500</div><div class="shop-card-desc">Mega pacchetto con bonus 50% extra leggendario</div></div>
+        <div class="shop-card-price">150×</div>
+      </div>
+    </div>
+  </div>
+</div>
+  <div class="bg-layer"></div>
+  <div class="tut-overlay" id="tutOverlay">
+    <div class="tut-highlight" id="tutHighlight"></div>
+    <div class="tut-tooltip" id="tutTooltip"></div>
+  </div>
+  <div class="bg-nebula"></div>
+  <div class="bg-particles-close"></div>
+  <div class="bg-flash" id="bgFlash"></div>
+  <!-- Premium Win Overlays -->
+  <div class="win-premium-frame" id="winFrame">
+    <div class="win-backdrop"></div>
+    <div class="win-center">
+      <div class="win-level-label" id="winLevelLabel"></div>
+      <div class="win-amount-display" id="winAmountDisplay">0</div>
+    </div>
+  </div>
+  <div class="win-counter" id="winCounter">
+    <div class="win-counter-label" id="winCounterLabel">GRANDE!</div>
+    <div class="win-counter-amount" id="winCounterAmount">0</div>
+  </div>
+  <div class="bh-overlay" id="bhOverlay">
+    <div class="bh-panel">
+      <div class="bh-vortex-icon" id="bhVortexIcon">
+        <div class="bh-accretion">
+          <div class="bh-accretion-ring"></div>
+          <div class="bh-accretion-ring ring2"></div>
+          <div class="bh-accretion-ring ring3"></div>
+          <div class="bh-jet jet-top"></div>
+          <div class="bh-jet jet-bottom"></div>
+        </div>
+      </div>
+      <div class="bh-title">BUCO NERO</div>
+      <div class="bh-subtitle">Sorteggio simbolo da potenziare</div>
+      <div class="bh-options" id="bhOptions"></div>
+      <div class="bh-result-label" id="bhResult"></div>
+    </div>
+  </div>
+  <div class="sn-mult-overlay" id="snMultOverlay">
+    <div style="text-align:center">
+      <div class="sn-mult-label">WILD</div>
+      <div class="sn-mult-text" id="snMultText"></div>
+    </div>
+  </div>
+  <div class="sn-overlay" id="snOverlay">
+    <div class="sn-panel">
+      <div class="sn-vortex-icon" id="snVortexIcon"></div>
+      <div class="sn-title">SUPERNOVA</div>
+      <div class="sn-subtitle">Sorteggio simbolo da eliminare</div>
+      <div class="sn-options" id="snOptions"></div>
+      <div class="sn-result-label" id="snResult"></div>
+    </div>
+  </div>
+
+  <!-- FREE SPIN BANNER -->
+  <div class="free-spin-banner" id="fsBanner">
+    <div class="free-spin-banner-inner">
+      <span>✧ FREE SPIN ✧</span>
+      <span class="free-spin-count" id="fsCount">0</span>
+      <span>rimanenti</span>
+    </div>
+  </div>
+
+  <!-- FREE SPIN MULTIPLIER -->
+  <div class="fs-multiplier" id="fsMult">
+    <div class="fs-mult-label">MOLTIPLICATORE</div>
+    <div class="fs-mult-value" id="fsMultVal">×1</div>
+  </div>
+  <div class="fs-countdown" id="fsCountdown"></div>
+
+  <!-- FREE SPIN ANNOUNCE OVERLAY -->
+  <div class="free-spin-announce" id="fsAnnounce">
+    <div class="free-spin-announce-box">
+      <div class="fsa-title">✧ FREE SPIN ✧</div>
+      <div class="fsa-count" id="fsAnnounceCount">10</div>
+      <div class="fsa-sub">GIRI GRATUITI</div>
+    </div>
+  </div>
+
+  <!-- DUST BONUS CHOICE OVERLAY -->
+  <div class="dust-choice-overlay" id="dustChoiceOverlay">
+    <div class="dust-choice-box">
+      <div class="dust-choice-title">✦ POLVERE COSMICA PIENA ✦</div>
+      <div class="dust-choice-subtitle">Scegli il tuo bonus galattico</div>
+      <div class="dust-choice-grid">
+        <button class="dust-choice-btn" data-bonus="buco_nero" onclick="chooseDustBonus('buco_nero')">
+          <div class="dcb-glow"></div>
+          <img src="simboli/buco_nero.png" alt="Buco Nero" class="dcb-icon">
+          <span class="dcb-name">Buco Nero</span>
+          <span class="dcb-desc">Upgrade simboli</span>
+        </button>
+        <button class="dust-choice-btn" data-bonus="supernova" onclick="chooseDustBonus('supernova')">
+          <div class="dcb-glow"></div>
+          <img src="simboli/supernova.png" alt="Supernova" class="dcb-icon">
+          <span class="dcb-name">Supernova</span>
+          <span class="dcb-desc">Elimina simbolo</span>
+        </button>
+        <button class="dust-choice-btn" data-bonus="antigravita" onclick="chooseDustBonus('antigravita')">
+          <div class="dcb-glow"></div>
+          <img src="simboli/antigravita.png" alt="Antigravità" class="dcb-icon">
+          <span class="dcb-name">Antigravità</span>
+          <span class="dcb-desc">Rimescola griglia</span>
+        </button>
+        <button class="dust-choice-btn" data-bonus="tesseract" onclick="chooseDustBonus('tesseract')">
+          <div class="dcb-glow"></div>
+          <img src="simboli/tesseract.png" alt="Tesseract" class="dcb-icon">
+          <span class="dcb-name">Tesseract</span>
+          <span class="dcb-desc">Sotto-griglia 3×3</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TESSERACT (inline sub-grid, no overlay needed) -->
+
+    <!-- title bar removed -->
+  <!-- PAYTABLE SLIDING PANEL -->
+  <div class="paytable-overlay" id="paytableOverlay">
+    <div class="paytable-panel" id="paytablePanel">
+      <div class="pt-header">
+        <h2 class="pt-title">TABELLA PAGAMENTI</h2>
+        <button class="pt-close" id="ptClose">✕</button>
+      </div>
+      <div class="pt-scroll">
+        <div class="pt-section">
+          <h3 class="pt-section-title">Simboli Regolari</h3>
+          <div class="pt-sym-grid">
+            <div class="pt-sym-card"><img src="simboli/astronauta.png" class="pt-sym-img"><div class="pt-sym-name">B</div><div class="pt-sym-pays">5→2.5x &nbsp; 7→5x &nbsp; 9→20x &nbsp; 12→150x</div></div>
+            <div class="pt-sym-card"><img src="simboli/alieno.png" class="pt-sym-img"><div class="pt-sym-name">UFO</div><div class="pt-sym-pays">5→1.5x &nbsp; 7→5x &nbsp; 9→20x &nbsp; 12→100x</div></div>
+            <div class="pt-sym-card"><img src="simboli/cristallo_oro.png" class="pt-sym-img"><div class="pt-sym-name">Gemma Oro</div><div class="pt-sym-pays">5→0.3x &nbsp; 7→1x &nbsp; 9→4x &nbsp; 12→22x</div></div>
+            <div class="pt-sym-card"><img src="simboli/meteora_rossa.png" class="pt-sym-img"><div class="pt-sym-name">Gemma Rossa</div><div class="pt-sym-pays">5→0.2x &nbsp; 7→0.7x &nbsp; 9→2.8x &nbsp; 12→16x</div></div>
+            <div class="pt-sym-card"><img src="simboli/cristallo_blu.png" class="pt-sym-img"><div class="pt-sym-name">Gemma Blu</div><div class="pt-sym-pays">5→0.15x &nbsp; 7→0.5x &nbsp; 9→2x &nbsp; 12→12x</div></div>
+            <div class="pt-sym-card"><img src="simboli/asteroide.png" class="pt-sym-img"><div class="pt-sym-name">Gemma Marrone</div><div class="pt-sym-pays">5→0.08x &nbsp; 7→0.3x &nbsp; 9→1.2x &nbsp; 12→6x</div></div>
+          </div>
+        </div>
+        <div class="pt-section">
+          <h3 class="pt-section-title">Simboli Speciali</h3>
+          <div class="pt-sym-grid">
+            <div class="pt-sym-card pt-special"><img src="simboli/wild.png" class="pt-sym-img"><div class="pt-sym-name" style="color:#ffd700">WILD</div><div class="pt-sym-desc">Sostituisce tutti i simboli. Appare dopo Supernova o Antigravità.</div></div>
+            <div class="pt-sym-card pt-special"><img src="simboli/freespin.png" class="pt-sym-img"><div class="pt-sym-name" style="color:#ff88aa">FREE SPIN</div><div class="pt-sym-desc">3+ attivano 10 Free Spin. 5+ attivano 15 Free Spin.</div></div>
+          </div>
+        </div>
+        <div class="pt-section">
+          <h3 class="pt-section-title">Bonus</h3>
+          <div class="pt-sym-grid">
+            <div class="pt-sym-card pt-bonus"><img src="simboli/buco_nero.png" class="pt-sym-img"><div class="pt-sym-name">Buco Nero</div><div class="pt-sym-desc">Risucchia e potenzia un tipo di simbolo sulla griglia.</div></div>
+            <div class="pt-sym-card pt-bonus"><img src="simboli/supernova.png" class="pt-sym-img"><div class="pt-sym-name">Supernova</div><div class="pt-sym-desc">Distrugge tutti i simboli di un tipo e diventa Wild con moltiplicatore.</div></div>
+            <div class="pt-sym-card pt-bonus"><img src="simboli/antigravita.png" class="pt-sym-img"><div class="pt-sym-name">Antigravità</div><div class="pt-sym-desc">Attrae simboli e forma un cluster, diventando Wild al centro.</div></div>
+            <div class="pt-sym-card pt-bonus"><img src="simboli/tesseract.png" class="pt-sym-img"><div class="pt-sym-name">Tesseract</div><div class="pt-sym-desc">Apre una sub-griglia con gettoni: monete, expand e collect.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="game-area">
+    <div class="side-panel side-panel-l">
+      <!-- DUST GAUGE -->
+      <div class="sp-box sp-dust-box">
+        <div class="sp-box-header">
+          <span class="sp-box-title">POLVERE COSMICA</span>
+        </div>
+        <div class="dust-gauge-wrap">
+          <div class="dust-gauge" id="dustGauge">
+            <div class="dust-particles">
+              <span class="dust-particle"></span><span class="dust-particle"></span>
+              <span class="dust-particle"></span><span class="dust-particle"></span>
+              <span class="dust-particle"></span>
+            </div>
+            <svg viewBox="0 0 36 36">
+              <defs><linearGradient id="dustGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a855f7"/><stop offset="50%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient></defs>
+              <circle class="dust-gauge-bg" cx="18" cy="18" r="15.9"/>
+              <circle class="dust-gauge-fill" id="dustGaugeFill" cx="18" cy="18" r="15.9" stroke-dasharray="100" stroke-dashoffset="100"/>
+            </svg>
+            <div class="dust-gauge-val" id="dustCount">0</div>
+          </div>
+          <div class="dust-pct" id="dustPct">0%</div>
+        </div>
+        <div class="dust-label">Raccogli polvere cosmica per sbloccare bonus</div>
+      </div>
+      <!-- POLVERE STELLARE BAR -->
+      <div class="dust-bar-panel" id="dustBarWrap">
+        <div class="dust-bar-header">POLVERE STELLARE</div>
+        <div class="dust-bar-wrap">
+          <div class="dust-bar-track">
+            <div class="dust-bar-fill" id="dustBarFill" style="height:0%"></div>
+            <div class="dust-bar-marks">
+              <div class="dust-bar-mark"></div>
+              <div class="dust-bar-mark"></div>
+              <div class="dust-bar-mark"></div>
+            </div>
+            <div class="dust-bar-particles">
+              <div class="dust-bar-particle"></div>
+              <div class="dust-bar-particle"></div>
+              <div class="dust-bar-particle"></div>
+              <div class="dust-bar-particle"></div>
+            </div>
+          </div>
+          <div class="dust-bar-info">
+            <div class="dust-bar-icon">💎</div>
+            <div class="dust-bar-pct" id="dustBarPct">0%</div>
+            <div class="dust-bar-label">COSMICA</div>
+          </div>
+        </div>
+      </div>
+      <!-- SYMBOL LEGEND -->
+      <div class="sp-box sp-sym-box">
+        <div class="sp-box-header">
+          <span class="sp-box-title">SIMBOLI</span>
+        </div>
+        <div class="sym-legend" id="symLegend">
+          <div class="sym-leg-row sym-high"><img src="simboli/astronauta.png" class="sym-leg-icon"><div class="sym-leg-info"><span class="sym-leg-name">B</span><span class="sym-leg-pay">2.5×–150×</span></div></div>
+          <div class="sym-leg-row sym-high"><img src="simboli/alieno.png" class="sym-leg-icon"><div class="sym-leg-info"><span class="sym-leg-name">UFO</span><span class="sym-leg-pay">1.5×–100×</span></div></div>
+          <div class="sym-leg-sep"></div>
+          <div class="sym-leg-row"><img src="simboli/cristallo_oro.png" class="sym-leg-icon"><div class="sym-leg-info"><span class="sym-leg-name">Gemma Oro</span><span class="sym-leg-pay">0.3×–22×</span></div></div>
+          <div class="sym-leg-row"><img src="simboli/meteora_rossa.png" class="sym-leg-icon"><div class="sym-leg-info"><span class="sym-leg-name">Gemma Rossa</span><span class="sym-leg-pay">0.2×–16×</span></div></div>
+          <div class="sym-leg-row"><img src="simboli/cristallo_blu.png" class="sym-leg-icon"><div class="sym-leg-info"><span class="sym-leg-name">Gemma Blu</span><span class="sym-leg-pay">0.15×–12×</span></div></div>
+          <div class="sym-leg-row"><img src="simboli/asteroide.png" class="sym-leg-icon"><div class="sym-leg-info"><span class="sym-leg-name">Gemma Marrone</span><span class="sym-leg-pay">0.08×–6×</span></div></div>
+          <div class="sym-leg-sep"></div>
+          <div class="sym-leg-row sym-special"><img src="simboli/wild.png" class="sym-leg-icon"><div class="sym-leg-info"><span class="sym-leg-name" style="color:#ffd700">Wild</span><span class="sym-leg-pay" style="color:rgba(255,215,0,0.7)">Sostituisce</span></div></div>
+          <div class="sym-leg-row sym-special"><img src="simboli/freespin.png" class="sym-leg-icon"><div class="sym-leg-info"><span class="sym-leg-name" style="color:#ff88cc">Free Spin</span><span class="sym-leg-pay" style="color:rgba(255,136,170,0.7)">3+ = Giri</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-frame" id="gridFrame">
+      <div class="tess-win-display" id="spinWinPanel"><span class="tess-win-label">VINCITA</span><span class="tess-win-amount" id="spinWinPanelAmount">0</span></div>
+      <!-- toggle buttons removed: panels always visible -->
+      <div class="grid-led-border led-idle" id="ledBorder"></div>
+      <div class="grid-container" id="grid"></div>
+      <!-- dust bar moved to side-panel-l -->
+      <div class="cosmic-dust-container" id="cosmicDust"></div>
+      <div class="cascade-overlay" id="cascadeOverlay"></div>
+      <div class="win-overlay" id="winDisplay"></div>
+      <!-- SPIN BOOST PANEL -->
+      <div class="spin-boost-panel" id="spinBoostPanel">
+        <span class="boost-label">BOOST</span>
+        <div class="boost-separator"></div>
+        <button class="boost-btn" id="boostBtn125" data-mult="1.25">
+          <span class="boost-mult">1.25×</span>
+          <span class="boost-cost" id="boostCost125">—</span>
+        </button>
+        <button class="boost-btn" id="boostBtn150" data-mult="1.5">
+          <span class="boost-mult">1.5×</span>
+          <span class="boost-cost" id="boostCost150">—</span>
+        </button>
+        <button class="boost-btn" id="boostBtn200" data-mult="2">
+          <span class="boost-mult">2×</span>
+          <span class="boost-cost" id="boostCost200">—</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- BONUS SIDE PANEL RIGHT (two columns) -->
+    <div class="bonus-side-panel" id="bonusSidePanel">
+      <!-- COLONNA 1: BONUS BUY -->
+      <div class="bsp-section">
+        <div class="bsp-title">BONUS BUY</div>
+        <div class="bsp-list">
+          <div class="bsp-item" id="buyBuco" data-cost="50" data-desc="Risucchia e potenzia un tipo di simbolo sulla griglia. Attiva il Buco Nero istantaneamente.">
+            <div class="bsp-icon"><img src="simboli/buco_nero.png" alt="Buco Nero"></div>
+            <div class="bsp-info"><span class="bsp-name">Buco Nero</span><span class="bsp-cost">50×</span></div>
+            <div class="bsp-tooltip">Risucchia e potenzia un tipo di simbolo sulla griglia. Attiva il Buco Nero istantaneamente.</div>
+          </div>
+          <div class="bsp-item" id="buySuper" data-cost="75" data-desc="Distrugge tutti i simboli di un tipo e diventa Wild con moltiplicatore.">
+            <div class="bsp-icon"><img src="simboli/supernova.png" alt="Supernova"></div>
+            <div class="bsp-info"><span class="bsp-name">Supernova</span><span class="bsp-cost">75×</span></div>
+            <div class="bsp-tooltip">Distrugge tutti i simboli di un tipo e diventa Wild con moltiplicatore.</div>
+          </div>
+          <div class="bsp-item" id="buyAnti" data-cost="60" data-desc="Attrae simboli e forma un cluster, diventando Wild al centro.">
+            <div class="bsp-icon"><img src="simboli/antigravita.png" alt="Antigravità"></div>
+            <div class="bsp-info"><span class="bsp-name">Antigravità</span><span class="bsp-cost">60×</span></div>
+            <div class="bsp-tooltip">Attrae simboli e forma un cluster, diventando Wild al centro.</div>
+          </div>
+          <div class="bsp-item" id="buyTess" data-cost="65" data-desc="Apre una sub-griglia con gettoni: monete, expand e collect.">
+            <div class="bsp-icon"><img src="simboli/tesseract.png" alt="Tesseract"></div>
+            <div class="bsp-info"><span class="bsp-name">Tesseract</span><span class="bsp-cost">65×</span></div>
+            <div class="bsp-tooltip">Apre una sub-griglia con gettoni: monete, expand e collect.</div>
+          </div>
+        </div>
+      </div>
+      <!-- SEPARATORE VERTICALE -->
+      <div class="bsp-sep"></div>
+      <!-- COLONNA 2: SUPER BONUS BUY -->
+      <div class="bsp-section">
+        <div class="bsp-title bsp-title-super">SUPER BONUS BUY</div>
+        <div class="bsp-list">
+          <div class="bsp-item legendary" id="buySuperBonus" data-cost="100" data-desc="Attiva TUTTI e 4 i bonus contemporaneamente! Buco Nero + Supernova + Antigravità + Tesseract in un unico spin devastante.">
+            <div class="bsp-icon bsp-icon-multi">
+              <img src="simboli/buco_nero.png"><img src="simboli/supernova.png">
+              <img src="simboli/antigravita.png"><img src="simboli/tesseract.png">
+            </div>
+            <div class="bsp-info"><span class="bsp-name">Super Bonus</span><span class="bsp-cost">100×</span></div>
+            <div class="bsp-tooltip">Attiva TUTTI e 4 i bonus contemporaneamente! Buco Nero + Supernova + Antigravità + Tesseract in un unico spin devastante.</div>
+          </div>
+          <div class="bsp-item scatter" id="buyFreeSpin" data-cost="80" data-desc="Attiva 10 Free Spin classici con moltiplicatore crescente ad ogni cascata.">
+            <div class="bsp-icon"><img src="simboli/freespin.png" alt="Free Spin"></div>
+            <div class="bsp-info"><span class="bsp-name">Free Spin</span><span class="bsp-cost">80×</span></div>
+            <div class="bsp-tooltip">Attiva 10 Free Spin classici con moltiplicatore crescente ad ogni cascata.</div>
+          </div>
+          <div class="bsp-item ultimate" id="buyBonusMax" data-cost="500" data-desc="Il pacchetto DEFINITIVO! Free Spin + Super Bonus combinati. 10 giri gratuiti con tutti e 4 i bonus attivi!">
+            <div class="bsp-icon"><span class="bsp-crown">♛</span></div>
+            <div class="bsp-info"><span class="bsp-name">BONUS MAX</span><span class="bsp-cost">500×</span></div>
+            <div class="bsp-tooltip">Free Spin + Super Bonus combinati. 10 giri gratuiti con tutti e 4 i bonus attivi!</div>
+          </div>
+          <div class="bsp-item spacespin" id="buySpaceSpin" data-cost="1000" data-desc="SPACE SPIN! Un simbolo gigante da 3×3 fino a 6×6 (MAX WIN) appare sulla griglia. Le celle si fondono in un'esplosione cosmica!">
+            <div class="bsp-icon"><span class="bsp-galaxy">✦</span></div>
+            <div class="bsp-info"><span class="bsp-name">SPACE SPIN</span><span class="bsp-cost">1000×</span></div>
+            <div class="bsp-tooltip">Un simbolo gigante (3×3→6×6) appare sulla griglia! Le celle si fondono in un'esplosione cosmica!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM SHEET MENU -->
+  <div class="bs-overlay" id="bsOverlay" onclick="closeBsMenu()">
+    <div class="bs-sheet" onclick="event.stopPropagation()">
+      <div class="bs-handle"></div>
+      <button class="bs-back" id="bsBack" onclick="bsShowGrid()"><span class="bs-back-arrow">←</span> Menu</button>
+      <div class="bs-grid" id="bsGrid">
+        <div class="bs-tile" onclick="bsOpenSection('settings')"><div class="bs-tile-icon">⚙️</div><div class="bs-tile-label">Impostazioni</div></div>
+        <div class="bs-tile" onclick="bsOpenSection('autoplay')"><div class="bs-tile-icon">🔄</div><div class="bs-tile-label">Autoplay</div></div>
+        <div class="bs-tile" onclick="bsOpenSection('history')"><div class="bs-tile-icon">📋</div><div class="bs-tile-label">Storico</div></div>
+        <div class="bs-tile" onclick="bsOpenSection('stats')"><div class="bs-tile-icon">📊</div><div class="bs-tile-label">Statistiche</div></div>
+        <div class="bs-tile" onclick="bsOpenSection('paytable')"><div class="bs-tile-icon">💰</div><div class="bs-tile-label">Pagamenti</div></div>
+        <div class="bs-tile" onclick="bsOpenSection('tutorial')"><div class="bs-tile-icon">🎓</div><div class="bs-tile-label">Tutorial</div></div>
+      </div>
+      <div class="bs-content" id="bsContentArea">
+        <!-- SETTINGS PAGE -->
+        <div class="bs-page active" id="bsSettings">
+          <div class="bs-setting">
+            <div><div class="bs-setting-label">Volume Master</div><div class="bs-setting-desc">Volume generale del gioco</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><input type="range" class="bs-slider" id="bsVolMaster" min="0" max="100" value="35" oninput="updateBsVol()"><span class="bs-val" id="bsVolMasterVal">35%</span></div>
+          </div>
+          <div class="bs-setting">
+            <div><div class="bs-setting-label">Effetti Sonori</div><div class="bs-setting-desc">Attiva/disattiva suoni</div></div>
+            <button class="bs-toggle on" id="bsSfxToggle" onclick="toggleBsSfx()"></button>
+          </div>
+          <div class="bs-setting">
+            <div><div class="bs-setting-label">Musica di Fondo</div><div class="bs-setting-desc">Ambient sci-fi soundtrack</div></div>
+            <button class="bs-toggle" id="bsBgmToggle" onclick="toggleBsBgm()"></button>
+          </div>
+          <div class="bs-setting">
+            <div><div class="bs-setting-label">Velocità Spin</div><div class="bs-setting-desc">Normale o Turbo</div></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="bs-auto-btn selected" id="bsSpeedNorm" onclick="setBsSpeed(1)" style="padding:6px 12px">Normale</button>
+              <button class="bs-auto-btn" id="bsSpeedTurbo" onclick="setBsSpeed(2)" style="padding:6px 12px">Turbo</button>
+            </div>
+          <div class="bs-setting">
+            <div><div class="bs-setting-label">Tutorial</div><div class="bs-setting-desc">Impara come giocare</div></div>
+            <button class="bs-auto-btn" onclick="closeBsMenu();setTimeout(startTutorial,400)" style="padding:8px 20px;color:#fff">Avvia Tutorial</button>
+          </div>
+          </div>
+        </div>
+        <!-- AUTOPLAY PAGE -->
+        <div class="bs-page" id="bsAutoplay">
+          <div class="bs-setting-label" style="margin-bottom:8px">Numero di spin automatici</div>
+          <div class="bs-auto-grid">
+            <button class="bs-auto-btn" onclick="setBsAutoSpins(10)">10</button>
+            <button class="bs-auto-btn" onclick="setBsAutoSpins(25)">25</button>
+            <button class="bs-auto-btn" onclick="setBsAutoSpins(50)">50</button>
+            <button class="bs-auto-btn" onclick="setBsAutoSpins(100)">100</button>
+          </div>
+          <div class="bs-setting">
+            <div><div class="bs-setting-label">Stop se vincita ≥</div><div class="bs-setting-desc">Ferma autoplay su grande vincita</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><input type="range" class="bs-slider" id="bsAutoWinStop" min="0" max="5000" step="100" value="0" oninput="updateBsAutoWinStop()"><span class="bs-val" id="bsAutoWinStopVal">OFF</span></div>
+          </div>
+          <div class="bs-setting">
+            <div><div class="bs-setting-label">Stop se saldo ≤</div><div class="bs-setting-desc">Ferma se il saldo scende troppo</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><input type="range" class="bs-slider" id="bsAutoBalStop" min="0" max="5000" step="100" value="0" oninput="updateBsAutoBalStop()"><span class="bs-val" id="bsAutoBalStopVal">OFF</span></div>
+          </div>
+          <div class="bs-setting">
+            <div><div class="bs-setting-label">Stop su Free Spin</div><div class="bs-setting-desc">Ferma quando si attivano free spin</div></div>
+            <button class="bs-toggle" id="bsAutoFsStop" onclick="toggleBsAutoFs()"></button>
+          </div>
+          <div style="margin-top:16px;text-align:center">
+            <button class="bs-auto-btn" id="bsAutoStart" onclick="startBsAutoplay()" style="padding:10px 30px;font-size:clamp(10px,1.3vw,14px);color:#ffd700;border-color:rgba(255,215,0,0.5);background:rgba(255,215,0,0.1)">AVVIA AUTOPLAY</button>
+          </div>
+        </div>
+        <!-- HISTORY PAGE -->
+        <div class="bs-page" id="bsHistory">
+          <table class="bs-history">
+            <thead><tr><th>#</th><th>Puntata</th><th>Vincita</th><th>Cascate</th></tr></thead>
+            <tbody id="bsHistoryBody"></tbody>
+          </table>
+          <div style="text-align:center;padding:20px;color:rgba(0,180,255,0.3);font-size:clamp(8px,1vw,11px);font-family:'Orbitron',monospace" id="bsHistoryEmpty">Nessun giro registrato</div>
+        </div>
+        <!-- STATS PAGE -->
+        <div class="bs-page" id="bsStats">
+          <div class="bs-stats">
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatSpins">0</div><div class="bs-stat-label">Spin Totali</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatHits">0</div><div class="bs-stat-label">Vincite</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatWon">0</div><div class="bs-stat-label">Totale Vinto</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatWagered">0</div><div class="bs-stat-label">Totale Puntato</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatMaxWin">0</div><div class="bs-stat-label">Vincita Max</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatMaxCasc">0</div><div class="bs-stat-label">Max Cascate</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatRtp">0%</div><div class="bs-stat-label">RTP</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatHitRate">0%</div><div class="bs-stat-label">Hit Rate</div></div>
+          </div>
+        </div>
+        <!-- PAYTABLE PAGE -->
+        <div class="bs-page" id="bsPaytable">
+          <div class="paytable-grid" id="bsPaytableGrid"></div>
+          <div class="paytable-rules" id="bsPaytableRules"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BIG WIN OVERLAY -->
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatWagered">0</div><div class="bs-stat-label">Totale Puntato</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatMaxWin">0</div><div class="bs-stat-label">Vincita Max</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatMaxCasc">0</div><div class="bs-stat-label">Max Cascate</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatRtp">0%</div><div class="bs-stat-label">RTP</div></div>
+            <div class="bs-stat-card"><div class="bs-stat-value" id="bsStatHitRate">0%</div><div class="bs-stat-label">Hit Rate</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="big-win-overlay" id="bigWinOverlay">
+    <div class="big-win-particles" id="bigWinParticles"></div>
+    <div class="big-win-box">
+      <div class="big-win-title" id="bigWinTitle">BIG WIN!</div>
+      <div class="big-win-amount" id="bigWinAmount">0</div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+  <div class="dock-section">
+    <div class="dock-label">Saldo</div>
+    <div class="dock-value" id="balance">1.000</div>
+  </div>
+  <div class="dock-separator"></div>
+  <div class="dock-section">
+    <div class="dock-label">Puntata</div>
+    <div class="dock-bet">
+      <button class="dock-bet-btn" id="betDown">−</button>
+      <div class="dock-value" id="betVal">50</div>
+      <button class="dock-bet-btn" id="betUp">+</button>
+    </div>
+  </div>
+  <div class="dock-separator"></div>
+  <div class="dock-spin">
+    <div class="spin-btn-wrap" id="spinBtn" onclick="spin()" title="SPIN">
+      <div class="spin-ring spin-ring-outer"></div>
+      <div class="spin-ring spin-ring-inner"></div>
+      <div class="spin-core">
+        <svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19" fill="#fff"/></svg>
+      </div>
+    </div>
+    <div class="spin-ring-magg" id="spinRingMagg" title="Attiva/disattiva spin maggiorato +25%">
+      <span class="spin-ring-label" id="ringLabel">1.25x</span>
+    </div>
+  </div>
+  <div class="dock-separator"></div>
+  <div class="dock-section">
+    <div class="dock-label">Vincita</div>
+    <div class="dock-value gold" id="winAmount">0</div>
+  </div>
+  <div class="dock-separator"></div>
+  <!-- DROPDOWN MENU TRIGGER -->
+  <div class="dock-section dock-actions">
+    <button class="dock-action-btn dock-labeled-btn" id="btnTurbo" title="Turbo (velocità 2.5×)">
+      <span class="dock-btn-icon">⚡</span>
+      <span class="dock-btn-label">TURBO</span>
+    </button>
+    <button class="dock-action-btn dock-labeled-btn" id="btnAuto" title="Giri automatici">
+      <span class="dock-btn-icon">🔄</span>
+      <span class="dock-btn-label">AUTO</span>
+    </button>
+    <div class="dock-dropdown-wrap">
+      <button class="dock-action-btn dock-labeled-btn dock-menu-trigger" id="btnMenuDrop" title="Opzioni">
+        <span class="dock-btn-icon">☰</span>
+        <span class="dock-btn-label">MENU</span>
+      </button>
+      <div class="dock-dropdown" id="dockDropdown">
+        <button class="dd-item" id="btnSound">🔊 <span>Suoni</span></button>
+        <button class="dd-item" id="btnPaytable">📋 <span>Pagamenti</span></button>
+        <button class="dd-item" onclick="openBsMenu()">⚙ <span>Impostazioni</span></button>
+        <button class="dd-item" onclick="openShop()">🛒 <span>Negozio</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<button class="dev-toggle" id="devToggle">⚙</button>
+<button class="design-toggle" id="designToggle">✎</button>
+<div class="design-panel" id="designPanel">
+  <div class="design-panel-header">
+    <h2>Editor Grafico</h2>
+    <button class="design-close" id="designClose">✕</button>
+  </div>
+  <div class="design-scroll">
+
+    <!-- LAYOUT GENERALE -->
+    <div class="design-section open" data-section="layout">
+      <div class="design-section-header"><span class="design-section-title">Layout Generale</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Padding Lat.</label><input type="range" min="0" max="25" value="8" data-target="gameArea" data-prop="paddingLR"><span class="design-val">8%</span></div>
+        <div class="design-row"><label>Gap Aree</label><input type="range" min="0" max="4" step="0.5" value="1" data-target="gameArea" data-prop="gap"><span class="design-val">1%</span></div>
+        <div class="design-row"><label>Spazio Basso</label><input type="range" min="0" max="120" value="54" data-target="gameArea" data-prop="paddingBottom"><span class="design-val">54px</span></div>
+        <div class="design-row"><label>Offset X Gioco</label><input type="range" min="-800" max="800" value="0" data-target="gameArea" data-prop="offsetX"><span class="design-val">0px</span></div>
+        <div class="design-row"><label>Offset Y Gioco</label><input type="range" min="-500" max="500" value="0" data-target="gameArea" data-prop="offsetY"><span class="design-val">0px</span></div>
+      </div>
+    </div>
+
+
+    <!-- GRIGLIA -->
+    <div class="design-section open" data-section="grid">
+      <div class="design-section-header"><span class="design-section-title">Griglia</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Gap Celle</label><input type="range" min="0" max="8" step="0.5" value="2" data-target="gridContainer" data-prop="gap"><span class="design-val">2px</span></div>
+        <div class="design-row"><label>Padding</label><input type="range" min="0" max="12" value="3" data-target="gridContainer" data-prop="padding"><span class="design-val">3px</span></div>
+        <div class="design-row"><label>Bordo</label><input type="range" min="0" max="6" step="0.5" value="2" data-target="gridFrame" data-prop="border"><span class="design-val">2px</span></div>
+        <div class="design-row"><label>Raggio Bordo</label><input type="range" min="0" max="20" value="6" data-target="gridFrame" data-prop="borderRadius"><span class="design-val">6px</span></div>
+        <div class="design-row"><label>Max Altezza</label><input type="range" min="40" max="100" value="100" data-target="gridFrame" data-prop="maxH"><span class="design-val">100%</span></div>
+        <div class="design-row"><label>Offset X</label><input type="range" min="-500" max="500" value="0" data-target="gridFrame" data-prop="offsetX"><span class="design-val">0px</span></div>
+        <div class="design-row"><label>Offset Y</label><input type="range" min="-500" max="500" value="0" data-target="gridFrame" data-prop="offsetY"><span class="design-val">0px</span></div>
+      </div>
+    </div>
+
+    <!-- CELLE -->
+    <div class="design-section" data-section="cells">
+      <div class="design-section-header"><span class="design-section-title">Celle</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Bordo</label><input type="range" min="0" max="4" step="0.5" value="1.5" data-target="cells" data-prop="border"><span class="design-val">1.5px</span></div>
+        <div class="design-row"><label>Raggio</label><input type="range" min="0" max="16" value="4" data-target="cells" data-prop="borderRadius"><span class="design-val">4px</span></div>
+      </div>
+    </div>
+
+    <!-- PANNELLO SINISTRO -->
+    <div class="design-section" data-section="side">
+      <div class="design-section-header"><span class="design-section-title">Pannello Sinistro</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Larghezza</label><input type="range" min="50" max="200" value="90" data-target="sidePanels" data-prop="width"><span class="design-val">90px</span></div>
+        <div class="design-row"><label>Offset X</label><input type="range" min="-500" max="500" value="0" data-target="sidePanelL" data-prop="offsetX"><span class="design-val">0px</span></div>
+        <div class="design-row"><label>Offset Y</label><input type="range" min="-500" max="500" value="0" data-target="sidePanelL" data-prop="offsetY"><span class="design-val">0px</span></div>
+      </div>
+    </div>
+
+
+    <!-- BARRA INFERIORE HUD -->
+    <div class="design-section" data-section="bottombar">
+      <div class="design-section-header"><span class="design-section-title">HUD Inferiore</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Padding V</label><input type="range" min="0" max="20" value="4" data-target="bottomBar" data-prop="paddingV"><span class="design-val">4px</span></div>
+        <div class="design-row"><label>Padding H</label><input type="range" min="0" max="40" value="8" data-target="bottomBar" data-prop="paddingH"><span class="design-val">8px</span></div>
+        <div class="design-row"><label>Opacità Sfondo</label><input type="range" min="0" max="100" value="0" data-target="bottomBar" data-prop="bgOpacity"><span class="design-val">0%</span></div>
+        <div class="design-row"><label>Sfocatura</label><input type="range" min="0" max="30" value="0" data-target="bottomBar" data-prop="blur"><span class="design-val">0px</span></div>
+        <div class="design-row"><label>Bordo Top</label><input type="range" min="0" max="4" step="0.5" value="0" data-target="bottomBar" data-prop="borderTop"><span class="design-val">0px</span></div>
+        <div class="design-row"><label>Offset X</label><input type="range" min="-600" max="600" value="0" data-target="bottomBar" data-prop="offsetX"><span class="design-val">0px</span></div>
+        <div class="design-row"><label>Offset Y</label><input type="range" min="-200" max="200" value="0" data-target="bottomBar" data-prop="offsetY"><span class="design-val">0px</span></div>
+        <div class="design-row"><label>Largh. Max</label><input type="range" min="30" max="100" value="100" data-target="bottomBar" data-prop="width"><span class="design-val">100%</span></div>
+      </div>
+    </div>
+
+    <!-- PANNELLO BONUS LATERALE DESTRA -->
+    <div class="design-section" data-section="bonusBar">
+      <div class="design-section-header"><span class="design-section-title">Pannello Bonus (Dx)</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Icona Size</label><input type="range" min="20" max="65" value="32" data-target="bonusBar" data-prop="iconSize"><span class="design-val">32px</span></div>
+        <div class="design-row"><label>Gap</label><input type="range" min="0" max="14" value="3" data-target="bonusBar" data-prop="gap"><span class="design-val">3px</span></div>
+        <div class="design-row"><label>Opacità</label><input type="range" min="0" max="100" value="55" data-target="bonusBar" data-prop="bgOpacity"><span class="design-val">55%</span></div>
+        <div class="design-row"><label>Offset X</label><input type="range" min="-500" max="500" value="0" data-target="bonusBar" data-prop="offsetX"><span class="design-val">0px</span></div>
+        <div class="design-row"><label>Offset Y</label><input type="range" min="-500" max="500" value="0" data-target="bonusBar" data-prop="offsetY"><span class="design-val">0px</span></div>
+        <div class="design-row"><label>Visibile</label><input type="range" min="0" max="1" step="1" value="1" data-target="bonusBar" data-prop="visible"><span class="design-val">Sì</span></div>
+      </div>
+    </div>
+
+    <!-- PULSANTE SPIN -->
+    <div class="design-section" data-section="spinbtn">
+      <div class="design-section-header"><span class="design-section-title">Pulsante Spin</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Dimensione</label><input type="range" min="30" max="120" value="58" data-target="spinBtn" data-prop="size"><span class="design-val">58px</span></div>
+      </div>
+    </div>
+
+
+    <!-- TESTI -->
+    <div class="design-section" data-section="fonts">
+      <div class="design-section-header"><span class="design-section-title">Testi</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Saldo Size</label><input type="range" min="8" max="24" value="13" data-target="balanceText" data-prop="fontSize"><span class="design-val">13px</span></div>
+        <div class="design-row"><label>Vincita Size</label><input type="range" min="8" max="24" value="13" data-target="winText" data-prop="fontSize"><span class="design-val">13px</span></div>
+        <div class="design-row"><label>Side Title</label><input type="range" min="6" max="14" value="9" data-target="sideTitles" data-prop="fontSize"><span class="design-val">9px</span></div>
+      </div>
+    </div>
+
+
+    <!-- ANIMAZIONE SPIN -->
+    <div class="design-section" data-section="spinAnim">
+      <div class="design-section-header"><span class="design-section-title">Animazione Spin</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Vel. Riforma</label><input type="range" min="100" max="500" step="25" value="250" data-target="spinAnim" data-prop="colDelay"><span class="design-val">250ms</span></div>
+        <div class="design-row"><label>Vel. Cascade</label><input type="range" min="300" max="1500" step="50" value="650" data-target="spinAnim" data-prop="cascadeWait"><span class="design-val">650ms</span></div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK VINCITE -->
+    <div class="design-section" data-section="winFeedback">
+      <div class="design-section-header"><span class="design-section-title">Feedback Vincite</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Neon Vincita</label><input type="range" min="0" max="1" step="1" value="1" data-target="winFeedback" data-prop="neonEnabled"><span class="design-val">Sì</span></div>
+        <div class="design-row"><label>Popup Soglia</label><input type="range" min="5" max="50" step="5" value="20" data-target="winFeedback" data-prop="popupThreshold"><span class="design-val">20x</span></div>
+        <div class="design-row"><label>Particelle Popup</label><input type="range" min="10" max="60" value="30" data-target="winFeedback" data-prop="popupParticles"><span class="design-val">30</span></div>
+        <div class="design-row"><label>Durata Popup</label><input type="range" min="1500" max="5000" step="250" value="3200" data-target="winFeedback" data-prop="popupDuration"><span class="design-val">3200ms</span></div>
+      </div>
+    </div>
+
+    <!-- AUDIO -->
+    <div class="design-section" data-section="audioSettings">
+      <div class="design-section-header"><span class="design-section-title">Audio</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Volume</label><input type="range" min="0" max="100" value="35" data-target="audio" data-prop="masterVol"><span class="design-val">35%</span></div>
+        <div class="design-row"><label>Suoni</label><input type="range" min="0" max="1" step="1" value="1" data-target="audio" data-prop="sfxEnabled"><span class="design-val">Sì</span></div>
+        <div class="design-row"><label>Musica BGM</label><input type="range" min="0" max="1" step="1" value="0" data-target="audio" data-prop="bgmEnabled"><span class="design-val">No</span></div>
+      </div>
+    </div>
+
+    <!-- SFONDO DINAMICO -->
+    <div class="design-section" data-section="dynamicBg">
+      <div class="design-section-header"><span class="design-section-title">Sfondo Dinamico</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Stelle</label><input type="range" min="0" max="1" step="1" value="1" data-target="dynamicBg" data-prop="starsVisible"><span class="design-val">Sì</span></div>
+        <div class="design-row"><label>Nebulosa</label><input type="range" min="0" max="1" step="1" value="1" data-target="dynamicBg" data-prop="nebulaVisible"><span class="design-val">Sì</span></div>
+        <div class="design-row"><label>Stelle Cadenti</label><input type="range" min="0" max="1" step="1" value="1" data-target="dynamicBg" data-prop="shootingStars"><span class="design-val">Sì</span></div>
+        <div class="design-row"><label>Parallasse</label><input type="range" min="0" max="1" step="1" value="1" data-target="dynamicBg" data-prop="parallax"><span class="design-val">Sì</span></div>
+        <div class="design-row"><label>Glow Griglia</label><input type="range" min="0" max="1" step="1" value="1" data-target="dynamicBg" data-prop="gridGlow"><span class="design-val">Sì</span></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM SHEET MENU -->
+    <div class="design-section" data-section="bsMenu">
+      <div class="design-section-header"><span class="design-section-title">Menu Bottom Sheet</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Max Altezza</label><input type="range" min="40" max="90" value="75" data-target="bsMenu" data-prop="maxH"><span class="design-val">75vh</span></div>
+        <div class="design-row"><label>Raggio Top</label><input type="range" min="0" max="30" value="20" data-target="bsMenu" data-prop="borderRadius"><span class="design-val">20px</span></div>
+      </div>
+    </div>
+
+    <!-- BIG WIN POPUP -->
+    <div class="design-section" data-section="bigWin">
+      <div class="design-section-header"><span class="design-section-title">Big Win Popup</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Font Titolo</label><input type="range" min="20" max="80" value="56" data-target="bigWin" data-prop="titleSize"><span class="design-val">56px</span></div>
+        <div class="design-row"><label>Font Importo</label><input type="range" min="24" max="100" value="72" data-target="bigWin" data-prop="amountSize"><span class="design-val">72px</span></div>
+      </div>
+    </div>
+
+    <!-- PANNELLO VINCITA TESSERACT -->
+    <div class="design-section" data-section="tessWinPanel">
+      <div class="design-section-header"><span class="design-section-title">Pannello Vincita</span><span class="design-section-arrow">▶</span></div>
+      <div class="design-section-body">
+        <div class="design-row"><label>Posizione Y</label><input type="range" min="-80" max="-20" value="-54" data-target="tessWin" data-prop="top"><span class="design-val">-54px</span></div>
+        <div class="design-row"><label>Padding H</label><input type="range" min="6" max="40" value="22" data-target="tessWin" data-prop="paddingH"><span class="design-val">22px</span></div>
+        <div class="design-row"><label>Padding V</label><input type="range" min="2" max="16" value="6" data-target="tessWin" data-prop="paddingV"><span class="design-val">6px</span></div>
+        <div class="design-row"><label>Font Size</label><input type="range" min="8" max="30" value="14" data-target="tessWin" data-prop="fontSize"><span class="design-val">14px</span></div>
+        <div class="design-row"><label>Raggio Bordo</label><input type="range" min="4" max="24" value="14" data-target="tessWin" data-prop="borderRadius"><span class="design-val">14px</span></div>
+      </div>
+    </div>
+
+    <button class="design-reset-btn" id="designResetAll">Reset Tutto</button>
+  </div>
+</div>
+<div class="dev-panel" id="devPanel">
+  <h3>Spin Speed</h3>
+  <div class="dev-row"><label>×</label><input type="range" id="speedSlider" min="0.5" max="3" step="0.1" value="1"></div>
+  <h3>Extra Drop Rate</h3>
+  <div class="dev-row"><label>%</label><input type="range" id="extraRateSlider" min="0" max="10" step="0.5" value="2"></div>
+  <h3>Extra Rates</h3>
+  <div class="dev-row"><label>Buco</label><input type="number" id="rBuco" min="0" max="10" step="0.1" value="0.5"></div>
+  <div class="dev-row"><label>Super</label><input type="number" id="rSuper" min="0" max="10" step="0.1" value="0.5"></div>
+  <div class="dev-row"><label>Gravi</label><input type="number" id="rGravi" min="0" max="10" step="0.1" value="0.5"></div>
+  <div class="dev-row"><label>Tess</label><input type="number" id="rTess" min="0" max="10" step="0.1" value="0.5"></div>
+  <h3>Stats</h3>
+  <div class="dev-row"><span>Spins:</span><span id="statSpins">0</span></div>
+  <div class="dev-row"><span>Wagered:</span><span id="statWagered">0</span></div>
+  <div class="dev-row"><span>Won:</span><span id="statWon">0</span></div>
+  <div class="dev-row"><span>Hits:</span><span id="statHits">0</span></div>
+  <div class="dev-row"><span>Max Win:</span><span id="statMaxW">0</span></div>
+  <div class="dev-row"><span>Max Casc:</span><span id="statMaxC">0</span></div>
+  <div class="dev-row"><span>Avg Casc:</span><span id="statAvgC">0</span></div>
+  <div class="dev-row"><span style="color:#ffd700;font-weight:900">RTP:</span><span id="statRTP" style="color:#ffd700;font-weight:900">0%</span></div>
+  <div class="dev-row"><span>Dust:</span><span id="statDust">0%</span></div>
+  <h3>Audio</h3>
+  <div class="dev-row"><label>Volume</label><input type="range" id="volSlider" min="0" max="100" value="35"></div>
+  <h3>Actions</h3>
+  <button class="dev-btn" id="btnForceWin">Force Win</button>
+  <button class="dev-btn" id="btnForceBH">Force BH</button>
+  <button class="dev-btn" id="btnAdd10k">+1k</button>
+  <button class="dev-btn" id="btnReset">Reset</button>
+  <button class="dev-btn" id="btnSim100">Sim 100</button>
+  <h3>Force Extra</h3>
+  <button class="dev-btn" id="btnForceBuco">Buco Nero</button>
+  <button class="dev-btn" id="btnForceSuper">Supernova</button>
+  <button class="dev-btn" id="btnForceAnti">Antigravita</button>
+  <button class="dev-btn" id="btnForceTess">Tesseract</button>
+  <h3>Tesseract Tokens</h3>
+  <button class="dev-btn" id="btnForceExpand">Force Expand</button>
+  <button class="dev-btn" id="btnForceCollect">Force Collect</button>
+  <button class="dev-btn" id="btnForceMaxWin">Force Max Win</button>
+  <h3>Scatter / Free Spin</h3>
+  <button class="dev-btn" id="btnForceScatter3">3 Scatter</button>
+  <button class="dev-btn" id="btnForceScatter5">5 Scatter</button>
+  <button class="dev-btn" id="btnForceFreeSpins">+10 Free Spin</button>
+  <h3>Dust Bar</h3>
+  <button class="dev-btn" id="btnDustFill">Fill Dust</button>
+  <button class="dev-btn" id="btnDustReset">Reset Dust</button>
+  <h3>Log</h3>
+  <div class="dev-log" id="devLog"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="state.js"></script>
+<script src="audio.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
