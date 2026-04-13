@@ -122,7 +122,7 @@ function findClusters(){
   return rawClusters.filter(cl=>cl.sz>=S.minCl);
 }
 
-function calcPay(clusters){let total=0;for(const cl of clusters){const pt=PAYTABLE[cl.sym];if(!pt)continue;const idx=Math.min(cl.sz,pt.length-1);const basePay=pt[idx];/* Wild multiplier: product of ALL wild cellMults in the cluster (each wild multiplies) */let wildMult=1;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]==='wild'&&S.cellMult[r][c]>1)wildMult*=S.cellMult[r][c];});/* Cascade multiplier: average of non-wild cell multipliers */let cascMult=0;let normCount=0;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]!=='wild'){cascMult+=S.cellMult[r][c];normCount++;}});const avgCasc=normCount>0?cascMult/normCount:1;const finalPay=basePay*S.bet*avgCasc*wildMult;dLog(`  → ${cl.sym} ×${cl.sz}: base=${basePay} wild=×${wildMult} casc=×${avgCasc.toFixed(1)} = ${finalPay.toFixed(0)}`,'info');total+=finalPay;}return Math.round(total*100)/100;}
+function calcPay(clusters){let total=0;for(const cl of clusters){const pt=PAYTABLE[cl.sym];if(!pt)continue;const idx=Math.min(cl.sz,pt.length-1);const basePay=pt[idx];if(basePay<=0)continue;/* Wild multiplier: product of ALL wild cellMults in the cluster (each wild multiplies) */let wildMult=1;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]==='wild'&&S.cellMult[r][c]>1)wildMult*=S.cellMult[r][c];});/* Cascade multiplier: average of non-wild cell multipliers */let cascMult=0;let normCount=0;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]!=='wild'){cascMult+=S.cellMult[r][c];normCount++;}});const avgCasc=normCount>0?cascMult/normCount:1;const rawPay=basePay*S.bet*avgCasc*wildMult;const finalPay=Math.max(1,Math.round(rawPay));dLog(`  → ${cl.sym} ×${cl.sz}: base=${basePay} wild=×${wildMult} casc=×${avgCasc.toFixed(1)} = ${finalPay}`,'info');total+=finalPay;}return total;}
 
 const dly=ms=>new Promise(r=>setTimeout(r,Math.max(10,ms/S.speedMult)));
 const fmt=n=>n.toLocaleString('it-IT');
@@ -771,7 +771,7 @@ async function triggerTesseract(){
         const tok=pickToken();
         if(tok.type==='coin'){
           const prevMult=Math.random()<0.03?MAX_WIN_MULT:COIN_MULTS[Math.floor(Math.random()*COIN_MULTS.length)];
-          const rVal=Math.round(S.bet*prevMult);
+          const rVal=Math.max(1,Math.round(S.bet*prevMult));
           const prevIsMax=prevMult===MAX_WIN_MULT;
           if(prevIsMax){
             sw.innerHTML=`<div class="tess-inline-coin tess-maxwin"><div class="tess-coin">💎</div><div class="tess-inline-val">${fmt(rVal)}</div></div>`;
@@ -791,7 +791,7 @@ async function triggerTesseract(){
       const teaseCell=emptyCells[Math.floor(Math.random()*emptyCells.length)];
       clearInterval(teaseCell._spinIv);
       const teaseSw=teaseCell.el.querySelector('.sw');
-      const teaseVal=fmt(Math.round(S.bet*MAX_WIN_MULT));
+      const teaseVal=fmt(Math.max(1,Math.round(S.bet*MAX_WIN_MULT)));
       /* Show max win in slow motion */
       SFX.tessNearMiss();
       teaseSw.innerHTML=`<div class="tess-inline-coin tess-maxwin"><div class="tess-coin" style="color:#ff4444;font-size:clamp(14px,1.8vw,22px)">💎</div><div class="tess-inline-val" style="color:#ff4444;font-size:clamp(12px,1.5vw,18px)">${teaseVal}</div></div>`;
@@ -811,7 +811,7 @@ async function triggerTesseract(){
       teaseCell._spinIv=setInterval(()=>{
         const tok=pickToken();
         if(tok.type==='coin'){
-          const rVal=Math.round(S.bet*COIN_MULTS[Math.floor(Math.random()*COIN_MULTS.length)]);
+          const rVal=Math.max(1,Math.round(S.bet*COIN_MULTS[Math.floor(Math.random()*COIN_MULTS.length)]));
           teaseSw.innerHTML=`<div class="tess-inline-coin tess-token-coin"><div class="tess-coin">${tok.icon}</div><div class="tess-inline-val">${fmt(rVal)}</div></div>`;
         }else{
           teaseSw.innerHTML=`<div class="tess-inline-coin tess-token-${tok.type}"><div class="tess-coin">${tok.icon}</div></div>`;
@@ -839,7 +839,7 @@ async function triggerTesseract(){
         if(tok.type==='coin'){
           const isMaxWin=S.forceMaxWin?((S.forceMaxWin=false),true):(Math.random()<MAX_WIN_CHANCE);
           const mult=isMaxWin?MAX_WIN_MULT:COIN_MULTS[Math.floor(Math.random()*COIN_MULTS.length)];
-          const coinVal=Math.round(S.bet*mult);
+          const coinVal=Math.max(1,Math.round(S.bet*mult));
           tc.value=coinVal;
           tessTotal+=coinVal;
           if(isMaxWin){
@@ -2220,9 +2220,7 @@ document.getElementById('btnTurbo').addEventListener('click',function(){S.turbo=
 document.getElementById('btnAuto').addEventListener('click',function(){S.auto=!S.auto;this.classList.toggle('active');});
 /* Spin Boost Panel — sotto la griglia */
 S.activeBoostMult=0;
-const BOOST_MULTS=[{id:'boostBtn125',costId:'boostCost125',mult:1.25,bonusChance:0.15},
-                   {id:'boostBtn150',costId:'boostCost150',mult:1.5,bonusChance:0.25},
-                   {id:'boostBtn200',costId:'boostCost200',mult:2,bonusChance:0.40}];
+const BOOST_MULTS=[{id:'boostBtn125',costId:'boostCost125',mult:1.25,bonusChance:0.15}];
 function updateBoostPanel(){
   BOOST_MULTS.forEach(b=>{
     const btn=document.getElementById(b.id);
