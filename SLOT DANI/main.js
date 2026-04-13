@@ -2911,14 +2911,46 @@ updateBonusBtns();if(typeof updateSpinMaggButtons==='function')updateSpinMaggBut
     return val;
   }
 
+  /* ── localStorage persistence ── */
+  const STORAGE_KEY='cyberSlotDesignSettings';
+
+  function saveAllSettings(){
+    const settings={};
+    dp.querySelectorAll('input[type="range"]').forEach(inp=>{
+      const key=inp.dataset.target+'__'+inp.dataset.prop;
+      settings[key]=inp.value;
+    });
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify(settings));}catch(e){}
+  }
+
+  function loadAllSettings(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      if(!raw)return;
+      const settings=JSON.parse(raw);
+      dp.querySelectorAll('input[type="range"]').forEach(inp=>{
+        const key=inp.dataset.target+'__'+inp.dataset.prop;
+        if(key in settings){
+          inp.value=settings[key];
+          const display=applyVal(inp.dataset.target,inp.dataset.prop,parseFloat(inp.value));
+          inp.nextElementSibling.textContent=display;
+        }
+      });
+    }catch(e){}
+  }
+
   /* Bind all sliders */
   dp.querySelectorAll('input[type="range"]').forEach(inp=>{
     const valSpan=inp.nextElementSibling;
     inp.addEventListener('input',()=>{
       const display=applyVal(inp.dataset.target,inp.dataset.prop,parseFloat(inp.value));
       valSpan.textContent=display;
+      saveAllSettings();
     });
   });
+
+  /* Load saved settings on startup */
+  loadAllSettings();
 
   /* Reset all */
   document.getElementById('designResetAll').addEventListener('click',()=>{
@@ -2938,6 +2970,8 @@ updateBonusBtns();if(typeof updateSpinMaggButtons==='function')updateSpinMaggBut
       const display=applyVal(inp.dataset.target,inp.dataset.prop,parseFloat(inp.value));
       inp.nextElementSibling.textContent=display;
     });
+    /* Clear saved settings */
+    try{localStorage.removeItem(STORAGE_KEY);}catch(e){}
   });
 })();
 
