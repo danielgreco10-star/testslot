@@ -826,7 +826,7 @@ async function triggerTesseract(){
     /* Sort empty cells by row then column (top-left → bottom-right) */
     const sortedEmpty=[...emptyCells].sort((a,b)=>a.r!==b.r?a.r-b.r:a.c-b.c);
     for(const tc of sortedEmpty){
-      const hits=S.forceToken?true:(Math.random()<0.20);
+      const hits=S.forceToken?true:(Math.random()<0.08);
       clearInterval(tc._spinIv);
 
       if(hits){
@@ -1217,11 +1217,11 @@ async function triggerFreeSpins(numSpins){
   document.getElementById('fsMult').classList.add('visible');
 
   /* Run free spins with growing multiplier */
-  let fsMult=S.jackpotMode?5:0.5;/* Jackpot Mode starts at 5x */
+  let fsMult=S.jackpotMode?5:1;/* Jackpot Mode starts at 5x, normal at 1x */
   while(S.freeSpins>0){
     S.freeSpins--;
     fsCountEl.textContent=S.freeSpins;
-    fsMult+=0.45;/* Multiplier grows by 0.45x each spin: 0.95x, 1.4x, 1.85x... */
+    fsMult+=0.5;/* Multiplier grows by 0.5x each spin: 1.5x, 2x, 2.5x... */
     const fsMultEl=document.getElementById('fsMultVal');
     fsMultEl.textContent='×'+fsMult;
     fsMultEl.classList.add('fs-mult-bump');
