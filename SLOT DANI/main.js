@@ -2855,6 +2855,11 @@ updateBonusBtns();if(typeof updateSpinMaggButtons==='function')updateSpinMaggBut
       case 'bonusBar_offsetX':{const bb=document.getElementById('bonusSidePanel');if(bb){bb._oxVal=+val;bb.style.transform='translate('+val+'px,'+(bb._oyVal||0)+'px)';}return val+'px';}
       case 'bonusBar_offsetY':{const bb=document.getElementById('bonusSidePanel');if(bb){bb._oyVal=+val;bb.style.transform='translate('+(bb._oxVal||0)+'px,'+val+'px)';}return val+'px';}
       case 'bonusBar_visible':{const bb=document.getElementById('bonusSidePanel');if(bb)bb.style.display=+val?'flex':'none';return +val?'Sì':'No';}
+      case 'bonusBar_imgScale':{document.querySelectorAll('.bsp-icon img').forEach(img=>{img.style.width=val+'%';img.style.height=val+'%';});return val+'%';}
+      case 'bonusBar_iconRadius':{document.querySelectorAll('.bsp-icon').forEach(ic=>{ic.style.borderRadius=val+'%';});return val+'%';}
+      case 'bonusBar_iconBorder':{document.querySelectorAll('.bsp-icon').forEach(ic=>{ic.style.borderWidth=val+'px';});return val+'px';}
+      case 'bonusBar_itemRadius':{document.querySelectorAll('.bsp-item').forEach(it=>{it.style.borderRadius=val+'px';});return val+'px';}
+      case 'bonusBar_itemPadding':{document.querySelectorAll('.bsp-item').forEach(it=>{it.style.padding=val+'px '+val+'px';});return val+'px';}
       /* Spin */
       case 'spinBtn_size': els.spinBtn.style.width=val+'px';els.spinBtn.style.height=val+'px';return val+'px';
       /* Fonts */
