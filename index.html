@@ -13,11 +13,13 @@ html,body{min-height:100vh}
 body{
   background:#05050f;
   font-family:'Space Grotesk',sans-serif;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
   color:#fff;
   overflow-x:hidden;
-  padding:40px 20px;
   position:relative;
+}
+#root{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:40px 20px;position:relative;
 }
 
 /* ===== BACKGROUND ===== */
@@ -60,13 +62,23 @@ body{
 @keyframes float2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,-60px) scale(1.15)}}
 @keyframes float3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.25)}}
 
+.cursor-glow{
+  position:fixed;width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(168,85,247,.15),transparent 70%);
+  pointer-events:none;z-index:1;
+  transform:translate(-50%,-50%);
+  transition:opacity .3s ease;
+}
+
 /* ===== LAYOUT ===== */
 .container{
   position:relative;z-index:2;
   display:flex;flex-direction:column;align-items:center;
   gap:50px;
   width:100%;max-width:1100px;
+  animation:fadeUp .8s cubic-bezier(.22,1,.36,1) both;
 }
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 
 .hero{display:flex;flex-direction:column;align-items:center;gap:14px}
 
@@ -114,7 +126,12 @@ h1{
   border:1px solid rgba(255,255,255,.08);
   transition:transform .5s cubic-bezier(.175,.885,.32,1.275), box-shadow .5s ease, border-color .5s ease;
   isolation:isolate;
+  animation:cardIn .7s cubic-bezier(.22,1,.36,1) both;
 }
+.card:nth-child(1){animation-delay:.15s}
+.card:nth-child(2){animation-delay:.3s}
+@keyframes cardIn{from{opacity:0;transform:translateY(40px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+
 .card::before{
   content:'';position:absolute;inset:0;border-radius:24px;
   padding:1px;
@@ -124,33 +141,23 @@ h1{
   opacity:0;transition:opacity .5s ease;
   pointer-events:none;
 }
-.card:hover{
+.card.hovered{
   transform:translateY(-12px) scale(1.02);
   box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 60px var(--glow,rgba(124,58,237,.3));
   border-color:rgba(255,255,255,.15);
 }
-.card:hover::before{opacity:1}
+.card.hovered::before{opacity:1}
 
 .card.cyber{--accent:#a855f7;--glow:rgba(168,85,247,.35)}
 .card.irish{--accent:#10b981;--glow:rgba(16,185,129,.35)}
 
-.card-preview{
-  position:relative;
-  width:100%;aspect-ratio:16/10;
-  overflow:hidden;
-}
+.card-preview{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden}
 .card-preview img{
   width:100%;height:100%;object-fit:cover;
   transition:transform .8s cubic-bezier(.25,.46,.45,.94), filter .5s ease;
 }
-.card:hover .card-preview img{
-  transform:scale(1.12);
-  filter:brightness(1.2) saturate(1.2);
-}
-.card-overlay{
-  position:absolute;inset:0;
-  background:linear-gradient(to top,rgba(5,5,15,.98) 0%,rgba(5,5,15,.6) 40%,rgba(5,5,15,.15) 70%,transparent 100%);
-}
+.card.hovered .card-preview img{transform:scale(1.12);filter:brightness(1.2) saturate(1.2)}
+.card-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(5,5,15,.98) 0%,rgba(5,5,15,.6) 40%,rgba(5,5,15,.15) 70%,transparent 100%)}
 .card-shine{
   position:absolute;inset:0;
   background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.15) 50%,transparent 60%);
@@ -158,7 +165,7 @@ h1{
   transition:transform .8s ease;
   pointer-events:none;
 }
-.card:hover .card-shine{transform:translateX(100%)}
+.card.hovered .card-shine{transform:translateX(100%)}
 
 .card-badge{
   position:absolute;top:18px;right:18px;
@@ -172,17 +179,9 @@ h1{
 .badge-cyber{background:rgba(168,85,247,.25);border:1px solid rgba(168,85,247,.5);color:#e9d5ff;box-shadow:0 4px 20px rgba(168,85,247,.3)}
 .badge-irish{background:rgba(16,185,129,.25);border:1px solid rgba(16,185,129,.5);color:#a7f3d0;box-shadow:0 4px 20px rgba(16,185,129,.3)}
 
-.card-info{
-  position:relative;
-  padding:28px 26px 26px;
-  display:flex;flex-direction:column;gap:14px;
-}
+.card-info{position:relative;padding:28px 26px 26px;display:flex;flex-direction:column;gap:14px}
 
-.card-title{
-  font-size:1.75rem;font-weight:800;
-  line-height:1.1;
-  letter-spacing:.02em;
-}
+.card-title{font-size:1.75rem;font-weight:800;line-height:1.1;letter-spacing:.02em}
 .card-title.cyber{
   font-family:'Audiowide',sans-serif;
   font-size:1.85rem;
@@ -197,10 +196,7 @@ h1{
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 
-.card-desc{
-  font-size:.9rem;color:rgba(255,255,255,.6);line-height:1.6;
-  font-weight:400;
-}
+.card-desc{font-size:.9rem;color:rgba(255,255,255,.6);line-height:1.6;font-weight:400}
 
 .card-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .tag{
@@ -233,10 +229,10 @@ h1{
   transform:translateX(-100%);
   transition:transform .6s ease;
 }
-.card:hover .play-btn::before{transform:translateX(100%)}
+.card.hovered .play-btn::before{transform:translateX(100%)}
 .play-btn.cyber{background:linear-gradient(135deg,#7c3aed 0%,#a855f7 50%,#4f46e5 100%);box-shadow:0 8px 24px rgba(124,58,237,.4)}
 .play-btn.irish{background:linear-gradient(135deg,#059669 0%,#10b981 50%,#f59e0b 100%);box-shadow:0 8px 24px rgba(16,185,129,.4)}
-.card:hover .play-btn{transform:translateX(4px);filter:brightness(1.15)}
+.card.hovered .play-btn{transform:translateX(4px);filter:brightness(1.15)}
 .play-btn svg{width:18px;height:18px;fill:currentColor}
 
 .footer{
@@ -251,6 +247,7 @@ h1{
   h1{letter-spacing:.08em}
   .cards{gap:24px}
   .card-info{padding:22px 20px 20px}
+  .cursor-glow{display:none}
 }
 </style>
 </head>
@@ -262,65 +259,101 @@ h1{
 <div class="glow-orb gold"></div>
 <div class="glow-orb emerald"></div>
 
-<div class="container">
-  <div class="hero">
-    <h1>Demo Slot</h1>
-    <p class="hero-accent">Scegli la tua avventura</p>
-  </div>
+<div id="root"></div>
 
-  <div class="cards">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- SLOT DANI -->
-    <a class="card cyber" href="SLOT DANI/cyber-alien-slot.html">
-      <div class="card-preview">
-        <img src="SLOT DANI/simboli/sfondo.png" alt="Galaxy Miners preview">
-        <div class="card-overlay"></div>
-        <div class="card-shine"></div>
-        <span class="card-badge badge-cyber">Sci-Fi</span>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const SLOTS = [
+  {
+    id: 'galaxy-miners',
+    theme: 'cyber',
+    href: 'SLOT DANI/cyber-alien-slot.html',
+    img: 'SLOT DANI/simboli/sfondo.png',
+    badge: 'Sci-Fi',
+    title: 'Galaxy Miners',
+    desc: "Griglia 7×7 in un universo alieno. Supernova, buchi neri, meteore e cristalli cosmici — con negozio bonus, free spin e moltiplicatori.",
+    tags: ['7×7 Grid', 'Free Spin', 'Bonus Round', 'Negozio'],
+  },
+  {
+    id: 'elven-fortunes',
+    theme: 'irish',
+    href: 'SLOT TOSCA/irish-elves-slot.html',
+    img: 'SLOT TOSCA/img/background.png',
+    badge: 'Fantasy',
+    title: 'Elven Fortunes',
+    desc: "Un mondo di elfi e leprechaun irlandesi. Pentole d'oro, nodi celtici e simboli magici — con bonus e big symbols.",
+    tags: ['6 Rulli', 'Big Symbols', 'Bonus', 'Celtic'],
+  },
+];
+
+function PlayIcon() {
+  return <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>;
+}
+
+function SlotCard({ slot }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <a
+      className={`card ${slot.theme} ${hovered ? 'hovered' : ''}`}
+      href={slot.href}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className="card-preview">
+        <img src={slot.img} alt={`${slot.title} preview`} />
+        <div className="card-overlay"></div>
+        <div className="card-shine"></div>
+        <span className={`card-badge badge-${slot.theme}`}>{slot.badge}</span>
       </div>
-      <div class="card-info">
-        <div class="card-title cyber">Galaxy Miners</div>
-        <p class="card-desc">Griglia 7×7 in un universo alieno. Supernova, buchi neri, meteore e cristalli cosmici — con negozio bonus, free spin e moltiplicatori.</p>
-        <div class="card-tags">
-          <span class="tag">7×7 Grid</span>
-          <span class="tag">Free Spin</span>
-          <span class="tag">Bonus Round</span>
-          <span class="tag">Negozio</span>
+      <div className="card-info">
+        <div className={`card-title ${slot.theme}`}>{slot.title}</div>
+        <p className="card-desc">{slot.desc}</p>
+        <div className="card-tags">
+          {slot.tags.map(t => <span key={t} className="tag">{t}</span>)}
         </div>
-        <span class="play-btn cyber">
-          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <span className={`play-btn ${slot.theme}`}>
+          <PlayIcon />
           Gioca
         </span>
       </div>
     </a>
+  );
+}
 
-    <!-- SLOT TOSCA -->
-    <a class="card irish" href="SLOT TOSCA/irish-elves-slot.html">
-      <div class="card-preview">
-        <img src="SLOT TOSCA/img/background.png" alt="Elven Fortunes preview">
-        <div class="card-overlay"></div>
-        <div class="card-shine"></div>
-        <span class="card-badge badge-irish">Fantasy</span>
-      </div>
-      <div class="card-info">
-        <div class="card-title irish">Elven Fortunes</div>
-        <p class="card-desc">Un mondo di elfi e leprechaun irlandesi. Pentole d'oro, nodi celtici e simboli magici — con bonus e big symbols.</p>
-        <div class="card-tags">
-          <span class="tag">6 Rulli</span>
-          <span class="tag">Big Symbols</span>
-          <span class="tag">Bonus</span>
-          <span class="tag">Celtic</span>
+function CursorGlow() {
+  const [pos, setPos] = useState({ x: -1000, y: -1000 });
+  useEffect(() => {
+    const move = e => setPos({ x: e.clientX, y: e.clientY });
+    window.addEventListener('mousemove', move);
+    return () => window.removeEventListener('mousemove', move);
+  }, []);
+  return <div className="cursor-glow" style={{ left: pos.x, top: pos.y }}></div>;
+}
+
+function App() {
+  return (
+    <>
+      <CursorGlow />
+      <div className="container">
+        <div className="hero">
+          <h1>Demo Slot</h1>
+          <p className="hero-accent">Scegli la tua avventura</p>
         </div>
-        <span class="play-btn irish">
-          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          Gioca
-        </span>
+        <div className="cards">
+          {SLOTS.map(s => <SlotCard key={s.id} slot={s} />)}
+        </div>
+        <p className="footer">Slot Demo · Solo a scopo dimostrativo</p>
       </div>
-    </a>
+    </>
+  );
+}
 
-  </div>
-
-  <p class="footer">Slot Demo · Solo a scopo dimostrativo</p>
-</div>
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
