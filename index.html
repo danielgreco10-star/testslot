@@ -4,182 +4,278 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Slot Collection</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Cinzel+Decorative:wght@700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Cinzel+Decorative:wght@700;900&family=Orbitron:wght@500;700;900&family=Space+Grotesk:wght@400;500;700&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh}
 body{
-  min-height:100vh;
-  background:#0a0a1a;
-  font-family:'Inter',sans-serif;
+  background:#05050f;
+  font-family:'Space Grotesk',sans-serif;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  overflow:hidden;
   color:#fff;
+  overflow-x:hidden;
+  padding:40px 20px;
+  position:relative;
 }
 
-/* Animated background */
-.bg-stars{position:fixed;inset:0;z-index:0;overflow:hidden}
+/* ===== BACKGROUND ===== */
+.bg-stars{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
 .bg-stars::before,.bg-stars::after{
   content:'';position:absolute;inset:-50%;
-  background:radial-gradient(2px 2px at 20% 30%,rgba(255,255,255,.8),transparent),
-             radial-gradient(2px 2px at 40% 70%,rgba(255,255,255,.6),transparent),
-             radial-gradient(1px 1px at 60% 20%,rgba(255,255,255,.7),transparent),
-             radial-gradient(1px 1px at 80% 50%,rgba(255,255,255,.5),transparent),
-             radial-gradient(2px 2px at 10% 80%,rgba(255,255,255,.4),transparent),
-             radial-gradient(1px 1px at 70% 90%,rgba(255,255,255,.6),transparent),
-             radial-gradient(2px 2px at 50% 10%,rgba(255,255,255,.5),transparent),
-             radial-gradient(1px 1px at 90% 40%,rgba(255,255,255,.7),transparent);
-  background-size:300px 300px;
-  animation:drift 60s linear infinite;
+  background:
+    radial-gradient(2px 2px at 20% 30%,rgba(255,255,255,.9),transparent),
+    radial-gradient(2px 2px at 40% 70%,rgba(192,132,252,.7),transparent),
+    radial-gradient(1px 1px at 60% 20%,rgba(255,255,255,.8),transparent),
+    radial-gradient(1px 1px at 80% 50%,rgba(110,231,183,.6),transparent),
+    radial-gradient(2px 2px at 10% 80%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1px 1px at 70% 90%,rgba(245,158,11,.6),transparent),
+    radial-gradient(2px 2px at 50% 10%,rgba(255,255,255,.6),transparent),
+    radial-gradient(1px 1px at 90% 40%,rgba(255,255,255,.8),transparent),
+    radial-gradient(1px 1px at 30% 50%,rgba(6,182,212,.5),transparent),
+    radial-gradient(2px 2px at 85% 15%,rgba(255,255,255,.7),transparent);
+  background-size:350px 350px;
+  animation:drift 80s linear infinite;
 }
-.bg-stars::after{animation-duration:90s;animation-direction:reverse;opacity:.5}
-@keyframes drift{to{transform:translate(150px,150px)}}
+.bg-stars::after{animation-duration:120s;animation-direction:reverse;opacity:.4;background-size:500px 500px}
+@keyframes drift{to{transform:translate(200px,200px)}}
 
-.glow-orb{
-  position:fixed;border-radius:50%;filter:blur(80px);opacity:.15;z-index:0;
+.bg-grid{
+  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.08;
+  background-image:
+    linear-gradient(rgba(124,58,237,.5) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(124,58,237,.5) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%);
 }
-.glow-orb.purple{width:500px;height:500px;background:#7c3aed;top:-100px;left:-100px;animation:float1 8s ease-in-out infinite}
-.glow-orb.cyan{width:400px;height:400px;background:#06b6d4;bottom:-100px;right:-100px;animation:float2 10s ease-in-out infinite}
-.glow-orb.gold{width:300px;height:300px;background:#f59e0b;top:50%;left:50%;transform:translate(-50%,-50%);animation:float3 12s ease-in-out infinite}
-@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
-@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,-40px)}}
-@keyframes float3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.2)}}
 
+.glow-orb{position:fixed;border-radius:50%;filter:blur(100px);opacity:.22;z-index:0;pointer-events:none}
+.glow-orb.purple{width:600px;height:600px;background:#7c3aed;top:-150px;left:-150px;animation:float1 12s ease-in-out infinite}
+.glow-orb.cyan{width:500px;height:500px;background:#06b6d4;bottom:-150px;right:-150px;animation:float2 14s ease-in-out infinite}
+.glow-orb.gold{width:350px;height:350px;background:#f59e0b;top:50%;left:50%;transform:translate(-50%,-50%);animation:float3 16s ease-in-out infinite}
+.glow-orb.emerald{width:400px;height:400px;background:#10b981;top:60%;left:10%;animation:float1 18s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(60px,40px) scale(1.1)}}
+@keyframes float2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,-60px) scale(1.15)}}
+@keyframes float3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.25)}}
+
+/* ===== LAYOUT ===== */
 .container{
-  position:relative;z-index:1;
+  position:relative;z-index:2;
   display:flex;flex-direction:column;align-items:center;
-  gap:40px;padding:30px;
-  width:100%;max-width:1000px;
+  gap:50px;
+  width:100%;max-width:1100px;
 }
+
+.hero{display:flex;flex-direction:column;align-items:center;gap:14px}
 
 h1{
-  font-family:'Orbitron',sans-serif;
-  font-size:clamp(1.5rem,4vw,2.5rem);
+  font-family:'Unbounded',sans-serif;
+  font-size:clamp(2rem,6vw,4rem);
+  font-weight:800;
   text-transform:uppercase;
-  letter-spacing:6px;
-  background:linear-gradient(135deg,#f59e0b,#ef4444,#7c3aed,#06b6d4);
+  letter-spacing:.12em;
+  background:linear-gradient(120deg,#f59e0b 0%,#ef4444 25%,#ec4899 50%,#7c3aed 75%,#06b6d4 100%);
   background-size:300% 300%;
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  animation:gradient 6s ease infinite;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:gradient 8s ease infinite;
   text-align:center;
+  line-height:1;
+  filter:drop-shadow(0 0 40px rgba(124,58,237,.4));
 }
-@keyframes gradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes gradient{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 
-.subtitle{
-  font-size:.95rem;color:rgba(255,255,255,.5);letter-spacing:2px;
-  text-transform:uppercase;margin-top:-20px;
+.hero-accent{
+  display:flex;align-items:center;gap:16px;
+  font-family:'Orbitron',sans-serif;
+  font-size:.75rem;color:rgba(255,255,255,.5);
+  letter-spacing:.4em;text-transform:uppercase;font-weight:500;
+}
+.hero-accent::before,.hero-accent::after{
+  content:'';width:60px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
 }
 
+/* ===== CARDS ===== */
 .cards{
-  display:flex;gap:30px;width:100%;
-  flex-wrap:wrap;justify-content:center;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:36px;width:100%;
 }
 
 .card{
   position:relative;
-  flex:1;min-width:280px;max-width:450px;
-  border-radius:20px;
+  border-radius:24px;
   overflow:hidden;
   cursor:pointer;
-  transition:transform .4s cubic-bezier(.175,.885,.32,1.275), box-shadow .4s ease;
   text-decoration:none;color:#fff;
-  background:#12122a;
+  background:linear-gradient(145deg,#12122a 0%,#0a0a1f 100%);
   border:1px solid rgba(255,255,255,.08);
+  transition:transform .5s cubic-bezier(.175,.885,.32,1.275), box-shadow .5s ease, border-color .5s ease;
+  isolation:isolate;
+}
+.card::before{
+  content:'';position:absolute;inset:0;border-radius:24px;
+  padding:1px;
+  background:linear-gradient(135deg,transparent 30%,var(--accent,#7c3aed) 50%,transparent 70%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  opacity:0;transition:opacity .5s ease;
+  pointer-events:none;
 }
 .card:hover{
-  transform:translateY(-8px) scale(1.02);
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  transform:translateY(-12px) scale(1.02);
+  box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 60px var(--glow,rgba(124,58,237,.3));
+  border-color:rgba(255,255,255,.15);
 }
+.card:hover::before{opacity:1}
+
+.card.cyber{--accent:#a855f7;--glow:rgba(168,85,247,.35)}
+.card.irish{--accent:#10b981;--glow:rgba(16,185,129,.35)}
 
 .card-preview{
   position:relative;
-  width:100%;height:260px;
+  width:100%;aspect-ratio:16/10;
   overflow:hidden;
 }
 .card-preview img{
   width:100%;height:100%;object-fit:cover;
-  transition:transform .6s ease, filter .4s ease;
+  transition:transform .8s cubic-bezier(.25,.46,.45,.94), filter .5s ease;
 }
 .card:hover .card-preview img{
-  transform:scale(1.1);
-  filter:brightness(1.15);
+  transform:scale(1.12);
+  filter:brightness(1.2) saturate(1.2);
 }
 .card-overlay{
   position:absolute;inset:0;
-  background:linear-gradient(to top,rgba(10,10,26,.95) 0%,rgba(10,10,26,.3) 50%,transparent 100%);
+  background:linear-gradient(to top,rgba(5,5,15,.98) 0%,rgba(5,5,15,.6) 40%,rgba(5,5,15,.15) 70%,transparent 100%);
 }
+.card-shine{
+  position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.15) 50%,transparent 60%);
+  transform:translateX(-100%);
+  transition:transform .8s ease;
+  pointer-events:none;
+}
+.card:hover .card-shine{transform:translateX(100%)}
 
 .card-badge{
-  position:absolute;top:16px;right:16px;
-  padding:6px 14px;border-radius:20px;
-  font-size:.7rem;font-weight:700;letter-spacing:1.5px;
+  position:absolute;top:18px;right:18px;
+  padding:8px 16px;border-radius:999px;
+  font-family:'Orbitron',sans-serif;
+  font-size:.65rem;font-weight:700;letter-spacing:.2em;
   text-transform:uppercase;
-  backdrop-filter:blur(10px);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  z-index:2;
 }
-.badge-cyber{background:rgba(124,58,237,.6);border:1px solid rgba(124,58,237,.4)}
-.badge-irish{background:rgba(16,185,129,.6);border:1px solid rgba(16,185,129,.4)}
+.badge-cyber{background:rgba(168,85,247,.25);border:1px solid rgba(168,85,247,.5);color:#e9d5ff;box-shadow:0 4px 20px rgba(168,85,247,.3)}
+.badge-irish{background:rgba(16,185,129,.25);border:1px solid rgba(16,185,129,.5);color:#a7f3d0;box-shadow:0 4px 20px rgba(16,185,129,.3)}
 
 .card-info{
-  padding:24px;
-  display:flex;flex-direction:column;gap:12px;
+  position:relative;
+  padding:28px 26px 26px;
+  display:flex;flex-direction:column;gap:14px;
 }
+
 .card-title{
-  font-size:1.4rem;font-weight:700;
-  line-height:1.2;
+  font-size:1.75rem;font-weight:800;
+  line-height:1.1;
+  letter-spacing:.02em;
 }
-.card-title.cyber{font-family:'Orbitron',sans-serif;font-size:1.2rem;color:#c084fc}
-.card-title.irish{font-family:'Cinzel Decorative',cursive;font-size:1.3rem;color:#6ee7b7}
+.card-title.cyber{
+  font-family:'Audiowide',sans-serif;
+  font-size:1.85rem;
+  background:linear-gradient(135deg,#e9d5ff 0%,#a855f7 50%,#06b6d4 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-shadow:0 0 30px rgba(168,85,247,.3);
+}
+.card-title.irish{
+  font-family:'Cinzel Decorative',cursive;
+  font-size:1.75rem;font-weight:900;
+  background:linear-gradient(135deg,#d1fae5 0%,#10b981 50%,#f59e0b 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
 
 .card-desc{
-  font-size:.85rem;color:rgba(255,255,255,.55);line-height:1.5;
+  font-size:.9rem;color:rgba(255,255,255,.6);line-height:1.6;
+  font-weight:400;
 }
 
-.card-tags{
-  display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;
-}
+.card-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .tag{
-  padding:4px 10px;border-radius:8px;font-size:.7rem;font-weight:600;
-  background:rgba(255,255,255,.06);color:rgba(255,255,255,.45);
-  letter-spacing:.5px;
+  padding:5px 12px;border-radius:8px;
+  font-family:'Orbitron',sans-serif;
+  font-size:.65rem;font-weight:500;letter-spacing:.08em;
+  background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.55);
+  border:1px solid rgba(255,255,255,.08);
+  text-transform:uppercase;
 }
+.card.cyber .tag{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.2);color:#d8b4fe}
+.card.irish .tag{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.2);color:#6ee7b7}
 
 .play-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  margin-top:8px;padding:12px 24px;
-  border-radius:12px;font-size:.85rem;font-weight:700;
-  letter-spacing:1px;text-transform:uppercase;
-  transition:all .3s ease;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  margin-top:10px;padding:14px 28px;
+  border-radius:14px;
+  font-family:'Orbitron',sans-serif;
+  font-size:.8rem;font-weight:700;letter-spacing:.15em;
+  text-transform:uppercase;
+  transition:all .4s ease;
   border:none;cursor:pointer;
   text-decoration:none;color:#fff;
+  position:relative;overflow:hidden;
 }
-.play-btn.cyber{background:linear-gradient(135deg,#7c3aed,#4f46e5)}
-.play-btn.irish{background:linear-gradient(135deg,#059669,#10b981)}
-.play-btn:hover{filter:brightness(1.2);transform:translateX(4px)}
+.play-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.3) 50%,transparent 60%);
+  transform:translateX(-100%);
+  transition:transform .6s ease;
+}
+.card:hover .play-btn::before{transform:translateX(100%)}
+.play-btn.cyber{background:linear-gradient(135deg,#7c3aed 0%,#a855f7 50%,#4f46e5 100%);box-shadow:0 8px 24px rgba(124,58,237,.4)}
+.play-btn.irish{background:linear-gradient(135deg,#059669 0%,#10b981 50%,#f59e0b 100%);box-shadow:0 8px 24px rgba(16,185,129,.4)}
+.card:hover .play-btn{transform:translateX(4px);filter:brightness(1.15)}
 .play-btn svg{width:18px;height:18px;fill:currentColor}
 
 .footer{
-  margin-top:10px;
-  font-size:.75rem;color:rgba(255,255,255,.25);
-  letter-spacing:1px;
+  margin-top:20px;
+  font-family:'Orbitron',sans-serif;
+  font-size:.7rem;color:rgba(255,255,255,.25);
+  letter-spacing:.3em;text-transform:uppercase;
+  text-align:center;
+}
+
+@media (max-width:600px){
+  h1{letter-spacing:.08em}
+  .cards{gap:24px}
+  .card-info{padding:22px 20px 20px}
 }
 </style>
 </head>
 <body>
 <div class="bg-stars"></div>
+<div class="bg-grid"></div>
 <div class="glow-orb purple"></div>
 <div class="glow-orb cyan"></div>
 <div class="glow-orb gold"></div>
+<div class="glow-orb emerald"></div>
 
 <div class="container">
-  <h1>Slot Collection</h1>
-  <p class="subtitle">Scegli una slot per giocare</p>
+  <div class="hero">
+    <h1>Slot Collection</h1>
+    <p class="hero-accent">Scegli la tua avventura</p>
+  </div>
 
   <div class="cards">
 
     <!-- SLOT DANI -->
-    <a class="card" href="SLOT DANI/cyber-alien-slot.html">
+    <a class="card cyber" href="SLOT DANI/cyber-alien-slot.html">
       <div class="card-preview">
         <img src="SLOT DANI/simboli/sfondo.png" alt="Galaxy Miners preview">
         <div class="card-overlay"></div>
+        <div class="card-shine"></div>
         <span class="card-badge badge-cyber">Sci-Fi</span>
       </div>
       <div class="card-info">
@@ -199,10 +295,11 @@ h1{
     </a>
 
     <!-- SLOT TOSCA -->
-    <a class="card" href="SLOT TOSCA/irish-elves-slot.html">
+    <a class="card irish" href="SLOT TOSCA/irish-elves-slot.html">
       <div class="card-preview">
         <img src="SLOT TOSCA/img/background.png" alt="Elven Fortunes preview">
         <div class="card-overlay"></div>
+        <div class="card-shine"></div>
         <span class="card-badge badge-irish">Fantasy</span>
       </div>
       <div class="card-info">
@@ -223,7 +320,7 @@ h1{
 
   </div>
 
-  <p class="footer">Slot Demo — Solo a scopo dimostrativo</p>
+  <p class="footer">Slot Demo · Solo a scopo dimostrativo</p>
 </div>
 </body>
 </html>
