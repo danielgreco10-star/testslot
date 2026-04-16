@@ -288,46 +288,8 @@ function triggerBgShift(level){
 function showWin(t){const d=document.getElementById('winDisplay');d.textContent=t;d.classList.add('visible');SFX.bigWin();}
 function hideWin(){document.getElementById('winDisplay').classList.remove('visible');}
 function showBigWinPopup(title,amount){
-  /* FIX 2026-04-15: cleanup di popup precedente se ancora visibile (evita sovrapposizioni e flash) */
-  const overlay=document.getElementById('bigWinOverlay');
-  const titleEl=document.getElementById('bigWinTitle');
-  const amountEl=document.getElementById('bigWinAmount');
-  const particlesEl=document.getElementById('bigWinParticles');
-  /* Pulisci particelle vecchie che possono essere rimaste da un popup ancora in corso */
-  particlesEl.innerHTML='';
-  /* Rimuovi shockwave vecchie non ancora cancellate */
-  document.querySelectorAll('.win-shockwave').forEach(el=>el.remove());
-  /* Trigger shockwave */
-  const sw = document.createElement('div');
-  sw.className = 'win-shockwave';
-  document.body.appendChild(sw);
-  setTimeout(() => sw.remove(), 1000);
-
-  titleEl.textContent=title;
-  /* Importo mostrato subito (no flash a "0") */
-  amountEl.textContent=fmt(Math.round(amount*100)/100);
-  overlay.classList.add('visible');
-  /* Spawn particles */
-  const colors=['#ffd700','#ff6600','#00d0ff','#ff00aa','#00ff88','#8040ff'];
-  const numSparks=window._designPopupParticles||30;
-  for(let i=0;i<numSparks;i++){
-    const spark=document.createElement('div');
-    spark.className='bw-spark';
-    const color=colors[Math.floor(Math.random()*colors.length)];
-    const angle=Math.random()*Math.PI*2;
-    const dist=100+Math.random()*200;
-    spark.style.cssText=`
-      left:${45+Math.random()*10}%;top:${45+Math.random()*10}%;
-      background:${color};box-shadow:0 0 8px ${color};
-      --spark-x:${Math.cos(angle)*dist}px;--spark-y:${Math.sin(angle)*dist}px;
-      animation-delay:${Math.random()*0.5}s;animation-duration:${1+Math.random()*1}s;
-    `;
-    particlesEl.appendChild(spark);
-  }
-  /* Importo già scritto all'inizio (count-up rimosso per evitare confusione). */
-  /* Auto-hide after popup duration */
-  const popupDur=window._designPopupDuration||1920;
-  setTimeout(()=>{overlay.classList.remove('visible');},popupDur);
+  /* Animazioni big/mega/ultra win disabilitate — la vincita è già mostrata nel pannello principale */
+  return;
 }
 
 /* ══════════════════════════════════════════════ */
@@ -2032,7 +1994,7 @@ async function runFeatureCascadeLoop(fsMult){
 
 function genForceExtra(sym){S.grid=[];S.cellMult=[];for(let r=0;r<ROWS;r++){S.grid[r]=[];S.cellMult[r]=[];for(let c=0;c<COLS;c++){S.grid[r][c]=null;S.cellMult[r][c]=1;}}let er,ec;if(sym==='buco_nero'||sym==='tesseract'){er=Math.floor(ROWS/2);ec=Math.floor(COLS/2);}else{er=Math.floor(Math.random()*ROWS);ec=Math.floor(Math.random()*COLS);}S.grid[er][ec]=sym;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(S.grid[r][c]===null)S.grid[r][c]=rndSym();}S.extraSpawned=true;renderFullGrid(true);}
 
-async function spin(){if(S.spinning)return;const ripple=document.createElement('div');ripple.className='spin-ripple';document.getElementById('spinBtn').appendChild(ripple);setTimeout(()=>ripple.remove(),800);if(S.spinMagg>0)SFX.spinMagg();else SFX.spinStart();const tb=S.bet;const isBonusSpin=S.bonusSpin;S.bonusSpin=false;const maggiMult=S.spinMagg>0?S.spinMagg:1;const realCost=Math.round(tb*maggiMult*100)/100;if(!isBonusSpin&&S.bal<realCost){showWin('CREDITO\nINSUFFICIENTE');setTimeout(hideWin,1500);S.spinMagg=0;return;}S.spinning=true;document.getElementById('spinBtn').classList.add('is-spinning');S.spinWin=0;S.cascLvl=0;setGridState('spinning');document.getElementById('spinBtn').disabled=true;document.getElementById('winAmount').textContent='0';updSpinWinPanel(0);hideWin();document.getElementById('cascadeOverlay').classList.remove('visible');if(!isBonusSpin){S.bal-=realCost;S.wagered+=realCost;}/* Spin maggiorato: increase bonus/scatter chance */if(S.spinMagg>0&&!S.forceExtra&&!S.forceScatter){const bInfo=BOOST_MULTS.find(b=>b.mult===S.activeBoostMult);const bonusChance=bInfo?bInfo.bonusChance:0.15;if(Math.random()<bonusChance){const bonuses=['buco_nero','supernova','antigravita','tesseract'];S.forceExtra=bonuses[Math.floor(Math.random()*bonuses.length)];}}S.spinMagg=0;S.activeBoostMult=0;S.spins++;updBal();updateBoostPanel();if(S.gridPreloaded){S.gridPreloaded=false;shuffleReveal();}else if(S.forceBH){genForcedBlackHole();S.forceBH=false;}else if(S.forceW){genForceWin();S.forceW=false;}else if(S.forceExtra){genForceExtra(S.forceExtra);S.forceExtra=null;}else{fillGrid(true);}await dly(S.speedMult>1?2200:3500);/* Check scatters */const scRes=countScatters();if(scRes.count>=3){for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.add('scatter-hl');}await dly(800);for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.remove('scatter-hl');}renderFullGrid(false);const fsCount=scRes.count>=5?15:10;SFX.freeSpinStart();await triggerFreeSpins(fsCount);}else{/* Scatters stay in grid as permanent symbols */}let hasBH=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='buco_nero')hasBH=true;if(hasBH){setGridState('bonus');SFX.bucoNero();showToast('Bonus Attivato!','bonus',3500);await triggerBlackHole();await cascadeGrid();await runFeatureCascadeLoop();S.bannedSym=null;S.snSlowCascade=false;}let hasSN=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='supernova')hasSN=true;if(hasSN){setGridState('bonus');SFX.supernova();await triggerSupernova();await cascadeGrid();await runFeatureCascadeLoop();}let hasAnti=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='antigravita')hasAnti=true;if(hasAnti){setGridState('bonus');SFX.antigravita();await triggerAntigravita();await cascadeGrid();await runFeatureCascadeLoop();}let hasTess=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='tesseract')hasTess=true;if(hasTess){setGridState('bonus');SFX.tesseractOpen();await triggerTesseract();await cascadeGrid();await runFeatureCascadeLoop();}while(true){const clusters=findClusters();if(!clusters.length)break;const pay=calcPay(clusters);S.spinWin+=pay;clusters.forEach(cl=>{cl.cells.forEach(([r,c])=>{S.cellMult[r][c]++;});const dv=DUST_VALUES[cl.sym]||0;if(dv>0){const cascMult=Math.max(1,S.cascLvl);const symBonus=(cl.sym==='astronauta'?3:cl.sym==='alieno'?2:1);const dustGain=Math.max(1,Math.round(dv*cl.sz*0.5*cascMult*symBonus));spawnDustParticles(cl.cells,Math.min(dustGain,8));updDust(dustGain);dLog(`Polvere +${dustGain} (${cl.sym}${cascMult>1?' ×'+cascMult+'casc':''}${symBonus>1?' ×'+symBonus+'sym':''})`,'info');}});document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin*100)/100);document.getElementById('winAmount').parentElement.classList.add('win-counting');updSpinWinPanel(S.spinWin);document.getElementById('cascadeOverlay').textContent=`Cascata ${S.cascLvl+1}`;document.getElementById('cascadeOverlay').classList.add('visible');const cnEl=document.getElementById('cascadeNum');if(cnEl)cnEl.textContent=S.cascLvl+1;{const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin*100)/100);};updateMultiplierStats();dLog(`Cascata ${S.cascLvl+1}: +${pay.toFixed(2)}`,'casc');SFX.cascadeStart(S.cascLvl);triggerBgFlash('cascade-flash');SFX.clusterWin(clusters.reduce((s,c)=>s+c.sz,0));await highlightWins(clusters);await destroyClusters(clusters);await cascadeGrid();S.cascLvl++;showToast('Cascata Livello '+S.cascLvl+'!','cascade',2500);await dly(150);}/* Clean up any wild/tesseract cells remaining after cascades */for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(S.grid[r][c]==='wild'||S.grid[r][c]==='tesseract'){S.grid[r][c]=rndSym();S.cellMult[r][c]=1;}}renderFullGrid(false);document.getElementById('cascadeOverlay').classList.remove('visible');if(S.spinWin>0){S.bal+=S.spinWin;S.won+=S.spinWin;S.hits++;if(S.spinWin>S.maxW)S.maxW=S.spinWin;updBal();const wr=S.spinWin/tb;setGridState('winning');spawnWinCoins(document.getElementById('winAmount'),Math.min(Math.ceil(wr),15));if(wr>=50){SFX.megaWin();showBigWinPopup('MEGA WIN!',S.spinWin);triggerBgFlash('mega-flash');triggerBgShift('mega');}else if(wr>=20){SFX.bigWin();showBigWinPopup('BIG WIN!',S.spinWin);triggerBgFlash('win-flash');triggerBgShift('big');}else if(wr>=8){SFX.smallWin();showWin('GRANDE!\n'+fmt(Math.round(S.spinWin*100)/100));triggerBgFlash('win-flash');triggerBgShift('small');}else{SFX.smallWin();}dLog(`Spin #${S.spins}: +${S.spinWin.toFixed(2)} (${wr.toFixed(1)}x)`,'win');addHistory(S.spins,tb,S.spinWin,S.cascLvl);}else{SFX.noWin();dLog(`Spin #${S.spins}: nessuna vincita`,'info');addHistory(S.spins,tb,0,S.cascLvl);}if(S.cascLvl>S.maxC)S.maxC=S.cascLvl;S.totC+=S.cascLvl;updDev();document.getElementById('winAmount').parentElement.classList.remove('win-counting');S.spinning=false;S.superBonusActive=false;S.jackpotMode=false;S.gridPreloaded=false;document.getElementById('spinBtn').classList.remove('is-spinning');setGridState('idle');document.getElementById('spinBtn').disabled=false;updateBonusBtns();updateBoostPanel();if(S.auto&&S.bal>=S.bet*COLS&&!checkAutoplayStop()){await dly(S.turbo?200:500);hideWin();spin();}else{S.auto=false;bsState.autoRemaining=0;document.getElementById('btnAuto').classList.remove('active');setTimeout(hideWin,2000);}}
+async function spin(){if(S.spinning)return;const ripple=document.createElement('div');ripple.className='spin-ripple';document.getElementById('spinBtn').appendChild(ripple);setTimeout(()=>ripple.remove(),800);if(S.spinMagg>0)SFX.spinMagg();else SFX.spinStart();const tb=S.bet;const isBonusSpin=S.bonusSpin;S.bonusSpin=false;const maggiMult=S.spinMagg>0?S.spinMagg:1;const realCost=Math.round(tb*maggiMult*100)/100;if(!isBonusSpin&&S.bal<realCost){showWin('CREDITO\nINSUFFICIENTE');setTimeout(hideWin,1500);S.spinMagg=0;return;}S.spinning=true;document.getElementById('spinBtn').classList.add('is-spinning');S.spinWin=0;S.cascLvl=0;setGridState('spinning');document.getElementById('spinBtn').disabled=true;document.getElementById('winAmount').textContent='0';updSpinWinPanel(0);hideWin();document.getElementById('cascadeOverlay').classList.remove('visible');if(!isBonusSpin){S.bal-=realCost;S.wagered+=realCost;}/* Spin maggiorato: increase bonus/scatter chance */if(S.spinMagg>0&&!S.forceExtra&&!S.forceScatter){const bInfo=BOOST_MULTS.find(b=>b.mult===S.activeBoostMult);const bonusChance=bInfo?bInfo.bonusChance:0.15;if(Math.random()<bonusChance){const bonuses=['buco_nero','supernova','antigravita','tesseract'];S.forceExtra=bonuses[Math.floor(Math.random()*bonuses.length)];}}S.spinMagg=0;S.activeBoostMult=0;S.spins++;updBal();updateBoostPanel();if(S.gridPreloaded){S.gridPreloaded=false;shuffleReveal();}else if(S.forceBH){genForcedBlackHole();S.forceBH=false;}else if(S.forceW){genForceWin();S.forceW=false;}else if(S.forceExtra){genForceExtra(S.forceExtra);S.forceExtra=null;}else{fillGrid(true);}await dly(S.speedMult>1?2200:3500);/* Check scatters */const scRes=countScatters();if(scRes.count>=3){for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.add('scatter-hl');}await dly(800);for(const[sr,sc]of scRes.positions){document.getElementById(`c${sr}_${sc}`).classList.remove('scatter-hl');}renderFullGrid(false);const fsCount=scRes.count>=5?15:10;SFX.freeSpinStart();await triggerFreeSpins(fsCount);}else{/* Scatters stay in grid as permanent symbols */}let hasBH=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='buco_nero')hasBH=true;if(hasBH){setGridState('bonus');SFX.bucoNero();showToast('Bonus Attivato!','bonus',3500);await triggerBlackHole();await cascadeGrid();await runFeatureCascadeLoop();S.bannedSym=null;S.snSlowCascade=false;}let hasSN=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='supernova')hasSN=true;if(hasSN){setGridState('bonus');SFX.supernova();await triggerSupernova();await cascadeGrid();await runFeatureCascadeLoop();}let hasAnti=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='antigravita')hasAnti=true;if(hasAnti){setGridState('bonus');SFX.antigravita();await triggerAntigravita();await cascadeGrid();await runFeatureCascadeLoop();}let hasTess=false;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(S.grid[r][c]==='tesseract')hasTess=true;if(hasTess){setGridState('bonus');SFX.tesseractOpen();await triggerTesseract();await cascadeGrid();await runFeatureCascadeLoop();}while(true){const clusters=findClusters();if(!clusters.length)break;const pay=calcPay(clusters);S.spinWin+=pay;clusters.forEach(cl=>{cl.cells.forEach(([r,c])=>{S.cellMult[r][c]++;});const dv=DUST_VALUES[cl.sym]||0;if(dv>0){const cascMult=Math.max(1,S.cascLvl);const symBonus=(cl.sym==='astronauta'?3:cl.sym==='alieno'?2:1);const dustGain=Math.max(1,Math.round(dv*cl.sz*0.5*cascMult*symBonus));spawnDustParticles(cl.cells,Math.min(dustGain,8));updDust(dustGain);dLog(`Polvere +${dustGain} (${cl.sym}${cascMult>1?' ×'+cascMult+'casc':''}${symBonus>1?' ×'+symBonus+'sym':''})`,'info');}});document.getElementById('winAmount').textContent=fmt(Math.round(S.spinWin*100)/100);document.getElementById('winAmount').parentElement.classList.add('win-counting');updSpinWinPanel(S.spinWin);document.getElementById('cascadeOverlay').textContent=`Cascata ${S.cascLvl+1}`;document.getElementById('cascadeOverlay').classList.add('visible');const cnEl=document.getElementById('cascadeNum');if(cnEl)cnEl.textContent=S.cascLvl+1;{const _swd=document.getElementById('spinWinDisplay');if(_swd)_swd.textContent=fmt(Math.round(S.spinWin*100)/100);};updateMultiplierStats();dLog(`Cascata ${S.cascLvl+1}: +${pay.toFixed(2)}`,'casc');SFX.cascadeStart(S.cascLvl);triggerBgFlash('cascade-flash');SFX.clusterWin(clusters.reduce((s,c)=>s+c.sz,0));await highlightWins(clusters);await destroyClusters(clusters);await cascadeGrid();S.cascLvl++;showToast('Cascata Livello '+S.cascLvl+'!','cascade',2500);await dly(150);}/* Clean up any wild/tesseract cells remaining after cascades */for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(S.grid[r][c]==='wild'||S.grid[r][c]==='tesseract'){S.grid[r][c]=rndSym();S.cellMult[r][c]=1;}}renderFullGrid(false);document.getElementById('cascadeOverlay').classList.remove('visible');if(S.spinWin>0){S.bal+=S.spinWin;S.won+=S.spinWin;S.hits++;if(S.spinWin>S.maxW)S.maxW=S.spinWin;updBal();const wr=S.spinWin/tb;setGridState('winning');if(wr>=8){SFX.smallWin();showWin('+'+fmt(Math.round(S.spinWin*100)/100));}else{SFX.smallWin();}dLog(`Spin #${S.spins}: +${S.spinWin.toFixed(2)} (${wr.toFixed(1)}x)`,'win');addHistory(S.spins,tb,S.spinWin,S.cascLvl);}else{SFX.noWin();dLog(`Spin #${S.spins}: nessuna vincita`,'info');addHistory(S.spins,tb,0,S.cascLvl);}if(S.cascLvl>S.maxC)S.maxC=S.cascLvl;S.totC+=S.cascLvl;updDev();document.getElementById('winAmount').parentElement.classList.remove('win-counting');S.spinning=false;S.superBonusActive=false;S.jackpotMode=false;S.gridPreloaded=false;document.getElementById('spinBtn').classList.remove('is-spinning');setGridState('idle');document.getElementById('spinBtn').disabled=false;updateBonusBtns();updateBoostPanel();if(S.auto&&S.bal>=S.bet*COLS&&!checkAutoplayStop()){await dly(S.turbo?200:500);hideWin();spin();}else{S.auto=false;bsState.autoRemaining=0;document.getElementById('btnAuto').classList.remove('active');setTimeout(hideWin,2000);}}
 
 function updBet(d){SFX.betChange();const idx=BETS.indexOf(S.bet);const newIdx=Math.max(0,Math.min(BETS.length-1,idx+d));S.bet=BETS[newIdx];document.getElementById('betVal').textContent=S.bet;if(typeof updateBonusPrices==='function')updateBonusPrices();if(typeof updateSpinMaggButtons==='function')updateSpinMaggButtons();}
 
@@ -2143,64 +2105,8 @@ function spawnWinParticles(x,y,count,type){
 let _winCoinInterval=null;
 let _winCountInterval=null;
 function showPremiumWin(amount,label,type){
-  const frame=document.getElementById('winFrame');
-  const levelLabel=document.getElementById('winLevelLabel');
-  const amountDisplay=document.getElementById('winAmountDisplay');
-
-  /* Determine win level: big < mega < ultra  (colossal rimosso 2026-04-15 — si sovrapponeva a mega) */
-  const betRatio=amount/S.bet;
-  let level='big';
-  if(betRatio>=50)level='ultra';
-  else if(betRatio>=20)level='mega';
-
-  /* Frame class */
-  frame.className='win-premium-frame visible '+level;
-
-  /* Level label with escalation */
-  const levelNames={big:'BIG WIN!',mega:'MEGA WIN!',ultra:'ULTRA WIN!',colossal:'COLOSSAL WIN!'};
-  const levelClasses={big:'win-level-big',mega:'win-level-mega',ultra:'win-level-ultra',colossal:'win-level-colossal'};
-  levelLabel.className='win-level-label '+levelClasses[level];
-  levelLabel.textContent=levelNames[level];
-  setTimeout(()=>levelLabel.classList.add('visible'),100);
-
-  /* Importo mostrato subito (count-up rimosso: evita confusione durante l'animazione). */
-  if(_winCountInterval)cancelAnimationFrame(_winCountInterval);
-  _winCountInterval=null;
-  amountDisplay.textContent=fmt(Math.round(amount*100)/100);
-  amountDisplay.style.animation='valFlash 0.3s ease-out';
-
-  /* Coin rain */
-  const coinEmojis=['🪙','💰','⭐','✦','◆'];
-  const coinCount=level==='ultra'?35:level==='mega'?25:15;
-  let coinsSpawned=0;
-  _winCoinInterval=setInterval(()=>{
-    if(coinsSpawned>=coinCount){clearInterval(_winCoinInterval);_winCoinInterval=null;return;}
-    const coin=document.createElement('div');
-    coin.className='win-coin';
-    coin.textContent=coinEmojis[Math.floor(Math.random()*coinEmojis.length)];
-    coin.style.left=Math.random()*90+5+'%';
-    coin.style.top='-40px';
-    coin.style.animationDuration=(2+Math.random()*1.5)+'s';
-    coin.style.animationDelay=(Math.random()*0.3)+'s';
-    document.body.appendChild(coin);
-    setTimeout(()=>coin.remove(),4000);
-    coinsSpawned++;
-  },80);
-
-  /* Particles from center */
-  const cx=window.innerWidth/2;
-  const cy=window.innerHeight/2;
-  const pCount=level==='ultra'?60:level==='mega'?40:25;
-  spawnWinParticles(cx,cy,pCount,level);
-  setTimeout(()=>spawnWinParticles(cx,cy,Math.round(pCount*0.6),level),500);
-  if(level==='ultra')setTimeout(()=>spawnWinParticles(cx,cy,Math.round(pCount*0.4),level),1000);
-
-  /* Screen shake proportional to level */
-  const shakeMap={big:'sm',mega:'md',ultra:'lg'};
-  shakeGrid(shakeMap[level]);
-
-  /* LED */
-  LED.bigwin();
+  /* Animazioni premium win (coin rain, shake, particles) disabilitate */
+  return;
 }
 function hidePremiumWin(){
   const frame=document.getElementById('winFrame');
@@ -2555,11 +2461,13 @@ document.getElementById('buySpaceSpin').addEventListener('click',async function(
   const isMaxWin=giantSize===6;
 
   /* ── SPACE MULTIPLIER — estrazione casuale pesata per bilanciare il costo 800× ──
-     EV nominal giant pay ≈ 239× bet. Con avg spaceMult ≈ 3.1 → EV ≈ 740× → RTP ~92%.
-     Distribuzione (peso / mult): 450×1, 330×2, 130×3, 55×5, 22×10, 8×25, 4×100, 1×500 */
+     ssMultiplier è size-dependent (3×3→×40, 4×4→×7, 5×5→×3, 6×6→×2) così anche
+     un 3×3 paga decentemente (min ~15×). avg basePay×ssMult ≈ 316.8×.
+     Con avg spaceMult ≈ 2.34 → EV ≈ 741× → RTP ~92.6%.
+     Distribuzione (peso / mult): 550×1, 280×2, 100×3, 40×5, 18×10, 8×25, 3×50, 1×200 */
   const SPACE_MULTS=[
-    {v:1,w:450},{v:2,w:330},{v:3,w:130},{v:5,w:55},
-    {v:10,w:22},{v:25,w:8},{v:100,w:4},{v:500,w:1}
+    {v:1,w:550},{v:2,w:280},{v:3,w:100},{v:5,w:40},
+    {v:10,w:18},{v:25,w:8},{v:50,w:3},{v:200,w:1}
   ];
   const totalW=SPACE_MULTS.reduce((s,m)=>s+m.w,0);
   let pick=Math.random()*totalW, spaceMult=1;
@@ -2813,7 +2721,11 @@ document.getElementById('buySpaceSpin').addEventListener('click',async function(
   const giantCount=giantSize*giantSize;
   const clusters=[{sym:chosenSym,sz:giantCount,cells:spiralCells.map(([r,c])=>[r,c])}];
   const basePay=calcPay(clusters);
-  const ssMultiplier=3;
+  /* Moltiplicatore size-dependent: i giganti piccoli hanno mult più alto per compensare
+     la paytable bassa, quelli grandi pagano già molto dalla paytable stessa.
+     Con avg spaceMult ≈ 2.34 → EV ≈ 741× → RTP ~92.6% su costo 800×. */
+  const SS_SIZE_MULT={3:40, 4:7, 5:3, 6:2};
+  const ssMultiplier=SS_SIZE_MULT[giantSize]||3;
   /* Applica il multiplier casuale estratto all'inizio del Space Spin */
   const pay=basePay*ssMultiplier*(S.spaceMult||1);
   S.spinWin=pay;
@@ -2830,10 +2742,8 @@ document.getElementById('buySpaceSpin').addEventListener('click',async function(
     updBal();
     const wr=pay/S.bet;
     setGridState('winning');
-    if(wr>=50){showBigWinPopup('MEGA WIN!',pay);}
-    else if(wr>=20){showBigWinPopup('BIG WIN!',pay);}
-    else{showWin('SPACE WIN x3!\n+'+fmt(Math.round(pay*100)/100));}
-    dLog(`Space Spin: ${giantSize}×${giantSize} ${SYM_NAMES[chosenSym]||chosenSym} x10 = +${fmt(Math.round(pay*100)/100)}`,'win');
+    showWin('SPACE WIN ×'+ssMultiplier+'!\n+'+fmt(Math.round(pay*100)/100));
+    dLog(`Space Spin: ${giantSize}×${giantSize} ${SYM_NAMES[chosenSym]||chosenSym} ×${ssMultiplier} spaceMult×${S.spaceMult||spaceMult} = +${fmt(Math.round(pay*100)/100)}`,'win');
     addHistory(S.spins,S.bet,pay,0);
   }
   S.spins++;updDev();
