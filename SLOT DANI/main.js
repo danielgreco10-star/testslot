@@ -2718,16 +2718,19 @@ document.getElementById('buySpaceSpin').addEventListener('click',async function(
   ufo.remove();
 
   /* ── PHASE 8: Calculate giant win payout ── */
-  const giantCount=giantSize*giantSize;
-  const clusters=[{sym:chosenSym,sz:giantCount,cells:spiralCells.map(([r,c])=>[r,c])}];
-  const basePay=calcPay(clusters);
-  /* Moltiplicatore size-dependent: i giganti piccoli hanno mult più alto per compensare
-     la paytable bassa, quelli grandi pagano già molto dalla paytable stessa.
-     Con avg spaceMult ≈ 2.34 → EV ≈ 741× → RTP ~92.6% su costo 800×. */
-  const SS_SIZE_MULT={3:40, 4:7, 5:3, 6:2};
-  const ssMultiplier=SS_SIZE_MULT[giantSize]||3;
-  /* Applica il multiplier casuale estratto all'inizio del Space Spin */
-  const pay=basePay*ssMultiplier*(S.spaceMult||1);
+  /* Tabella pagamenti dedicata Space Spin (× bet).
+     La PAYTABLE normale si ferma a cluster 20, quindi 5×5 e 6×6 verrebbero troncati.
+     Qui ogni combinazione simbolo/dimensione ha un valore calibrato ad hoc.
+     Avg base EV ≈ 313× · avg spaceMult ≈ 2.34 → EV ≈ 732× → RTP ~91.5% su 800×.
+     Il 6×6 è la MAX WIN e paga proporzionalmente molto di più del 5×5. */
+  const SS_PAY={
+    K:         {3:10,  4:50,   5:160,  6:480},
+    A:         {3:17,  4:80,   5:280,  6:800},
+    alieno:    {3:48,  4:220,  5:720,  6:2000},
+    astronauta:{3:80,  4:360,  5:1150, 6:3200}
+  };
+  const ssBasePay=(SS_PAY[chosenSym]&&SS_PAY[chosenSym][giantSize])||50;
+  const pay=Math.round(ssBasePay*S.bet*(S.spaceMult||1)*100)/100;
   S.spinWin=pay;
   /* Aggiorna i pannelli vincita (numerico principale + pannello "VINCITA") */
   document.getElementById('winAmount').textContent=fmt(Math.round(pay*100)/100);
@@ -2742,8 +2745,8 @@ document.getElementById('buySpaceSpin').addEventListener('click',async function(
     updBal();
     const wr=pay/S.bet;
     setGridState('winning');
-    showWin('SPACE WIN ×'+ssMultiplier+'!\n+'+fmt(Math.round(pay*100)/100));
-    dLog(`Space Spin: ${giantSize}×${giantSize} ${SYM_NAMES[chosenSym]||chosenSym} ×${ssMultiplier} spaceMult×${S.spaceMult||spaceMult} = +${fmt(Math.round(pay*100)/100)}`,'win');
+    showWin('SPACE WIN!\n+'+fmt(pay));
+    dLog(`Space Spin: ${giantSize}×${giantSize} ${SYM_NAMES[chosenSym]||chosenSym} base=${ssBasePay}× spaceMult×${spaceMult} = +${fmt(pay)}`,'win');
     addHistory(S.spins,S.bet,pay,0);
   }
   S.spins++;updDev();
