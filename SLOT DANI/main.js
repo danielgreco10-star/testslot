@@ -2437,8 +2437,8 @@ function updateBonusBtns(){
    · tesseract:     50× (EV ~46 con drop 0.20 + coin ×7.2 → RTP ~92%)
    · freeSpin:     100× (EV 93.5 con buyBoost ×11.85 → RTP 93.5%)
    · superBonus:   200× (EV ~77 → RTP ~38% — conservato come scelta utente)
-   · spaceSpin:   1000× (EV ~884 con spaceMult medio ×3.7 → RTP ~88%) */
-const BONUS_COST_MULT={supernova:11,buco_nero:15,antigravita:22,tesseract:50,freeSpin:100,superBonus:200,spaceSpin:1000};
+   · spaceSpin:    800× (EV ~884 con spaceMult medio ×3.7) */
+const BONUS_COST_MULT={supernova:11,buco_nero:15,antigravita:22,tesseract:50,freeSpin:100,superBonus:200,spaceSpin:800};
 function getBonusCost(key){return Math.round(S.bet*BONUS_COST_MULT[key]*100)/100;}
 function updateBonusPrices(){
   const fmt=cost=>`${cost}×`;
