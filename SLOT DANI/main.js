@@ -125,7 +125,7 @@ function findClusters(){
 function calcPay(clusters){let total=0;for(const cl of clusters){const pt=PAYTABLE[cl.sym];if(!pt)continue;const idx=Math.min(cl.sz,pt.length-1);const basePay=pt[idx];if(basePay<=0)continue;/* Wild multiplier: product of ALL wild cellMults in the cluster (each wild multiplies) */let wildMult=1;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]==='wild'&&S.cellMult[r][c]>1)wildMult*=S.cellMult[r][c];});/* Cascade multiplier: average of non-wild cell multipliers */let cascMult=0;let normCount=0;cl.cells.forEach(([r,c])=>{if(S.grid[r][c]!=='wild'){cascMult+=S.cellMult[r][c];normCount++;}});const avgCasc=normCount>0?cascMult/normCount:1;const rawPay=basePay*S.bet*avgCasc*wildMult;const finalPay=Math.round(rawPay*100)/100;dLog(`  → ${cl.sym} ×${cl.sz}: base=${basePay} wild=×${wildMult} casc=×${avgCasc.toFixed(1)} = ${finalPay}`,'info');total+=finalPay;}return Math.round(total*100)/100;}
 
 const dly=ms=>new Promise(r=>setTimeout(r,Math.max(10,ms/S.speedMult)));
-const fmt=n=>{const r=Math.round(n*100)/100;return r%1===0?r.toLocaleString('it-IT'):r.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});};
+const fmt=n=>{const r=Math.round(n*100)/100;return r.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});};
 function updBal(){
   const el=document.getElementById('balance');
   const oldVal=parseFloat(el.textContent.replace(/\./g,'').replace(',','.'))||0;
@@ -2554,12 +2554,12 @@ document.getElementById('buySpaceSpin').addEventListener('click',async function(
   const giantSize=rr<0.50?3:rr<0.75?4:rr<0.90?5:6;
   const isMaxWin=giantSize===6;
 
-  /* ── SPACE MULTIPLIER — estrazione casuale pesata per bilanciare il costo 1000× ──
-     EV nominal giant pay ≈ 239× bet. Con avg spaceMult ≈ 3.7 → EV ≈ 884× → RTP ~88%.
-     Distribuzione (peso / mult): 300×1, 350×2, 200×3, 100×5, 30×10, 15×25, 4×100, 1×500 */
+  /* ── SPACE MULTIPLIER — estrazione casuale pesata per bilanciare il costo 800× ──
+     EV nominal giant pay ≈ 239× bet. Con avg spaceMult ≈ 3.1 → EV ≈ 740× → RTP ~92%.
+     Distribuzione (peso / mult): 450×1, 330×2, 130×3, 55×5, 22×10, 8×25, 4×100, 1×500 */
   const SPACE_MULTS=[
-    {v:1,w:300},{v:2,w:350},{v:3,w:200},{v:5,w:100},
-    {v:10,w:30},{v:25,w:15},{v:100,w:4},{v:500,w:1}
+    {v:1,w:450},{v:2,w:330},{v:3,w:130},{v:5,w:55},
+    {v:10,w:22},{v:25,w:8},{v:100,w:4},{v:500,w:1}
   ];
   const totalW=SPACE_MULTS.reduce((s,m)=>s+m.w,0);
   let pick=Math.random()*totalW, spaceMult=1;
