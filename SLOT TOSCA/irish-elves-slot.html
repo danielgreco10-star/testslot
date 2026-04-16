@@ -528,32 +528,32 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'MedievalSharp',cursiv
     <button class="buy-btn" data-buy="findBonus" onclick="doBuy('findBonus')">
       <span class="buy-icon">&#x1F50D;</span>
       <span class="buy-name">FIND BONUS</span>
-      <span class="buy-cost">1.9x</span>
-    </button>
-    <button class="buy-btn" data-buy="removeSymbols" onclick="doBuy('removeSymbols')">
-      <span class="buy-icon">&#x1F300;</span>
-      <span class="buy-name">REMOVE SYMBOLS</span>
-      <span class="buy-cost">5.7x</span>
+      <span class="buy-cost">1.3x</span>
     </button>
     <button class="buy-btn" data-buy="bigSymbols" onclick="doBuy('bigSymbols')">
       <span class="buy-icon">&#x1F48E;</span>
       <span class="buy-name">GIANT SYMBOL</span>
-      <span class="buy-cost">12.2x</span>
+      <span class="buy-cost">7x</span>
+    </button>
+    <button class="buy-btn" data-buy="removeSymbols" onclick="doBuy('removeSymbols')">
+      <span class="buy-icon">&#x1F300;</span>
+      <span class="buy-name">REMOVE SYMBOLS</span>
+      <span class="buy-cost">19x</span>
     </button>
     <button class="buy-btn" data-buy="fireballs" onclick="doBuy('fireballs')">
       <span class="buy-icon">&#x1F525;</span>
       <span class="buy-name">FIREBALL</span>
-      <span class="buy-cost">19.9x</span>
+      <span class="buy-cost">20x</span>
     </button>
     <button class="buy-btn" data-buy="buyFSFull" onclick="doBuy('buyFSFull')">
       <span class="buy-icon">&#x2728;</span>
       <span class="buy-name">FREE SPINS FULL</span>
-      <span class="buy-cost">2280x</span>
+      <span class="buy-cost">500x</span>
     </button>
     <button class="buy-btn" data-buy="buyFSAuto" onclick="doBuy('buyFSAuto')">
       <span class="buy-icon">&#x1F451;</span>
       <span class="buy-name">FINAL FREE SPIN</span>
-      <span class="buy-cost">3690x</span>
+      <span class="buy-cost">1050x</span>
     </button>
   </div>
   <!-- Speed boost buttons bottom-right corner -->
@@ -878,7 +878,7 @@ function isBigPart(c,r){
 }
 
 // ===== BUY BONUS =====
-const buyCosts={findBonus:1.9,removeSymbols:5.7,fireballs:19.9,bigSymbols:12.2,buyFSFull:2280,buyFSAuto:3690};
+const buyCosts={findBonus:1.3,removeSymbols:19,fireballs:20,bigSymbols:7,buyFSFull:500,buyFSAuto:1050};
 
 function doBuy(type){
   if(isSpinning||inFS)return;
