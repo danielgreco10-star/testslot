@@ -19,7 +19,10 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'MedievalSharp',cursiv
 .side{display:none}
 
 /* ===== MAIN FRAME CONTAINER ===== */
-.frame-container{position:relative;width:500px;z-index:2}
+/* Responsive: fits viewport height, capped at 500px width */
+.frame-container{position:relative;
+  width:min(500px, calc(100vh * 1024 / 1536), 95vw);
+  z-index:2}
 
 /* Single frame image: frame + spin bar combined (1024x1536) */
 .frame-wrapper{position:relative;width:100%;aspect-ratio:1024/1536}
@@ -30,25 +33,26 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'MedievalSharp',cursiv
 /* Grid area: left 14.3%, top 14.7%, width 73.6%, height 62.7% of full image */
 .grid{position:absolute;left:14.3%;top:14.7%;width:73.6%;height:62.7%;
   background:transparent;border:none;overflow:hidden;padding:0;
-  display:flex;align-items:center;justify-content:center;z-index:2}
-.reels{display:flex;gap:1px;position:relative;z-index:2}
-.reel{display:flex;flex-direction:column;gap:1px}
+  display:flex;align-items:stretch;justify-content:stretch;z-index:2}
+/* Reels fill the entire grid area */
+.reels{display:flex;gap:1px;position:relative;z-index:2;width:100%;height:100%}
+.reel{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
 
-/* Cell size for 6 cols x 9 rows at 500px container */
-.cell{width:60px;height:57px;
+/* Cells: fully responsive — no fixed px sizes */
+.cell{flex:1;min-height:0;min-width:0;
   background:transparent;
   border-radius:0;display:flex;align-items:center;justify-content:center;
   position:relative;overflow:hidden;
   border:none;
   transition:all .3s ease;cursor:default}
-.cell .sym{width:56px;height:53px;transition:transform .2s ease}
+.cell .sym{width:92%;height:92%;object-fit:contain;transition:transform .2s ease}
 .cell:hover .sym{transform:scale(1.1)}
-/* Big symbols */
+/* Big symbols — use relative sizes (% of cell) */
 .cell.big-anchor{overflow:visible;z-index:5}
 .cell.big-part .sym{display:none}
-.cell.big-anchor .sym.big2x2{width:122px;height:116px;position:absolute;top:0;left:0;z-index:5;
+.cell.big-anchor .sym.big2x2{width:calc(200% + 1px);height:calc(200% + 1px);position:absolute;top:0;left:0;z-index:5;
   filter:drop-shadow(0 3px 8px rgba(0,0,0,0.6))}
-.cell.big-anchor .sym.big3x3{width:182px;height:155px;position:absolute;top:0;left:0;z-index:5;
+.cell.big-anchor .sym.big3x3{width:calc(300% + 2px);height:calc(300% + 2px);position:absolute;top:0;left:0;z-index:5;
   filter:drop-shadow(0 4px 12px rgba(0,0,0,0.7))}
 /* Big symbol decompose animation */
 .cell.big-decompose .sym{animation:bigDecompose .6s ease-in forwards}
@@ -86,13 +90,13 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'MedievalSharp',cursiv
   100%{transform:scale(0) rotate(30deg);opacity:0;filter:brightness(5)}
 }
 
-/* Drop - bouncy fall from top */
+/* Drop - bouncy fall from top (responsive: use % instead of px) */
 .cell.drop{animation:dropIn .7s cubic-bezier(.22,.68,.36,1.2)}
 @keyframes dropIn{
-  0%{transform:translateY(-90px) scale(0.8);opacity:0}
-  40%{transform:translateY(8px) scale(1.05);opacity:1}
-  60%{transform:translateY(-6px) scale(0.97)}
-  80%{transform:translateY(3px) scale(1.02)}
+  0%{transform:translateY(-150%) scale(0.8);opacity:0}
+  40%{transform:translateY(12%) scale(1.05);opacity:1}
+  60%{transform:translateY(-10%) scale(0.97)}
+  80%{transform:translateY(5%) scale(1.02)}
   100%{transform:translateY(0) scale(1)}
 }
 
@@ -356,7 +360,7 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'MedievalSharp',cursiv
 @keyframes coinFall{0%{opacity:1;transform:translateY(-50px) rotateX(0)}50%{transform:translateY(40vh) rotateX(900deg)}100%{opacity:0;transform:translateY(100vh) rotateX(1800deg)}}
 
 /* ===== CHARGE NUMBER POPUP (covers grid + frame exactly) ===== */
-.charge-popup{position:absolute;top:14.7%;left:14.3%;width:73.6%;height:62.7%;
+.charge-popup{position:absolute;inset:0;
   z-index:100;pointer-events:none;text-align:center;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at center,rgba(0,0,0,0.5),transparent 70%)}
@@ -524,32 +528,32 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'MedievalSharp',cursiv
     <button class="buy-btn" data-buy="findBonus" onclick="doBuy('findBonus')">
       <span class="buy-icon">&#x1F50D;</span>
       <span class="buy-name">FIND BONUS</span>
-      <span class="buy-cost">2x</span>
+      <span class="buy-cost">1.9x</span>
     </button>
     <button class="buy-btn" data-buy="removeSymbols" onclick="doBuy('removeSymbols')">
       <span class="buy-icon">&#x1F300;</span>
       <span class="buy-name">REMOVE SYMBOLS</span>
-      <span class="buy-cost">10x</span>
+      <span class="buy-cost">5.7x</span>
     </button>
     <button class="buy-btn" data-buy="bigSymbols" onclick="doBuy('bigSymbols')">
       <span class="buy-icon">&#x1F48E;</span>
       <span class="buy-name">GIANT SYMBOL</span>
-      <span class="buy-cost">25x</span>
+      <span class="buy-cost">12.2x</span>
     </button>
     <button class="buy-btn" data-buy="fireballs" onclick="doBuy('fireballs')">
       <span class="buy-icon">&#x1F525;</span>
       <span class="buy-name">FIREBALL</span>
-      <span class="buy-cost">180x</span>
+      <span class="buy-cost">19.9x</span>
     </button>
     <button class="buy-btn" data-buy="buyFSFull" onclick="doBuy('buyFSFull')">
       <span class="buy-icon">&#x2728;</span>
       <span class="buy-name">FREE SPINS FULL</span>
-      <span class="buy-cost">1600x</span>
+      <span class="buy-cost">2280x</span>
     </button>
     <button class="buy-btn" data-buy="buyFSAuto" onclick="doBuy('buyFSAuto')">
       <span class="buy-icon">&#x1F451;</span>
       <span class="buy-name">FINAL FREE SPIN</span>
-      <span class="buy-cost">3000x</span>
+      <span class="buy-cost">3690x</span>
     </button>
   </div>
   <!-- Speed boost buttons bottom-right corner -->
@@ -593,7 +597,7 @@ function getTierIdx(size){
 
 // ===== GAME CONFIG =====
 const COLS=6, ROWS=8;
-let grid=[], balance=5000, bet=1, totalWin=0, isSpinning=false, freeSpins=0, inFS=false, chargePoints=0, chargeMulti=1, fireballMulti=1;
+let grid=[], balance=5000, bet=1, totalWin=0, isSpinning=false, freeSpins=0, inFS=false, chargePoints=0, chargeMulti=1, fireballMulti=1, removeSymMulti=1;
 
 function pickFireballMulti(){
   const ms=CFG.fireballMultis;
@@ -645,19 +649,19 @@ const CFG={
   // Fireball count weights: how often each count appears
   fireballCounts:[
     {n:1, w:0},
-    {n:2, w:40},
-    {n:3, w:35},
-    {n:4, w:18},
-    {n:5, w:5},
-    {n:6, w:1.5},
-    {n:7, w:0.4},
-    {n:8, w:0.1}
+    {n:2, w:63},
+    {n:3, w:40},
+    {n:4, w:13},
+    {n:5, w:0},
+    {n:6, w:0},
+    {n:7, w:0},
+    {n:8, w:0}
   ],
   // Fireball multipliers: [value, weight] - lower weight = rarer
   fireballMultis:[
-    {v:1,  w:40},
-    {v:2,  w:30},
-    {v:3,  w:16},
+    {v:1,  w:67},
+    {v:2,  w:53},
+    {v:3,  w:23.5},
     {v:5,  w:7},
     {v:10, w:4},
     {v:25, w:1.8},
@@ -680,6 +684,18 @@ const CFG={
   // Charge Abilities
   removeSymMin:1,           // min symbol types removed (ability 25)
   removeSymMax:4,           // max symbol types removed
+  // Remove Symbols buy multiplier wheel
+  removeSymMultis:[
+    {v:1,   w:50},
+    {v:2,   w:30},
+    {v:3,   w:10},
+    {v:5,   w:5},
+    {v:10,  w:2},
+    {v:25,  w:2},
+    {v:50,  w:1},
+    {v:100, w:1},
+    {v:1000,w:0.1}
+  ],
   transformEnabled:true,    // symbol transform ability
   bigDropMin:1,             // min giant symbols dropped
   bigDropMax:2,             // max giant symbols dropped
@@ -691,6 +707,27 @@ const CFG={
   // Multiplier
   chargeMultiStart:1,       // starting multiplier
   chargeMultiStep:1,        // multiplier increment per bar fill
+
+  // FS Full buy specific
+  fsFullSpins:5,              // free spins when buying FS Full
+  fsFullChargeStart:120,      // charge bar starting points
+  fsFullMultiBonus:4,         // chargeMultiStep bonus to starting multi
+  fsFullBig2x2Chance:0.08,    // big 2x2 chance per spin
+  fsFullBig3x3Chance:0.03,    // big 3x3 chance per spin
+  fsFullScatterBoost:1,       // scatter weight multiplier (1 = normal)
+  fsFullRetriggerExtra:3,     // extra spins on retrigger
+
+  // FS Auto buy specific
+  fsAutoSpins:5,              // free spins when buying FS Auto
+  fsAutoChargeStart:120,      // charge bar starting points
+  fsAutoMultiBonus:4,         // chargeMultiStep bonus to starting multi
+  fsAutoBig2x2Chance:0.08,    // big 2x2 chance per spin
+  fsAutoBig3x3Chance:0.03,    // big 3x3 chance per spin
+  fsAutoScatterBoost:1,       // scatter weight multiplier (1 = normal)
+  fsAutoRetriggerExtra:3,     // extra spins on retrigger
+
+  // Max Win Cap
+  maxWinMultiplier:30000,     // max win cap in multiples of bet (0 = no cap)
 };
 
 let WT=Object.values(W).reduce((a,b)=>a+b,0);
@@ -841,7 +878,7 @@ function isBigPart(c,r){
 }
 
 // ===== BUY BONUS =====
-const buyCosts={findBonus:2,removeSymbols:10,fireballs:180,bigSymbols:25,buyFSFull:1600,buyFSAuto:3000};
+const buyCosts={findBonus:1.9,removeSymbols:5.7,fireballs:19.9,bigSymbols:12.2,buyFSFull:2280,buyFSAuto:3690};
 
 function doBuy(type){
   if(isSpinning||inFS)return;
@@ -851,11 +888,17 @@ function doBuy(type){
   buyBonus=type;
   // For FS buys, activate free spins immediately
   if(type==='buyFSFull'||type==='buyFSAuto'){
-    freeSpins=8;inFS=true;fsTotalWin=0;
-    if(type==='buyFSFull'){chargePoints=120;chargeMulti=1;chargeTriggered=new Set();updCharge()}
-    if(type==='buyFSAuto'){autoWildPerSpin=true}
+    if(type==='buyFSFull'){
+      freeSpins=CFG.fsFullSpins;inFS=true;fsTotalWin=0;
+      chargePoints=CFG.fsFullChargeStart;chargeMulti=CFG.chargeMultiStart+CFG.fsFullMultiBonus*CFG.chargeMultiStep;chargeTriggered=new Set();updCharge();
+    }
+    if(type==='buyFSAuto'){
+      freeSpins=CFG.fsAutoSpins;inFS=true;fsTotalWin=0;
+      autoWildPerSpin=true;
+      chargePoints=CFG.fsAutoChargeStart;chargeMulti=CFG.chargeMultiStart+CFG.fsAutoMultiBonus*CFG.chargeMultiStep;chargeTriggered=new Set();updCharge();
+    }
     updFS();document.getElementById('fs').classList.add('show');
-    showBanner(8);
+    showBanner(freeSpins);
     setTimeout(()=>doSpin(),1500);
   }else{
     // Single spin bonuses: just do spin
@@ -988,8 +1031,23 @@ async function doSpin(){
   renderAll();
   await sleep(200);
 
-  // Buy bonus: removeSymbols - remove 1-4 symbol types before cascade
+  // Buy bonus: removeSymbols - multiplier wheel then remove 1-4 symbol types before cascade
   if(buyBonus==='removeSymbols'){
+    const rsMulti=pickRemoveSymMulti();
+    await showMultiplierWheel(rsMulti);
+    removeSymMulti=rsMulti;
+    // Show active multiplier overlay
+    if(rsMulti>1){
+      let mOv=document.getElementById('removeSymMultiOverlay');
+      if(!mOv){
+        mOv=document.createElement('div');
+        mOv.id='removeSymMultiOverlay';
+        mOv.style.cssText='position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:90;background:rgba(0,153,204,0.9);color:#fff;padding:4px 16px;border-radius:20px;font:bold 16px Cinzel Decorative,cursive;text-shadow:0 0 10px rgba(0,200,255,0.8);pointer-events:none;animation:winPulse .7s ease-in-out infinite alternate';
+        document.getElementById('frameWrap').appendChild(mOv);
+      }
+      mOv.textContent='MULTIPLIER x'+rsMulti;
+      mOv.style.display='block';
+    }
     await chargeAbility25();
   }
 
@@ -1020,6 +1078,9 @@ async function doSpin(){
   if(inFS){
     // Accumulate wins during free spins
     fsTotalWin+=totalWin;
+    // Apply max win cap during FS
+    const fsMaxCap=CFG.maxWinMultiplier>0?CFG.maxWinMultiplier*bet:Infinity;
+    if(fsTotalWin>fsMaxCap)fsTotalWin=fsMaxCap;
     document.getElementById('winV').textContent=fsTotalWin.toFixed(2);
     if(totalWin>0)particles(totalWin);
     freeSpins--;updFS();
@@ -1031,7 +1092,16 @@ async function doSpin(){
       fsTotalWin=0;
     }
   }else{
+    // Apply max win cap for normal spins
+    const maxCap=CFG.maxWinMultiplier>0?CFG.maxWinMultiplier*bet:Infinity;
+    if(totalWin>maxCap)totalWin=maxCap;
     if(totalWin>0){balance+=totalWin;updBal();showWin(totalWin);particles(totalWin)}
+  }
+  // Reset removeSymMulti and overlay
+  if(removeSymMulti>1){
+    removeSymMulti=1;
+    const mOv=document.getElementById('removeSymMultiOverlay');
+    if(mOv)mOv.style.display='none';
   }
   // Reset single-use buy bonuses after spin
   if(buyBonus&&buyBonus!=='buyFSFull'&&buyBonus!=='buyFSAuto')buyBonus=null;
@@ -1072,7 +1142,7 @@ async function cascade(){
       document.getElementById('c'+p.c+'_'+p.r).classList.add('winning');
       if(i<6)await sleep(40);
     }
-    const w=calcWinAll(clusters)*chargeMulti*fireballMulti;totalWin+=w;
+    const w=calcWinAll(clusters)*chargeMulti*fireballMulti*removeSymMulti;totalWin+=w;
     document.getElementById('winV').textContent=(inFS?(fsTotalWin+totalWin):totalWin).toFixed(2);
     // Add paid symbols to charge bar
     chargePoints=Math.min(CFG.chargeMax,chargePoints+clusterCells.length);
@@ -1266,12 +1336,71 @@ async function showChargeNumber(num,label){
   const isText=isNaN(num);
   const numClass='charge-popup-num'+(isText?' text':'');
   popup.innerHTML='<div class="'+numClass+'">'+num+'</div><div class="charge-popup-label">'+label+'</div>';
-  document.getElementById('frameWrap').appendChild(popup);
+  (document.querySelector('.grid')||document.getElementById('frameWrap')).appendChild(popup);
   await sleep(1800);
   popup.querySelector('.charge-popup-num').style.animation='numFadeOut .4s ease-in forwards';
   popup.querySelector('.charge-popup-label').style.animation='numFadeOut .4s ease-in forwards';
   await sleep(400);
   popup.remove();
+}
+
+// Pick random multiplier from Remove Symbols wheel
+function pickRemoveSymMulti(){
+  const ms=CFG.removeSymMultis;
+  const totalW=ms.reduce((a,m)=>a+m.w,0);
+  let rn=Math.random()*totalW,cum=0;
+  for(const m of ms){cum+=m.w;if(rn<cum)return m.v;}
+  return ms[0].v;
+}
+
+// Animated multiplier wheel for Remove Symbols buy
+async function showMultiplierWheel(finalMulti){
+  const wrap=document.getElementById('frameWrap');
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);pointer-events:none';
+
+  const label=document.createElement('div');
+  label.style.cssText='color:#0099cc;font-size:14px;font-family:MedievalSharp,cursive;margin-bottom:8px;text-shadow:0 0 10px rgba(0,153,204,0.8)';
+  label.textContent='MULTIPLIER WHEEL';
+  overlay.appendChild(label);
+
+  const numEl=document.createElement('div');
+  numEl.style.cssText='font-size:48px;font-weight:bold;color:#FFD700;font-family:Cinzel Decorative,cursive;text-shadow:0 0 20px rgba(255,215,0,0.8),0 0 40px rgba(255,165,0,0.4);transition:all 0.1s ease';
+  overlay.appendChild(numEl);
+
+  const subLabel=document.createElement('div');
+  subLabel.style.cssText='color:#aaa;font-size:11px;margin-top:6px;font-family:MedievalSharp,cursive';
+  subLabel.textContent='';
+  overlay.appendChild(subLabel);
+
+  wrap.appendChild(overlay);
+
+  // Spin through random multipliers for visual effect
+  const allMultis=CFG.removeSymMultis.map(m=>m.v);
+  let speed=60, spins=0, maxSpins=18+Math.floor(Math.random()*8);
+  for(let i=0;i<maxSpins;i++){
+    const show=allMultis[Math.floor(Math.random()*allMultis.length)];
+    numEl.textContent='x'+show;
+    numEl.style.transform='scale('+(1+Math.random()*0.2)+')';
+    numEl.style.color=show>=25?'#ff4444':show>=5?'#ff8800':'#FFD700';
+    await sleep(speed);
+    speed+=12; // slow down
+  }
+
+  // Land on final
+  numEl.textContent='x'+finalMulti;
+  numEl.style.transform='scale(1.4)';
+  numEl.style.color=finalMulti>=25?'#ff4444':finalMulti>=5?'#ff8800':finalMulti>=2?'#4dff88':'#FFD700';
+  subLabel.textContent=finalMulti>1?'TUTTE LE VINCITE x'+finalMulti:'NESSUN MOLTIPLICATORE';
+  await sleep(1500);
+
+  // Fade out
+  overlay.style.transition='opacity 0.4s ease';
+  overlay.style.opacity='0';
+  await sleep(400);
+  overlay.remove();
+
+  return finalMulti;
 }
 
 // Charge ability: remove symbol types from grid
@@ -2348,7 +2477,8 @@ edLoadSaved();
       <button style="background:#c00;color:#fff;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="this.closest('div').querySelector('#dragModeBtn').click();window._resetOverlay()">RESET</button>
       <button style="background:#f0f;color:#000;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="window._showAllOverlay()">MOSTRA</button>
       <button style="background:#FFD700;color:#000;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="window._exportOverlay()">EXPORT CSS</button>
-      <button id="featTogBtn" style="background:linear-gradient(145deg,#1a1a2e,#0d0d1a);color:#FFD700;border:2px solid #FFD700;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="window._toggleFeatPanel()">FUNZIONI</button>
+      <button id="featTogBtnNormal" style="background:linear-gradient(145deg,#1a1a2e,#0d0d1a);color:#4dff88;border:2px solid #4dff88;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="window._toggleNormalPanel()">GIRI NORMALI</button>
+      <button id="featTogBtnBuy" style="background:linear-gradient(145deg,#1a1a2e,#0d0d1a);color:#ff6600;border:2px solid #ff6600;padding:4px 10px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:10px" onclick="window._toggleBuyPanel()">ACQUISTO FUNZ.</button>
       <span style="color:#888;font-size:9px;align-self:center">Scroll=resize | Shift+scroll=font</span>
     </div>`;
   document.body.appendChild(bar);
@@ -2386,11 +2516,16 @@ edLoadSaved();
   // CSS for the panel
   const st=document.createElement('style');
   st.textContent=`
-  .feat-panel{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:9999;
-    background:rgba(5,5,20,0.97);border:2px solid #FFD700;border-radius:12px;
+  .feat-panel-normal{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:9999;
+    background:rgba(5,5,20,0.97);border:2px solid #4dff88;border-radius:12px;
     max-height:0;overflow:hidden;transition:max-height .4s ease;font:11px/1.5 sans-serif;color:#ddd;
     width:92vw;max-width:900px}
-  .feat-panel.open{max-height:70vh;overflow-y:auto}
+  .feat-panel-normal.open{max-height:70vh;overflow-y:auto}
+  .feat-panel-buy{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:9998;
+    background:rgba(20,5,5,0.97);border:2px solid #ff6600;border-radius:12px;
+    max-height:0;overflow:hidden;transition:max-height .4s ease;font:11px/1.5 sans-serif;color:#ddd;
+    width:92vw;max-width:900px}
+  .feat-panel-buy.open{max-height:70vh;overflow-y:auto}
   .feat-header{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;
     background:#111;border-bottom:1px solid rgba(255,215,0,0.3);position:sticky;top:0;z-index:1}
   .feat-header h3{color:#FFD700;font-family:'Cinzel Decorative',cursive;font-size:14px;margin:0}
@@ -2429,23 +2564,53 @@ edLoadSaved();
         WT=Object.values(W).reduce((a,b)=>a+b,0);}
       if(data.fireballMultis)CFG.fireballMultis=data.fireballMultis;
       if(data.fireballCounts)CFG.fireballCounts=data.fireballCounts;
+      if(data.removeSymMultis)CFG.removeSymMultis=data.removeSymMultis;
+      if(data.buyCosts&&typeof buyCosts!=='undefined')for(const k of Object.keys(data.buyCosts))buyCosts[k]=data.buyCosts[k];
+      // Update buy button cost labels in UI
+      document.querySelectorAll('.buy-btn[data-buy]').forEach(btn=>{
+        const key=btn.getAttribute('data-buy');
+        if(buyCosts[key]!=null){
+          const costEl=btn.querySelector('.buy-cost');
+          if(costEl)costEl.textContent=buyCosts[key]+'x';
+        }
+      });
       console.log('Config caricato da localStorage');
     }catch(e){}
   })();
 
-  // Panel (toggled from editor bar button)
-  const panel=document.createElement('div');
-  panel.className='feat-panel';
-  panel.innerHTML=buildPanelHTML();
-  document.body.appendChild(panel);
+  // Panels (toggled from editor bar buttons)
+  const panelNormal=document.createElement('div');
+  panelNormal.className='feat-panel-normal';
+  panelNormal.innerHTML=buildNormalPanelHTML();
+  document.body.appendChild(panelNormal);
 
-  window._toggleFeatPanel=function(){
-    panel.classList.toggle('open');
-    const btn=document.getElementById('featTogBtn');
+  const panelBuy=document.createElement('div');
+  panelBuy.className='feat-panel-buy';
+  panelBuy.innerHTML=buildBuyPanelHTML();
+  document.body.appendChild(panelBuy);
+
+  window._toggleNormalPanel=function(){
+    panelNormal.classList.toggle('open');
+    panelBuy.classList.remove('open');
+    const btn=document.getElementById('featTogBtnNormal');
     if(btn){
-      if(panel.classList.contains('open')){btn.style.background='#FFD700';btn.style.color='#000'}
-      else{btn.style.background='';btn.style.color=''}
+      if(panelNormal.classList.contains('open')){btn.style.background='#4dff88';btn.style.color='#000'}
+      else{btn.style.background='';btn.style.color='#4dff88'}
     }
+    const btn2=document.getElementById('featTogBtnBuy');
+    if(btn2){btn2.style.background='';btn2.style.color='#ff6600'}
+  };
+
+  window._toggleBuyPanel=function(){
+    panelBuy.classList.toggle('open');
+    panelNormal.classList.remove('open');
+    const btn=document.getElementById('featTogBtnBuy');
+    if(btn){
+      if(panelBuy.classList.contains('open')){btn.style.background='#ff6600';btn.style.color='#000'}
+      else{btn.style.background='';btn.style.color='#ff6600'}
+    }
+    const btn2=document.getElementById('featTogBtnNormal');
+    if(btn2){btn2.style.background='';btn2.style.color='#4dff88'}
   };
 
   function buildFbCountInfo(){
@@ -2461,16 +2626,24 @@ edLoadSaved();
     return ms.map(m=>`<span style="color:${m.v===1?'#aaa':'#FFD700'}">${fbMultiLabel(m.v)}</span>: ${(m.w/tot*100).toFixed(1)}%`).join(' | ');
   }
 
-  function buildPanelHTML(){
+  function buildRsMultiInfo(){
+    const ms=CFG.removeSymMultis;
+    const tot=ms.reduce((a,m)=>a+m.w,0);
+    if(tot===0)return '<span style="color:#ff4444">Nessun moltiplicatore attivo!</span>';
+    return ms.map(m=>`<span style="color:${m.v===1?'#aaa':m.v>=25?'#ff4444':m.v>=5?'#ff8800':'#4dff88'}">${m.v>=1000?m.v/1000+'K':m.v}x</span>: ${(m.w/tot*100).toFixed(1)}%`).join(' | ');
+  }
+
+  function buildNormalPanelHTML(){
     return `
     <div class="feat-header">
-      <h3>Pannello Funzioni</h3>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="feat-rtp" id="rtpDisplay">RTP Target: 95%</span>
+      <h3>Giri Normali - RTP & Parametri</h3>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <label style="color:#aaa;font-size:10px">RTP Target:</label>
+        <input type="number" id="rtpTargetInput" value="95" min="50" max="120" step="0.5" style="width:55px;background:#1a1a2e;border:1px solid #4dff88;color:#4dff88;border-radius:4px;padding:2px 4px;font-size:11px;text-align:center">
         <button class="feat-btn" onclick="featSimRTP()">SIMULA RTP</button>
         <button class="feat-btn" style="background:linear-gradient(145deg,#00aa44,#006622);color:#fff" onclick="featSaveCFG()">SALVA</button>
         <button class="feat-btn danger" onclick="featResetCFG()">RESET</button>
-        <button class="feat-btn" onclick="window._toggleFeatPanel()">CHIUDI</button>
+        <button class="feat-btn" onclick="window._toggleNormalPanel()">CHIUDI</button>
       </div>
     </div>
     <div class="feat-grid">
@@ -2515,8 +2688,6 @@ edLoadSaved();
           <span class="feat-val">${c.w}</span>
         </div>`).join('')}
         <div class="feat-info" id="fbCountInfo">${buildFbCountInfo()}</div>
-        ${cfgRow('fireballBuyMin','Min (acquisto)',1,6,1)}
-        ${cfgRow('fireballBuyMax','Max (acquisto)',1,8,1)}
         <div class="feat-row">
           <label>Lancia fireballs ora</label>
           <input type="number" id="featFireN" value="2" min="1" max="8" style="width:40px">
@@ -2527,10 +2698,17 @@ edLoadSaved();
       <!-- FIREBALL MULTIPLIERS -->
       <div class="feat-section">
         <h4>Moltiplicatori Fireball</h4>
-        <div class="feat-info">Peso = frequenza relativa. Pi\u00f9 alto = esce pi\u00f9 spesso.</div>
-        ${CFG.fireballMultis.map((m,idx)=>`<div class="feat-row">
-          <label>${fbMultiLabel(m.v)}</label>
-          <input type="range" min="0" max="100" value="${m.w}" step="0.5"
+        <div class="feat-info">Ogni fireball pesca un moltiplicatore. Importo | peso (frequenza).</div>
+        <div style="display:flex;gap:4px;padding:2px 0;margin-bottom:4px">
+          <span style="color:#888;font-size:9px;flex:0 0 60px">Importo</span>
+          <span style="color:#888;font-size:9px;flex:1;text-align:center">Peso (frequenza)</span>
+          <span style="color:#888;font-size:9px;flex:0 0 35px;text-align:right">%</span>
+        </div>
+        ${CFG.fireballMultis.map((m,idx)=>`<div class="feat-row" style="gap:4px">
+          <input type="number" min="1" max="10000" value="${m.v}" step="1" style="width:55px;background:#1a1a2e;border:1px solid #ff6600;color:#ff6600;border-radius:4px;padding:2px 4px;font-size:10px;text-align:center"
+            oninput="featSetFbMultiVal(${idx},parseFloat(this.value)||1)">
+          <span style="color:#ff6600;font-size:10px;min-width:12px">x</span>
+          <input type="range" min="0" max="100" value="${m.w}" step="0.5" style="flex:1"
             oninput="featSetFbMulti(${idx},parseFloat(this.value));this.nextElementSibling.textContent=this.value">
           <span class="feat-val">${m.w}</span>
         </div>`).join('')}
@@ -2542,7 +2720,6 @@ edLoadSaved();
         <h4>Simboli Giganti</h4>
         ${cfgRowFloat('bigSym2x2Chance','Chance 2x2 per spin',0,0.30,0.01)}
         ${cfgRowFloat('bigSym3x3Chance','Chance 3x3 per spin',0,0.20,0.01)}
-        ${cfgRow('bigSymBuyMin','Min quando acquistato',1,5,1)}
         ${cfgRow('bigDropMin','Min drop (abilit\u00e0)',1,4,1)}
         ${cfgRow('bigDropMax','Max drop (abilit\u00e0)',1,6,1)}
         ${cfgRowFloat('bigDrop3x3Chance','Chance 3x3 vs 2x2',0,1,0.1)}
@@ -2583,6 +2760,8 @@ edLoadSaved();
       <div class="feat-section" style="grid-column:1/-1">
         <h4>Simulatore RTP</h4>
         <div class="feat-info">Simula N giri per calcolare RTP. Ogni simulazione include cascade + wild spawn + charge bar + abilit&agrave;.</div>
+        ${cfgRow('maxWinMultiplier','Max Win Cap (x bet)',0,100000,1000)}
+        <div class="feat-info" style="margin-bottom:6px;color:#ff8800">0 = nessun limite. Vincite oltre il cap vengono troncate a ${CFG.maxWinMultiplier}x.</div>
         <div class="feat-row" style="margin-bottom:6px">
           <label>N. giri</label>
           <select id="featSimN" style="background:#1a1a2e;border:1px solid #444;color:#FFD700;border-radius:4px;padding:2px;font-size:10px">
@@ -2595,16 +2774,249 @@ edLoadSaved();
           <button class="feat-btn" onclick="featSimRTP()">SIMULA TUTTO</button>
           <button class="feat-btn" style="background:linear-gradient(145deg,#888,#555);color:#fff" onclick="featSimFeature('baseonly')">SOLO BASE</button>
         </div>
-        <div style="font-size:9px;color:#888;margin-bottom:4px">Funzioni comprate (simula costo + vincita + RTP):</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
-          <button class="feat-btn" style="background:linear-gradient(145deg,#0088ff,#0055cc);color:#fff" onclick="featSimFeature('findBonus')">FIND BONUS (2x)</button>
-          <button class="feat-btn" style="background:linear-gradient(145deg,#0099cc,#006688);color:#fff" onclick="featSimFeature('removeSymbols')">REMOVE SYM (10x)</button>
-          <button class="feat-btn" style="background:linear-gradient(145deg,#ff6600,#cc3300);color:#fff" onclick="featSimFeature('fireballs')">FIREBALLS (180x)</button>
-          <button class="feat-btn" style="background:linear-gradient(145deg,#6633ff,#4400cc);color:#fff" onclick="featSimFeature('bigSymbols')">BIG SYMBOLS (10x)</button>
-          <button class="feat-btn" style="background:linear-gradient(145deg,#cc00cc,#880088);color:#fff" onclick="featSimFeature('buyFSFull')">FS FULL (1600x)</button>
-          <button class="feat-btn" style="background:linear-gradient(145deg,#ff0066,#cc0044);color:#fff" onclick="featSimFeature('buyFSAuto')">FS AUTO (3000x)</button>
-        </div>
         <div id="rtpResult" style="font-size:10px;color:#aaa;min-height:20px"></div>
+      </div>
+
+    </div>`;
+  }
+
+  function buildBuyPanelHTML(){
+    return `
+    <div class="feat-header">
+      <h3>Acquisto Funzioni - RTP</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="color:#aaa;font-size:10px">N. giri:</span>
+        <select id="featSimNBuy" style="background:#1a1a2e;border:1px solid #ff6600;color:#ff6600;border-radius:4px;padding:2px;font-size:10px">
+          <option value="1000">1,000</option>
+          <option value="10000" selected>10,000</option>
+          <option value="100000">100,000</option>
+        </select>
+        <button class="feat-btn" style="background:linear-gradient(145deg,#00aa44,#006622);color:#fff" onclick="featSaveCFG()">SALVA</button>
+        <button class="feat-btn" onclick="window._toggleBuyPanel()">CHIUDI</button>
+      </div>
+    </div>
+    <div class="feat-grid">
+
+      <!-- ======== PESI SIMBOLI (condivisi) ======== -->
+      <div class="feat-section">
+        <h4>Pesi Simboli (Frequenza)</h4>
+        <div class="feat-info">Peso maggiore = appare pi\u00f9 spesso. Condiviso con giri normali.</div>
+        ${symWeightRow('potOfGold','Pentola d\'Oro',1,40)}
+        ${symWeightRow('greenAcorn','Ghianda Verde',1,40)}
+        ${symWeightRow('crystalBell','Campana Vetro',1,40)}
+        ${symWeightRow('redMushroom','Fungo Rosso',1,40)}
+        ${symWeightRow('blueMushroom','Fungo Blu',1,40)}
+        ${symWeightRow('celticKnot','Medaglione',1,40)}
+        ${symWeightRow('scatter','BONUS (Scatter)',0,5)}
+        <div class="feat-info" id="totalWeightInfoBuy">Peso totale: ${WT}</div>
+      </div>
+
+      <!-- ======== FIND BONUS ======== -->
+      <div class="feat-section">
+        <h4 style="color:#0088ff">Find Bonus</h4>
+        <div class="feat-info">Aumenta peso scatter per questo spin</div>
+        <div class="feat-row">
+          <label>Costo moltiplicatore</label>
+          <input type="range" min="0.5" max="10" value="${buyCosts.findBonus}" step="0.1"
+            oninput="window.featSetBuyCost('findBonus',this.value);this.nextElementSibling.textContent=(parseFloat(this.value)).toFixed(1)+'x'">
+          <span class="feat-val">${buyCosts.findBonus.toFixed(1)}x</span>
+        </div>
+        <div class="feat-row">
+          <label>Boost peso scatter</label>
+          <input type="range" min="1" max="10" value="2" step="0.5" id="buyFindBonusScatterBoost"
+            oninput="this.nextElementSibling.textContent=this.value+'x'">
+          <span class="feat-val">2x</span>
+        </div>
+        <div class="feat-info">Il peso scatter viene moltiplicato per questo valore durante l'acquisto</div>
+        <div class="feat-row">
+          <button class="feat-btn" style="width:100%;background:linear-gradient(145deg,#0088ff,#0055cc);color:#fff" onclick="featSimFeature('findBonus')">SIMULA FIND BONUS</button>
+        </div>
+      </div>
+
+      <!-- ======== REMOVE SYMBOLS ======== -->
+      <div class="feat-section">
+        <h4 style="color:#0099cc">Remove Symbols - Costo & Parametri</h4>
+        <div class="feat-info">Rimuove tipi di simboli casuali dalla griglia</div>
+        <div class="feat-row">
+          <label>Costo moltiplicatore</label>
+          <input type="range" min="1" max="20" value="${buyCosts.removeSymbols}" step="0.1"
+            oninput="window.featSetBuyCost('removeSymbols',this.value);this.nextElementSibling.textContent=(parseFloat(this.value)).toFixed(1)+'x'">
+          <span class="feat-val">${buyCosts.removeSymbols.toFixed(1)}x</span>
+        </div>
+        ${cfgRow('removeSymMin','Min tipi rimossi',1,6,1)}
+        ${cfgRow('removeSymMax','Max tipi rimossi',1,6,1)}
+        ${cfgCheckbox('transformEnabled','Trasformazione simboli attiva')}
+        <div class="feat-row">
+          <button class="feat-btn" style="width:100%;background:linear-gradient(145deg,#0099cc,#006688);color:#fff" onclick="featSimFeature('removeSymbols')">SIMULA REMOVE SYMBOLS</button>
+        </div>
+      </div>
+
+      <!-- ======== REMOVE SYMBOLS MULTIPLIER WHEEL ======== -->
+      <div class="feat-section">
+        <h4 style="color:#0099cc">Remove Symbols - Ruota Moltiplicatori</h4>
+        <div class="feat-info">All'acquisto gira una ruota. Per ogni riga: importo moltiplicatore | peso (frequenza).</div>
+        <div style="display:flex;gap:4px;padding:2px 0;margin-bottom:4px">
+          <span style="color:#888;font-size:9px;flex:0 0 60px">Importo</span>
+          <span style="color:#888;font-size:9px;flex:1;text-align:center">Peso (frequenza)</span>
+          <span style="color:#888;font-size:9px;flex:0 0 35px;text-align:right">%</span>
+        </div>
+        ${CFG.removeSymMultis.map((m,idx)=>`<div class="feat-row" style="gap:4px">
+          <input type="number" min="1" max="10000" value="${m.v}" step="1" style="width:55px;background:#1a1a2e;border:1px solid #0099cc;color:#0099cc;border-radius:4px;padding:2px 4px;font-size:10px;text-align:center"
+            oninput="featSetRsMultiVal(${idx},parseFloat(this.value)||1)">
+          <span style="color:#0099cc;font-size:10px;min-width:12px">x</span>
+          <input type="range" min="0" max="100" value="${m.w}" step="0.1" style="flex:1"
+            oninput="featSetRsMulti(${idx},parseFloat(this.value));this.nextElementSibling.textContent=this.value">
+          <span class="feat-val">${m.w}</span>
+        </div>`).join('')}
+        <div class="feat-info" id="rsMultiInfo">${buildRsMultiInfo()}</div>
+      </div>
+
+      <!-- ======== FIREBALLS ======== -->
+      <div class="feat-section">
+        <h4 style="color:#ff6600">Fireballs - Conteggio</h4>
+        <div class="feat-info">Quante fireball appaiono quando acquisti la funzione</div>
+        <div class="feat-row">
+          <label>Costo moltiplicatore</label>
+          <input type="range" min="5" max="50" value="${buyCosts.fireballs}" step="0.1"
+            oninput="window.featSetBuyCost('fireballs',this.value);this.nextElementSibling.textContent=(parseFloat(this.value)).toFixed(1)+'x'">
+          <span class="feat-val">${buyCosts.fireballs.toFixed(1)}x</span>
+        </div>
+        ${cfgRow('fireballBuyMin','Min fireballs (acquisto)',1,6,1)}
+        ${cfgRow('fireballBuyMax','Max fireballs (acquisto)',1,8,1)}
+        <div class="feat-info" style="margin-top:6px;color:#ff8800">Distribuzione conteggio fireball:</div>
+        ${CFG.fireballCounts.map((c,idx)=>`<div class="feat-row">
+          <label>${c.n} fireball</label>
+          <input type="range" min="0" max="100" value="${c.w}" step="0.5"
+            oninput="featSetFbCount(${idx},parseFloat(this.value));this.nextElementSibling.textContent=this.value">
+          <span class="feat-val">${c.w}</span>
+        </div>`).join('')}
+        <div class="feat-info" id="fbCountInfoBuy">${buildFbCountInfo()}</div>
+        <div class="feat-row">
+          <button class="feat-btn" style="width:100%;background:linear-gradient(145deg,#ff6600,#cc3300);color:#fff" onclick="featSimFeature('fireballs')">SIMULA FIREBALLS</button>
+        </div>
+      </div>
+
+      <!-- ======== FIREBALL MULTIPLIERS ======== -->
+      <div class="feat-section">
+        <h4 style="color:#ff6600">Fireballs - Moltiplicatori</h4>
+        <div class="feat-info">Ogni fireball pesca un moltiplicatore. Importo | peso (frequenza).</div>
+        <div style="display:flex;gap:4px;padding:2px 0;margin-bottom:4px">
+          <span style="color:#888;font-size:9px;flex:0 0 60px">Importo</span>
+          <span style="color:#888;font-size:9px;flex:1;text-align:center">Peso (frequenza)</span>
+          <span style="color:#888;font-size:9px;flex:0 0 35px;text-align:right">%</span>
+        </div>
+        ${CFG.fireballMultis.map((m,idx)=>`<div class="feat-row" style="gap:4px">
+          <input type="number" min="1" max="10000" value="${m.v}" step="1" style="width:55px;background:#1a1a2e;border:1px solid #ff6600;color:#ff6600;border-radius:4px;padding:2px 4px;font-size:10px;text-align:center"
+            oninput="featSetFbMultiVal(${idx},parseFloat(this.value)||1)">
+          <span style="color:#ff6600;font-size:10px;min-width:12px">x</span>
+          <input type="range" min="0" max="100" value="${m.w}" step="0.5" style="flex:1"
+            oninput="featSetFbMulti(${idx},parseFloat(this.value));this.nextElementSibling.textContent=this.value">
+          <span class="feat-val">${m.w}</span>
+        </div>`).join('')}
+        <div class="feat-info" id="fbMultiInfoBuy">${buildFbMultiInfo()}</div>
+      </div>
+
+      <!-- ======== BIG SYMBOLS ======== -->
+      <div class="feat-section">
+        <h4 style="color:#6633ff">Big Symbols</h4>
+        <div class="feat-info">Crea simboli giganti sulla griglia</div>
+        <div class="feat-row">
+          <label>Costo moltiplicatore</label>
+          <input type="range" min="2" max="30" value="${buyCosts.bigSymbols}" step="0.1"
+            oninput="window.featSetBuyCost('bigSymbols',this.value);this.nextElementSibling.textContent=(parseFloat(this.value)).toFixed(1)+'x'">
+          <span class="feat-val">${buyCosts.bigSymbols.toFixed(1)}x</span>
+        </div>
+        ${cfgRow('bigSymBuyMin','Min simboli giganti',1,5,1)}
+        ${cfgRowFloat('bigSym2x2Chance','Chance 2x2 per spin',0,0.30,0.01)}
+        ${cfgRowFloat('bigSym3x3Chance','Chance 3x3 per spin',0,0.20,0.01)}
+        ${cfgRowFloat('bigDrop3x3Chance','Chance 3x3 vs 2x2 (drop)',0,1,0.1)}
+        ${cfgRow('bigDropMin','Min drop (abilit\u00e0)',1,4,1)}
+        ${cfgRow('bigDropMax','Max drop (abilit\u00e0)',1,6,1)}
+        <div class="feat-row">
+          <button class="feat-btn" style="width:100%;background:linear-gradient(145deg,#6633ff,#4400cc);color:#fff" onclick="featSimFeature('bigSymbols')">SIMULA BIG SYMBOLS</button>
+        </div>
+      </div>
+
+      <!-- ======== CHARGE BAR (per acquisti) ======== -->
+      <div class="feat-section">
+        <h4 style="color:#ffaa00">Barra Carica</h4>
+        <div class="feat-info">La barra carica si attiva anche durante gli acquisti se il cascade genera punti</div>
+        ${cfgRow('chargeMax','Punti max barra',30,300,10)}
+        ${cfgRow('chargeTh1','Soglia 1 (abilit\u00e0)',10,100,5)}
+        ${cfgRow('chargeTh2','Soglia 2',20,200,5)}
+        ${cfgRow('chargeTh3','Soglia 3',30,250,5)}
+        ${cfgRow('chargeTh4','Soglia 4 (WILD+Multi)',40,300,10)}
+        ${cfgRow('chargeMultiStep','Incremento moltiplicatore',1,5,1)}
+        ${cfgCheckbox('wildPerCluster','Wild per cluster (cascade)')}
+      </div>
+
+      <!-- ======== FREE SPINS CONFIG ======== -->
+      <div class="feat-section">
+        <h4 style="color:#cc00cc">Free Spins - Parametri</h4>
+        <div class="feat-info">Parametri condivisi per FS Full e FS Auto</div>
+        ${cfgRow('scatterForFS','Scatter per FS',2,5,1)}
+        ${cfgRow('fsSpins','Giri (3 scatter)',3,20,1)}
+        ${cfgRow('fsSpins4','Giri (4 scatter)',3,30,1)}
+        ${cfgRow('fsSpins5','Giri (5+ scatter)',3,40,1)}
+        ${cfgRow('fsRetriggerExtra','Extra giri retrigger',1,10,1)}
+      </div>
+
+      <!-- ======== FS FULL ======== -->
+      <div class="feat-section">
+        <h4 style="color:#cc00cc">FS Full - Parametri</h4>
+        <div class="feat-info">Giri gratuiti con charge bar piena + tutte le abilit\u00e0 attive</div>
+        <div class="feat-row">
+          <label>Costo moltiplicatore</label>
+          <input type="range" min="500" max="5000" value="${buyCosts.buyFSFull}" step="10"
+            oninput="window.featSetBuyCost('buyFSFull',this.value);this.nextElementSibling.textContent=(parseInt(this.value))+'x'">
+          <span class="feat-val">${buyCosts.buyFSFull}x</span>
+        </div>
+        ${cfgRow('fsFullSpins','Giri gratuiti',1,30,1)}
+        ${cfgRow('fsFullChargeStart','Punti carica iniziali',0,300,10)}
+        ${cfgRow('fsFullMultiBonus','Bonus multi (x step)',0,10,1)}
+        <div class="feat-info" style="color:#cc00cc">Multi iniziale = ${CFG.chargeMultiStart} + ${CFG.fsFullMultiBonus} x ${CFG.chargeMultiStep} = ${CFG.chargeMultiStart+CFG.fsFullMultiBonus*CFG.chargeMultiStep}x</div>
+        ${cfgRowFloat('fsFullBig2x2Chance','Chance Big 2x2 per spin',0,0.50,0.01)}
+        ${cfgRowFloat('fsFullBig3x3Chance','Chance Big 3x3 per spin',0,0.30,0.01)}
+        ${cfgRow('fsFullScatterBoost','Boost peso scatter',1,5,1)}
+        ${cfgRow('fsFullRetriggerExtra','Extra giri retrigger',1,10,1)}
+        ${cfgRow('scatterForFS','Scatter per retrigger',2,5,1)}
+        <div class="feat-row">
+          <button class="feat-btn" style="width:100%;background:linear-gradient(145deg,#cc00cc,#880088);color:#fff" onclick="featSimFeature('buyFSFull')">SIMULA FS FULL</button>
+        </div>
+      </div>
+
+      <!-- ======== FS AUTO ======== -->
+      <div class="feat-section">
+        <h4 style="color:#ff0066">FS Auto - Parametri</h4>
+        <div class="feat-info">Come FS Full ma con WILD transform automatica ad ogni giro</div>
+        <div class="feat-row">
+          <label>Costo moltiplicatore</label>
+          <input type="range" min="1000" max="8000" value="${buyCosts.buyFSAuto}" step="10"
+            oninput="window.featSetBuyCost('buyFSAuto',this.value);this.nextElementSibling.textContent=(parseInt(this.value))+'x'">
+          <span class="feat-val">${buyCosts.buyFSAuto}x</span>
+        </div>
+        ${cfgRow('fsAutoSpins','Giri gratuiti',1,30,1)}
+        ${cfgRow('fsAutoChargeStart','Punti carica iniziali',0,300,10)}
+        ${cfgRow('fsAutoMultiBonus','Bonus multi (x step)',0,10,1)}
+        <div class="feat-info" style="color:#ff0066">Multi iniziale = ${CFG.chargeMultiStart} + ${CFG.fsAutoMultiBonus} x ${CFG.chargeMultiStep} = ${CFG.chargeMultiStart+CFG.fsAutoMultiBonus*CFG.chargeMultiStep}x</div>
+        ${cfgRowFloat('fsAutoBig2x2Chance','Chance Big 2x2 per spin',0,0.50,0.01)}
+        ${cfgRowFloat('fsAutoBig3x3Chance','Chance Big 3x3 per spin',0,0.30,0.01)}
+        ${cfgRow('fsAutoScatterBoost','Boost peso scatter',1,5,1)}
+        ${cfgRow('fsAutoRetriggerExtra','Extra giri retrigger',1,10,1)}
+        ${cfgRow('scatterForFS','Scatter per retrigger',2,5,1)}
+        <div class="feat-info" style="color:#ff0066">+ WILD Transform automatica: 1 tipo simbolo random diventa WILD ad ogni giro</div>
+        <div class="feat-row">
+          <button class="feat-btn" style="width:100%;background:linear-gradient(145deg,#ff0066,#cc0044);color:#fff" onclick="featSimFeature('buyFSAuto')">SIMULA FS AUTO</button>
+        </div>
+      </div>
+
+      <!-- ======== RISULTATI ======== -->
+      <div class="feat-section" style="grid-column:1/-1">
+        <h4>Risultati Simulazioni Acquisto</h4>
+        <div class="feat-row">
+          <button class="feat-btn" style="width:100%;background:linear-gradient(145deg,#ff9900,#ff6600);color:#fff" onclick="window._simAllBuyFunctions()">SIMULA TUTTE LE FUNZIONI</button>
+        </div>
+        <div id="rtpBuyResult" style="font-size:10px;color:#aaa;min-height:20px"></div>
       </div>
 
     </div>`;
@@ -2649,8 +3061,11 @@ edLoadSaved();
   window.featSetWeight=function(key,val){
     W[key]=parseInt(val);
     WT=Object.values(W).reduce((a,b)=>a+b,0);
+    // Aggiorna info peso totale in entrambi i pannelli
     const info=document.getElementById('totalWeightInfo');
     if(info)info.textContent='Peso totale: '+WT;
+    const info2=document.getElementById('totalWeightInfoBuy');
+    if(info2)info2.textContent='Peso totale: '+WT;
   };
 
   window.featSetCFG=function(key,val){
@@ -2659,22 +3074,53 @@ edLoadSaved();
 
   window.featSetFbMulti=function(idx,val){
     CFG.fireballMultis[idx].w=val;
+    // Aggiorna info in entrambi i pannelli
     const info=document.getElementById('fbMultiInfo');
     if(info)info.innerHTML=buildFbMultiInfo();
+    const info2=document.getElementById('fbMultiInfoBuy');
+    if(info2)info2.innerHTML=buildFbMultiInfo();
+  };
+
+  window.featSetFbMultiVal=function(idx,val){
+    CFG.fireballMultis[idx].v=val;
+    // Aggiorna info in entrambi i pannelli
+    const info=document.getElementById('fbMultiInfo');
+    if(info)info.innerHTML=buildFbMultiInfo();
+    const info2=document.getElementById('fbMultiInfoBuy');
+    if(info2)info2.innerHTML=buildFbMultiInfo();
   };
 
   window.featSetFbCount=function(idx,val){
     CFG.fireballCounts[idx].w=val;
+    // Aggiorna info in entrambi i pannelli
     const info=document.getElementById('fbCountInfo');
     if(info)info.innerHTML=buildFbCountInfo();
+    const info2=document.getElementById('fbCountInfoBuy');
+    if(info2)info2.innerHTML=buildFbCountInfo();
+  };
+
+  window.featSetRsMulti=function(idx,val){
+    CFG.removeSymMultis[idx].w=val;
+    const info=document.getElementById('rsMultiInfo');
+    if(info)info.innerHTML=buildRsMultiInfo();
+  };
+
+  window.featSetRsMultiVal=function(idx,val){
+    CFG.removeSymMultis[idx].v=val;
+    const info=document.getElementById('rsMultiInfo');
+    if(info)info.innerHTML=buildRsMultiInfo();
+  };
+
+  window.featSetBuyCost=function(key,val){
+    buyCosts[key]=parseFloat(val);
   };
 
   window.featSaveCFG=function(){
     try{
-      const data={cfg:{},weights:{},fireballMultis:CFG.fireballMultis,fireballCounts:CFG.fireballCounts};
+      const data={cfg:{},weights:{},fireballMultis:CFG.fireballMultis,fireballCounts:CFG.fireballCounts,removeSymMultis:CFG.removeSymMultis,buyCosts:Object.assign({},buyCosts)};
       // Save all CFG scalar values
       for(const k of Object.keys(CFG)){
-        if(k==='fireballMultis'||k==='fireballCounts')continue;
+        if(k==='fireballMultis'||k==='fireballCounts'||k==='removeSymMultis')continue;
         data.cfg[k]=CFG[k];
       }
       // Save symbol weights
@@ -2703,6 +3149,8 @@ edLoadSaved();
       // Restore fireball multis
       if(data.fireballMultis)CFG.fireballMultis=data.fireballMultis;
       if(data.fireballCounts)CFG.fireballCounts=data.fireballCounts;
+      if(data.removeSymMultis)CFG.removeSymMultis=data.removeSymMultis;
+      if(data.buyCosts)for(const k of Object.keys(data.buyCosts))buyCosts[k]=data.buyCosts[k];
       return true;
     }catch(e){return false}
   };
@@ -2840,6 +3288,13 @@ edLoadSaved();
     for(const m of ms){cum+=m.w;if(rn<cum)return m.v;}
     return ms[0].v;
   }
+  function _simPickRsMulti(){
+    const ms=CFG.removeSymMultis;
+    const totalW=ms.reduce((a,m)=>a+m.w,0);
+    let rn=Math.random()*totalW,cum=0;
+    for(const m of ms){cum+=m.w;if(rn<cum)return m.v;}
+    return ms[0].v;
+  }
   function _simPickFbCount(){
     const cs=CFG.fireballCounts.filter(c=>c.w>0);
     if(cs.length===0)return CFG.fireballMin;
@@ -2851,9 +3306,16 @@ edLoadSaved();
   function _simAbilFireball(gr){
     const n=_simPickFbCount();
     let totalMulti=0;
+    const used=new Set();
     for(let f=0;f<n;f++){
-      const tc=Math.floor(Math.random()*COLS),tr=Math.floor(Math.random()*ROWS);
+      // Avoid duplicate positions (same as gameplay)
+      let tc,tr,att=0;
+      do{
+        tc=Math.floor(Math.random()*COLS);tr=Math.floor(Math.random()*ROWS);att++;
+      }while((gr[tc][tr]==='wild'||gr[tc][tr]==='scatter'||used.has(tc+','+tr))&&att<30);
+      if(used.has(tc+','+tr))continue;
       const ts=gr[tc][tr];if(ts==='wild'||ts==='scatter')continue;
+      used.add(tc+','+tr);
       const m=_simPickFbMulti();
       if(m>1)totalMulti+=m; // 1x = nessun moltiplicatore
       for(const[dc,dr]of[[-1,0],[1,0],[0,-1],[0,1]]){
@@ -2886,12 +3348,14 @@ edLoadSaved();
     }
   }
 
-  function _simChargeAbilities(gr,ch,stats,forceAbility){
+  function _simChargeAbilities(gr,ch,stats,forceAbility,externalFbMulti){
     let pay=0;const ths=[CFG.chargeTh1,CFG.chargeTh2,CFG.chargeTh3];const trig=new Set();
 
-    let _fbMulti=1; // fireball multiplier for current ability round
+    let _fbMulti=externalFbMulti||1; // fireball multiplier for current ability round
+    let _firstAbility=true;
     function pickAndRunAbility(thLabel){
-      _fbMulti=1;
+      _fbMulti=_firstAbility?(externalFbMulti||1):1;
+      _firstAbility=false;
       if(forceAbility){const r=forceAbility(gr);if(typeof r==='number'&&r>1)_fbMulti=r;return}
       const pool=[];
       pool.push({fn:_simAbilRemove,key:'removesym'});
@@ -3004,6 +3468,8 @@ edLoadSaved();
           }
           payFS+=fp;sp+=fp;
         }
+        // Apply max win cap per spin
+        if(CFG.maxWinMultiplier>0&&sp>CFG.maxWinMultiplier*_simBet)sp=CFG.maxWinMultiplier*_simBet;
         totalPay+=sp;
       }
 
@@ -3110,8 +3576,8 @@ edLoadSaved();
 
   // ===== BUY BONUS SIMULATORS =====
   window.featSimFeature=function(feat){
-    const N=parseInt(document.getElementById('featSimN')?.value||10000);
-    const res=document.getElementById('rtpResult');
+    const N=parseInt(document.getElementById('featSimNBuy')?.value||document.getElementById('featSimN')?.value||10000);
+    const res=document.getElementById('rtpBuyResult');
     if(res)res.innerHTML='<span style="color:#FFD700">Simulazione BUY '+feat+' in corso...</span>';
     setTimeout(()=>{
       const cost=buyCosts[feat]||1;
@@ -3162,11 +3628,12 @@ edLoadSaved();
           }
 
         }else if(feat==='removeSymbols'){
+          const rsM=_simPickRsMulti();
           const gr=_simGrid();_simPlaceBig(gr);
           _simAbilRemove(gr);
           const ch={points:0,multi:1};
-          pay=_simCascade(gr,ch,stats);
-          if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,stats);
+          pay=_simCascade(gr,ch,stats)*rsM;
+          if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,stats)*rsM;
           let scatN=0;
           for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
           if(scatN>=CFG.scatterForFS){
@@ -3179,13 +3646,10 @@ edLoadSaved();
 
         }else if(feat==='fireballs'){
           const gr=_simGrid();_simPlaceBig(gr);
-          const fbCount=CFG.fireballBuyMin+Math.floor(Math.random()*(CFG.fireballBuyMax-CFG.fireballBuyMin+1));
-          let fbM=0;
-          for(let f=0;f<fbCount;f++){const m=_simAbilFireball(gr);fbM+=m;}
-          if(fbM<1)fbM=1;
+          const fbM=_simAbilFireball(gr);
           const ch={points:0,multi:1};
           pay=_simCascade(gr,ch,stats)*fbM;
-          if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,stats);
+          if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,stats,null,fbM);
           let scatN=0;
           for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
           if(scatN>=CFG.scatterForFS){
@@ -3219,33 +3683,57 @@ edLoadSaved();
           }
 
         }else if(feat==='buyFSFull'){
-          let fsLeft=CFG.fsSpins;
+          let fsLeft=CFG.fsFullSpins;
+          // Persistent charge state across all FS spins (like gameplay)
+          const ch={points:CFG.fsFullChargeStart,multi:CFG.chargeMultiStart+CFG.fsFullMultiBonus*CFG.chargeMultiStep};
           while(fsLeft>0){fsLeft--;stats.fsTotalSpins++;
-            const gr=_simGrid();_simPlaceBig(gr);
-            const ch={points:CFG.chargeMax,multi:CFG.chargeMultiStart+4*CFG.chargeMultiStep};
+            const gr=_simGrid();
+            if(Math.random()<CFG.fsFullBig3x3Chance){
+              const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+              const c=Math.floor(Math.random()*(COLS-2)),r=Math.floor(Math.random()*(ROWS-2));
+              for(let dc=0;dc<3;dc++)for(let dr=0;dr<3;dr++)gr[c+dc][r+dr]=sym;
+            }
+            if(Math.random()<CFG.fsFullBig2x2Chance){
+              const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+              const c=Math.floor(Math.random()*(COLS-1)),r=Math.floor(Math.random()*(ROWS-1));
+              for(let dc=0;dc<2;dc++)for(let dr=0;dr<2;dr++)gr[c+dc][r+dr]=sym;
+            }
             const cascPay=_simCascade(gr,ch,stats);
             const chargePay=_simChargeAbilities(gr,ch,stats);
             pay+=cascPay+chargePay;
             let scatN=0;
             for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
-            if(scatN>=CFG.scatterForFS){fsLeft+=CFG.fsRetriggerExtra;stats.fsRetriggers++;}
+            if(scatN>=CFG.scatterForFS){fsLeft+=CFG.fsFullRetriggerExtra;stats.fsRetriggers++;}
           }
 
         }else if(feat==='buyFSAuto'){
-          let fsLeft=CFG.fsSpins;
+          let fsLeft=CFG.fsAutoSpins;
+          // Persistent charge state across all FS spins (like gameplay)
+          const ch={points:CFG.fsAutoChargeStart,multi:CFG.chargeMultiStart+CFG.fsAutoMultiBonus*CFG.chargeMultiStep};
           while(fsLeft>0){fsLeft--;stats.fsTotalSpins++;
-            const gr=_simGrid();_simPlaceBig(gr);
+            const gr=_simGrid();
+            if(Math.random()<CFG.fsAutoBig3x3Chance){
+              const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+              const c=Math.floor(Math.random()*(COLS-2)),r=Math.floor(Math.random()*(ROWS-2));
+              for(let dc=0;dc<3;dc++)for(let dr=0;dr<3;dr++)gr[c+dc][r+dr]=sym;
+            }
+            if(Math.random()<CFG.fsAutoBig2x2Chance){
+              const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+              const c=Math.floor(Math.random()*(COLS-1)),r=Math.floor(Math.random()*(ROWS-1));
+              for(let dc=0;dc<2;dc++)for(let dr=0;dr<2;dr++)gr[c+dc][r+dr]=sym;
+            }
             _simAbilWildTransform(gr);
-            const ch={points:CFG.chargeMax,multi:CFG.chargeMultiStart+4*CFG.chargeMultiStep};
             const cascPay=_simCascade(gr,ch,stats);
             const chargePay=_simChargeAbilities(gr,ch,stats);
             pay+=cascPay+chargePay;
             let scatN=0;
             for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)if(gr[c][r]==='scatter')scatN++;
-            if(scatN>=CFG.scatterForFS){fsLeft+=CFG.fsRetriggerExtra;stats.fsRetriggers++;}
+            if(scatN>=CFG.scatterForFS){fsLeft+=CFG.fsAutoRetriggerExtra;stats.fsRetriggers++;}
           }
         }
 
+        // Apply max win cap
+        if(CFG.maxWinMultiplier>0&&pay>CFG.maxWinMultiplier*_simBet)pay=CFG.maxWinMultiplier*_simBet;
         totalWon+=pay;
         if(pay>0)wins++;
         if(pay>maxWin)maxWin=pay;
@@ -3299,6 +3787,103 @@ edLoadSaved();
           ${abilRows}
         </table>`:''}
         <div style="color:#888;font-size:9px;margin-top:4px">Simula l'acquisto del bonus con costo ${cost}x bet. RTP = totale vinto / totale speso.</div>`;
+    },50);
+  };
+
+  window._simAllBuyFunctions=function(){
+    const features=['findBonus','removeSymbols','fireballs','bigSymbols','buyFSFull','buyFSAuto'];
+    const res=document.getElementById('rtpBuyResult');
+    if(res)res.innerHTML='<span style="color:#FFD700">Simulazione tutte le funzioni in corso...</span>';
+    setTimeout(()=>{
+      const N=parseInt(document.getElementById('featSimNBuy')?.value||document.getElementById('featSimN')?.value||10000);
+      const results=[];
+      for(const feat of features){
+        const cost=buyCosts[feat]||1;
+        let totalSpent=0,totalWon=0,wins=0,maxWin=0;
+        for(let i=0;i<N;i++){
+          totalSpent+=cost*_simBet;
+          let pay=0;
+          if(feat==='findBonus'){
+            const origW=W.scatter||CFG.scatterWeight;
+            const boostedW=origW*2;
+            const gr=[];
+            const tmpWT=WT-origW+boostedW;
+            for(let c=0;c<COLS;c++){gr[c]=[];for(let r=0;r<ROWS;r++){
+              let rn=Math.random()*tmpWT,cum=0;let picked='celticKnot';
+              for(const k of Object.keys(W)){
+                const w=(k==='scatter')?boostedW:W[k];
+                cum+=w;if(rn<cum){picked=k;break;}
+              }
+              gr[c][r]=picked;
+            }}
+            _simPlaceBig(gr);
+            const ch={points:0,multi:1};
+            pay=_simCascade(gr,ch,{cascades:0});
+          }else if(feat==='removeSymbols'){
+            const rsM=_simPickRsMulti();
+            const gr=_simGrid();_simPlaceBig(gr);
+            _simAbilRemove(gr);
+            const ch={points:0,multi:1};
+            pay=_simCascade(gr,ch,{cascades:0})*rsM;
+          }else if(feat==='fireballs'){
+            const gr=_simGrid();_simPlaceBig(gr);
+            const fbM=_simAbilFireball(gr);
+            const ch={points:0,multi:1};
+            pay=_simCascade(gr,ch,{cascades:0})*fbM;
+            if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,{cascades:0},null,fbM);
+          }else if(feat==='bigSymbols'){
+            const gr=_simGrid();
+            const numBig=CFG.bigSymBuyMin+Math.floor(Math.random()*2);
+            for(let b=0;b<numBig;b++){
+              const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];
+              const sz=Math.random()<CFG.bigDrop3x3Chance?3:2;
+              const c=Math.floor(Math.random()*(COLS-sz+1)),r=Math.floor(Math.random()*(ROWS-sz+1));
+              for(let dc=0;dc<sz;dc++)for(let dr=0;dr<sz;dr++)gr[c+dc][r+dr]=sym;
+            }
+            const ch={points:0,multi:1};
+            pay=_simCascade(gr,ch,{cascades:0});
+          }else if(feat==='buyFSFull'){
+            let fsLeft=CFG.fsFullSpins;
+            const ch={points:CFG.fsFullChargeStart,multi:CFG.chargeMultiStart+CFG.fsFullMultiBonus*CFG.chargeMultiStep};
+            while(fsLeft>0){fsLeft--;
+              const gr=_simGrid();
+              if(Math.random()<CFG.fsFullBig3x3Chance){const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];const c=Math.floor(Math.random()*(COLS-2)),r=Math.floor(Math.random()*(ROWS-2));for(let dc=0;dc<3;dc++)for(let dr=0;dr<3;dr++)gr[c+dc][r+dr]=sym;}
+              if(Math.random()<CFG.fsFullBig2x2Chance){const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];const c=Math.floor(Math.random()*(COLS-1)),r=Math.floor(Math.random()*(ROWS-1));for(let dc=0;dc<2;dc++)for(let dr=0;dr<2;dr++)gr[c+dc][r+dr]=sym;}
+              pay+=_simCascade(gr,ch,{cascades:0});
+              if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,{cascades:0});
+            }
+          }else if(feat==='buyFSAuto'){
+            let fsLeft=CFG.fsAutoSpins;
+            const ch={points:CFG.fsAutoChargeStart,multi:CFG.chargeMultiStart+CFG.fsAutoMultiBonus*CFG.chargeMultiStep};
+            while(fsLeft>0){fsLeft--;
+              const gr=_simGrid();
+              if(Math.random()<CFG.fsAutoBig3x3Chance){const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];const c=Math.floor(Math.random()*(COLS-2)),r=Math.floor(Math.random()*(ROWS-2));for(let dc=0;dc<3;dc++)for(let dr=0;dr<3;dr++)gr[c+dc][r+dr]=sym;}
+              if(Math.random()<CFG.fsAutoBig2x2Chance){const sym=_symKeys[Math.floor(Math.random()*_symKeys.length)];const c=Math.floor(Math.random()*(COLS-1)),r=Math.floor(Math.random()*(ROWS-1));for(let dc=0;dc<2;dc++)for(let dr=0;dr<2;dr++)gr[c+dc][r+dr]=sym;}
+              _simAbilWildTransform(gr);
+              pay+=_simCascade(gr,ch,{cascades:0});
+              if(ch.points>=CFG.chargeTh1)pay+=_simChargeAbilities(gr,ch,{cascades:0});
+            }
+          }
+          // Apply max win cap
+          if(CFG.maxWinMultiplier>0&&pay>CFG.maxWinMultiplier*_simBet)pay=CFG.maxWinMultiplier*_simBet;
+          totalWon+=pay;
+          if(pay>0)wins++;
+          if(pay>maxWin)maxWin=pay;
+        }
+        const rtp=(totalWon/totalSpent*100).toFixed(2);
+        const hitRate=(wins/N*100).toFixed(1);
+        const avgPerBuy=(totalWon/N).toFixed(2);
+        results.push({feat,cost,rtp,hitRate,avgPerBuy,maxWin});
+      }
+      let html='<div style="color:#FFD700;font-size:12px;font-weight:bold;margin-bottom:6px">Comparazione tutte le funzioni comprate</div>';
+      html+='<table style="font-size:10px;color:#aaa;border-collapse:collapse;width:100%">';
+      html+='<tr style="border-bottom:1px solid #333"><td style="padding:2px 4px;font-weight:bold">Funzione</td><td style="text-align:right;color:#888;font-size:9px">Costo</td><td style="text-align:right;color:#888;font-size:9px">RTP</td><td style="text-align:right;color:#888;font-size:9px">Hit</td><td style="text-align:right;color:#888;font-size:9px">Avg Win</td></tr>';
+      for(const r of results){
+        const col=parseFloat(r.rtp)>=100?'#4dff88':parseFloat(r.rtp)>=80?'#FFD700':'#ff4444';
+        html+=`<tr><td style="padding:2px 4px">${r.feat}</td><td style="text-align:right;color:#ff6666">${r.cost}x</td><td style="text-align:right;color:${col};font-weight:bold">${r.rtp}%</td><td style="text-align:right">${r.hitRate}%</td><td style="text-align:right">${r.avgPerBuy}x</td></tr>`;
+      }
+      html+='</table>';
+      if(res)res.innerHTML=html;
     },50);
   };
 })();
@@ -3356,5 +3941,65 @@ edLoadSaved();
   ov.addEventListener('click',(e)=>{if(e.target===ov)ov.classList.remove('show')});
 })();
 </script>
+
+<!-- DISCLAIMER POPUP -->
+<div id="disclaimerOverlay" style="
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,0.85);
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);
+  animation:disclaimerFadeIn 0.4s ease;
+">
+  <div style="
+    background:linear-gradient(135deg,#1a2e1a 0%,#0d1f0d 100%);
+    border:1px solid rgba(16,185,129,0.4);
+    border-radius:16px;
+    padding:32px 28px 24px;
+    max-width:460px;width:90%;
+    text-align:center;
+    box-shadow:0 0 40px rgba(16,185,129,0.25), 0 20px 60px rgba(0,0,0,0.5);
+    animation:disclaimerSlideUp 0.5s cubic-bezier(.175,.885,.32,1.275);
+  ">
+    <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+    <h2 style="
+      font-family:'Cinzel Decorative',cursive;
+      font-size:clamp(14px,2.5vw,18px);
+      color:#ffd700;
+      margin-bottom:14px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    ">Avviso Importante</h2>
+    <p style="
+      font-family:'MedievalSharp',cursive;
+      font-size:clamp(13px,1.8vw,15px);
+      color:rgba(255,255,255,0.8);
+      line-height:1.7;
+      margin-bottom:24px;
+    ">
+      Questa slot è a <strong style="color:#6ee7b7">scopo dimostrativo</strong> per mostrare le funzioni e i meccanismi di gioco.<br><br>
+      I <strong style="color:#ffd700">costi dei bonus</strong> e l'<strong style="color:#ffd700">RTP delle funzioni</strong> non sono affidabili ma da tarare.
+    </p>
+    <button onclick="document.getElementById('disclaimerOverlay').style.display='none'" style="
+      font-family:'Cinzel Decorative',cursive;
+      font-size:clamp(11px,1.5vw,14px);
+      padding:12px 36px;
+      border:none;border-radius:10px;
+      background:linear-gradient(135deg,#059669,#10b981);
+      color:#fff;cursor:pointer;
+      font-weight:700;letter-spacing:1.5px;
+      text-transform:uppercase;
+      transition:all 0.3s ease;
+      box-shadow:0 4px 20px rgba(16,185,129,0.4);
+    " onmouseover="this.style.filter='brightness(1.2)';this.style.transform='scale(1.05)'"
+       onmouseout="this.style.filter='';this.style.transform=''">
+      Ho capito
+    </button>
+  </div>
+</div>
+<style>
+@keyframes disclaimerFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes disclaimerSlideUp{from{opacity:0;transform:translateY(30px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+</style>
+
 </body>
 </html>

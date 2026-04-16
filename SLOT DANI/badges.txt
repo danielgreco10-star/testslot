@@ -1,7 +1,0 @@
-245: .cell-mult-badge{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);font-weight:900;z-index:3;pointer-events:none;text-shadow:0 0 3px rgba(0,0,0,0.8);padding:0 4px;border-radius:4px;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)}
-246: .cell.mult-2 .cell-mult-badge{color:#4ade80;text-shadow:0 0 8px rgba(74,222,128,0.7);border:1px solid rgba(74,222,128,0.3);animation:badgePulse 2s ease-in-out infinite}
-247: .cell.mult-3 .cell-mult-badge{color:#c88aff;text-shadow:0 0 8px rgba(180,120,255,0.7);border:1px solid rgba(180,120,255,0.3);animation:badgePulse 1.8s ease-in-out infinite}
-248: .cell.mult-4plus .cell-mult-badge{color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,0.8);border:1px solid rgba(255,200,0,0.4);animation:badgePulseGold 1.5s ease-in-out infinite}
-249: @keyframes badgePulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.1)}}
-250: @keyframes badgePulseGold{0%,100%{transform:translateX(-50%) scale(1);text-shadow:0 0 8px rgba(255,215,0,0.6)}50%{transform:translateX(-50%) scale(1.15);text-shadow:0 0 15px rgba(255,215,0,1),0 0 25px rgba(255,180,0,0.5)}}
-699: .wild-mult-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:clamp(14px,2vw,22px);font-weight:900;color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,0.8),0 0 20px rgba(255,150,0,0.4);z-index:5;pointer-events:none}

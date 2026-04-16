@@ -18,50 +18,7 @@
 <div class="grid-glow"></div>
 <div class="cinema-bar cinema-bar-top"></div>
 <div class="cinema-bar cinema-bar-bottom"></div>
-<div class="shop-overlay" id="shopOverlay" onclick="if(event.target===this)closeShop()">
-  <div class="shop-modal">
-    <div class="shop-header">
-      <span class="shop-title">NEGOZIO COSMICO</span>
-      <button class="shop-close" onclick="closeShop()">✕</button>
-    </div>
-    <div class="shop-section">
-      <div class="shop-section-title">Bonus Round</div>
-      <div class="shop-card" onclick="buyBonus('freespin')">
-        <div class="shop-card-icon bonus-bg">🌀</div>
-        <div class="shop-card-info"><div class="shop-card-name">Free Spin ×10</div><div class="shop-card-desc">Attiva 10 giri gratuiti con moltiplicatore crescente</div></div>
-        <div class="shop-card-price">50×</div>
-      </div>
-      <div class="shop-card" onclick="buyBonus('bonusround')">
-        <div class="shop-card-icon bonus-bg">⚡</div>
-        <div class="shop-card-info"><div class="shop-card-name">Bonus Round</div><div class="shop-card-desc">Accedi direttamente al round bonus con premi garantiti</div></div>
-        <div class="shop-card-price">80×</div>
-      </div>
-      <div class="shop-card shop-card-legendary" onclick="buyBonus('megaspin')">
-        <div class="shop-card-icon dust-bg">💎</div>
-        <div class="shop-card-info"><div class="shop-card-name">Mega Spin</div><div class="shop-card-desc">Spin con tutti i wild attivi e moltiplicatore ×5 garantito</div></div>
-        <div class="shop-card-price">150×</div>
-      </div>
-    </div>
-    <div class="shop-section">
-      <div class="shop-section-title">Polvere Stellare</div>
-      <div class="shop-card" onclick="buyDust(50)">
-        <div class="shop-card-icon dust-bg">✨</div>
-        <div class="shop-card-info"><div class="shop-card-name">Polvere ×50</div><div class="shop-card-desc">Pacchetto base di polvere stellare cosmica</div></div>
-        <div class="shop-card-price">25×</div>
-      </div>
-      <div class="shop-card" onclick="buyDust(200)">
-        <div class="shop-card-icon dust-bg">🌟</div>
-        <div class="shop-card-info"><div class="shop-card-name">Polvere ×200</div><div class="shop-card-desc">Pacchetto premium con bonus 20% extra</div></div>
-        <div class="shop-card-price">80×</div>
-      </div>
-      <div class="shop-card shop-card-legendary" onclick="buyDust(500)">
-        <div class="shop-card-icon dust-bg">🔮</div>
-        <div class="shop-card-info"><div class="shop-card-name">Polvere ×500</div><div class="shop-card-desc">Mega pacchetto con bonus 50% extra leggendario</div></div>
-        <div class="shop-card-price">150×</div>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Negozio Cosmico rimosso 2026-04-15 -->
   <div class="bg-layer"></div>
   <div class="tut-overlay" id="tutOverlay">
     <div class="tut-highlight" id="tutHighlight"></div>
@@ -93,8 +50,8 @@
           <div class="bh-jet jet-bottom"></div>
         </div>
       </div>
-      <div class="bh-title">BUCO NERO</div>
-      <div class="bh-subtitle">Sorteggio simbolo da potenziare</div>
+      <div class="bh-title" id="bhTitle">BUCO NERO</div>
+      <div class="bh-subtitle" id="bhSubtitle">Sorteggio simbolo da potenziare</div>
       <div class="bh-options" id="bhOptions"></div>
       <div class="bh-result-label" id="bhResult"></div>
     </div>
@@ -124,11 +81,7 @@
     </div>
   </div>
 
-  <!-- FREE SPIN MULTIPLIER -->
-  <div class="fs-multiplier" id="fsMult">
-    <div class="fs-mult-label">MOLTIPLICATORE</div>
-    <div class="fs-mult-value" id="fsMultVal">×1</div>
-  </div>
+  <!-- FREE SPIN MULTIPLIER spostato dentro il grid-frame (angolo destro sopra la griglia) -->
   <div class="fs-countdown" id="fsCountdown"></div>
 
   <!-- FREE SPIN ANNOUNCE OVERLAY -->
@@ -286,6 +239,15 @@
     </div>
 
     <div class="grid-frame" id="gridFrame">
+      <!-- STATUS PANEL — adiacente alla griglia, sopra il bordo superiore sinistro -->
+      <div class="status-panel status-idle" id="statusPanel">
+        <div class="status-panel-value" id="statusPanelVal">SPIN NORMALE</div>
+      </div>
+      <!-- FS MULTIPLIER BOX — adiacente alla griglia, subito sopra il bordo superiore destro -->
+      <div class="fs-multiplier" id="fsMult">
+        <div class="fs-mult-label">MOLTIPLICATORE</div>
+        <div class="fs-mult-value" id="fsMultVal">×1</div>
+      </div>
       <div class="tess-win-display" id="spinWinPanel"><span class="tess-win-label">VINCITA</span><span class="tess-win-amount" id="spinWinPanelAmount">0</span></div>
       <!-- toggle buttons removed: panels always visible -->
       <div class="grid-led-border led-idle" id="ledBorder"></div>
@@ -307,60 +269,55 @@
 
     <!-- BONUS SIDE PANEL RIGHT (two columns) -->
     <div class="bonus-side-panel" id="bonusSidePanel">
-      <!-- COLONNA 1: BONUS BUY -->
+      <!-- COLONNA 1: BONUS BUY — ordinati per costo crescente (multipli di 2 o 5) -->
       <div class="bsp-section">
         <div class="bsp-title">BONUS BUY</div>
         <div class="bsp-list">
-          <div class="bsp-item" id="buyBuco" data-cost="5" data-desc="Risucchia e potenzia un tipo di simbolo sulla griglia. Attiva il Buco Nero istantaneamente.">
-            <div class="bsp-icon"><img src="simboli/buco_nero.png" alt="Buco Nero"></div>
-            <div class="bsp-info"><span class="bsp-name">Buco Nero</span><span class="bsp-cost">5×</span></div>
-            <div class="bsp-tooltip">Risucchia e potenzia un tipo di simbolo sulla griglia. Attiva il Buco Nero istantaneamente.</div>
-          </div>
-          <div class="bsp-item" id="buySuper" data-cost="12" data-desc="Distrugge tutti i simboli di un tipo e diventa Wild con moltiplicatore.">
+          <div class="bsp-item" id="buySuper" data-cost="11" data-desc="Distrugge tutti i simboli di un tipo e diventa Wild con moltiplicatore.">
             <div class="bsp-icon"><img src="simboli/supernova.png" alt="Supernova"></div>
-            <div class="bsp-info"><span class="bsp-name">Supernova</span><span class="bsp-cost">12×</span></div>
+            <div class="bsp-info"><span class="bsp-name">Supernova</span><span class="bsp-cost">11×</span></div>
             <div class="bsp-tooltip">Distrugge tutti i simboli di un tipo e diventa Wild con moltiplicatore.</div>
           </div>
-          <div class="bsp-item" id="buyAnti" data-cost="35" data-desc="Attrae simboli e forma un cluster, diventando Wild al centro.">
+          <div class="bsp-item" id="buyBuco" data-cost="15" data-desc="Risucchia e potenzia un tipo di simbolo sulla griglia. Attiva il Buco Nero istantaneamente.">
+            <div class="bsp-icon"><img src="simboli/buco_nero.png" alt="Buco Nero"></div>
+            <div class="bsp-info"><span class="bsp-name">Buco Nero</span><span class="bsp-cost">15×</span></div>
+            <div class="bsp-tooltip">Risucchia e potenzia un tipo di simbolo sulla griglia. Attiva il Buco Nero istantaneamente.</div>
+          </div>
+          <div class="bsp-item" id="buyAnti" data-cost="22" data-desc="Attrae simboli e forma un cluster, diventando Wild al centro.">
             <div class="bsp-icon"><img src="simboli/antigravita.png" alt="Antigravità"></div>
-            <div class="bsp-info"><span class="bsp-name">Antigravità</span><span class="bsp-cost">35×</span></div>
+            <div class="bsp-info"><span class="bsp-name">Antigravità</span><span class="bsp-cost">22×</span></div>
             <div class="bsp-tooltip">Attrae simboli e forma un cluster, diventando Wild al centro.</div>
           </div>
-          <div class="bsp-item" id="buyTess" data-cost="40" data-desc="Apre una sub-griglia con gettoni: monete, expand e collect.">
+          <div class="bsp-item" id="buyTess" data-cost="50" data-desc="Apre una sub-griglia con gettoni: monete, expand e collect.">
             <div class="bsp-icon"><img src="simboli/tesseract.png" alt="Tesseract"></div>
-            <div class="bsp-info"><span class="bsp-name">Tesseract</span><span class="bsp-cost">40×</span></div>
+            <div class="bsp-info"><span class="bsp-name">Tesseract</span><span class="bsp-cost">50×</span></div>
             <div class="bsp-tooltip">Apre una sub-griglia con gettoni: monete, expand e collect.</div>
           </div>
         </div>
       </div>
       <!-- SEPARATORE VERTICALE -->
       <div class="bsp-sep"></div>
-      <!-- COLONNA 2: SUPER BONUS BUY -->
+      <!-- COLONNA 2: SUPER BONUS BUY — ordinati per costo crescente -->
       <div class="bsp-section">
         <div class="bsp-title bsp-title-super">SUPER BONUS BUY</div>
         <div class="bsp-list">
-          <div class="bsp-item legendary" id="buySuperBonus" data-cost="85" data-desc="Attiva TUTTI e 4 i bonus contemporaneamente! Buco Nero + Supernova + Antigravità + Tesseract in un unico spin devastante.">
+          <div class="bsp-item scatter" id="buyFreeSpin" data-cost="100" data-desc="Attiva 10 Free Spin classici con moltiplicatore potenziato.">
+            <div class="bsp-icon"><img src="simboli/freespin.png" alt="Free Spin"></div>
+            <div class="bsp-info"><span class="bsp-name">Free Spin</span><span class="bsp-cost">100×</span></div>
+            <div class="bsp-tooltip">Attiva 10 Free Spin con moltiplicatore potenziato (buy boost ×11.85).</div>
+          </div>
+          <div class="bsp-item legendary" id="buySuperBonus" data-cost="200" data-desc="Attiva TUTTI e 4 i bonus contemporaneamente + Free Spin! Buco Nero + Supernova + Antigravità + Tesseract in un evento devastante.">
             <div class="bsp-icon bsp-icon-multi">
               <img src="simboli/buco_nero.png"><img src="simboli/supernova.png">
               <img src="simboli/antigravita.png"><img src="simboli/tesseract.png">
             </div>
-            <div class="bsp-info"><span class="bsp-name">Super Bonus</span><span class="bsp-cost">85×</span></div>
-            <div class="bsp-tooltip">Attiva TUTTI e 4 i bonus contemporaneamente! Buco Nero + Supernova + Antigravità + Tesseract in un unico spin devastante.</div>
+            <div class="bsp-info"><span class="bsp-name">Super Bonus</span><span class="bsp-cost">200×</span></div>
+            <div class="bsp-tooltip">Attiva TUTTI e 4 i bonus contemporaneamente + Free Spin! Buco Nero + Supernova + Antigravità + Tesseract in un evento devastante.</div>
           </div>
-          <div class="bsp-item scatter" id="buyFreeSpin" data-cost="4" data-desc="Attiva 10 Free Spin classici con moltiplicatore crescente ad ogni cascata.">
-            <div class="bsp-icon"><img src="simboli/freespin.png" alt="Free Spin"></div>
-            <div class="bsp-info"><span class="bsp-name">Free Spin</span><span class="bsp-cost">4×</span></div>
-            <div class="bsp-tooltip">Attiva 10 Free Spin classici con moltiplicatore crescente ad ogni cascata.</div>
-          </div>
-          <div class="bsp-item ultimate" id="buyBonusMax" data-cost="87" data-desc="Il pacchetto DEFINITIVO! Free Spin + Super Bonus combinati. 10 giri gratuiti con tutti e 4 i bonus attivi!">
-            <div class="bsp-icon"><span class="bsp-crown">♛</span></div>
-            <div class="bsp-info"><span class="bsp-name">BONUS MAX</span><span class="bsp-cost">87×</span></div>
-            <div class="bsp-tooltip">Free Spin + Super Bonus combinati. 10 giri gratuiti con tutti e 4 i bonus attivi!</div>
-          </div>
-          <div class="bsp-item spacespin" id="buySpaceSpin" data-cost="150" data-desc="SPACE SPIN! Un simbolo gigante da 3×3 fino a 6×6 (MAX WIN) appare sulla griglia. Le celle si fondono in un'esplosione cosmica!">
+          <div class="bsp-item spacespin" id="buySpaceSpin" data-cost="1000" data-desc="SPACE SPIN! Evento massimo. Un simbolo gigante da 3×3 fino a 6×6 (MAX WIN) appare sulla griglia. Le celle si fondono in un'esplosione cosmica!">
             <div class="bsp-icon"><span class="bsp-galaxy">✦</span></div>
-            <div class="bsp-info"><span class="bsp-name">SPACE SPIN</span><span class="bsp-cost">150×</span></div>
-            <div class="bsp-tooltip">Un simbolo gigante (3×3→6×6) appare sulla griglia! Le celle si fondono in un'esplosione cosmica!</div>
+            <div class="bsp-info"><span class="bsp-name">SPACE SPIN</span><span class="bsp-cost">1000×</span></div>
+            <div class="bsp-tooltip">Evento massimo: simbolo gigante (3×3→6×6) sulla griglia! Le celle si fondono in un'esplosione cosmica.</div>
           </div>
         </div>
       </div>
@@ -534,15 +491,176 @@
         <button class="dd-item" id="btnSound">🔊 <span>Suoni</span></button>
         <button class="dd-item" id="btnPaytable">📋 <span>Pagamenti</span></button>
         <button class="dd-item" onclick="openBsMenu()">⚙ <span>Impostazioni</span></button>
-        <button class="dd-item" onclick="openShop()">🛒 <span>Negozio</span></button>
+        <button class="dd-item" onclick="openTestBonus()">🧪 <span>Test Bonus</span></button>
       </div>
     </div>
   </div>
 </div>
 </div>
 
+<!-- ============ PANNELLO GUIDA / INFO ============ -->
+<div class="info-overlay" id="infoOverlay" onclick="if(event.target===this){this.classList.remove('show')}">
+  <div class="info-panel">
+    <div class="info-header">
+      <h2>📖 Guida al Gioco</h2>
+      <button class="info-close" onclick="document.getElementById('infoOverlay').classList.remove('show')">✕</button>
+    </div>
+    <div class="info-scroll">
+
+      <!-- COME SI GIOCA -->
+      <div class="info-section">
+        <div class="info-section-title">🎰 Come si gioca</div>
+        <p>La griglia è <b>7×7</b>. Premi <b>SPIN</b> per far cadere i simboli. I simboli uguali adiacenti (orizzontale/verticale) formano <b>cluster</b>: servono almeno <b>5 simboli</b> collegati per vincere. I cluster esplodono e nuovi simboli cadono dall'alto (<b>cascata</b>), creando potenziali vincite multiple in un solo spin.</p>
+      </div>
+
+      <!-- SIMBOLI E PAGAMENTI -->
+      <div class="info-section">
+        <div class="info-section-title">💎 Simboli e Pagamenti</div>
+        <div class="info-sym-grid">
+          <div class="info-sym-row info-sym-header">
+            <span class="info-sym-icon"></span>
+            <span class="info-sym-name">Simbolo</span>
+            <span class="info-sym-pay">5+</span>
+            <span class="info-sym-pay">8+</span>
+            <span class="info-sym-pay">12+</span>
+            <span class="info-sym-pay">15+</span>
+          </div>
+          <div class="info-sym-row low">
+            <span class="info-sym-icon"><img src="simboli/asteroide.png"></span>
+            <span class="info-sym-name">Asteroide (J)</span>
+            <span class="info-sym-pay">0.01×</span>
+            <span class="info-sym-pay">0.08×</span>
+            <span class="info-sym-pay">0.49×</span>
+            <span class="info-sym-pay">2.65×</span>
+          </div>
+          <div class="info-sym-row low">
+            <span class="info-sym-icon"><img src="simboli/cristallo_blu.png"></span>
+            <span class="info-sym-name">Cristallo Blu (Q)</span>
+            <span class="info-sym-pay">0.02×</span>
+            <span class="info-sym-pay">0.14×</span>
+            <span class="info-sym-pay">0.98×</span>
+            <span class="info-sym-pay">5.57×</span>
+          </div>
+          <div class="info-sym-row low">
+            <span class="info-sym-icon"><img src="simboli/meteora_rossa.png"></span>
+            <span class="info-sym-name">Meteora (K)</span>
+            <span class="info-sym-pay">0.02×</span>
+            <span class="info-sym-pay">0.19×</span>
+            <span class="info-sym-pay">1.32×</span>
+            <span class="info-sym-pay">7.66×</span>
+          </div>
+          <div class="info-sym-row low">
+            <span class="info-sym-icon"><img src="simboli/cristallo_oro.png"></span>
+            <span class="info-sym-name">Cristallo Oro (A)</span>
+            <span class="info-sym-pay">0.04×</span>
+            <span class="info-sym-pay">0.28×</span>
+            <span class="info-sym-pay">2.09×</span>
+            <span class="info-sym-pay">11.83×</span>
+          </div>
+          <div class="info-sym-row high">
+            <span class="info-sym-icon"><img src="simboli/alieno.png"></span>
+            <span class="info-sym-name">Alieno</span>
+            <span class="info-sym-pay">0.19×</span>
+            <span class="info-sym-pay">1.39×</span>
+            <span class="info-sym-pay">10.3×</span>
+            <span class="info-sym-pay">60.69×</span>
+          </div>
+          <div class="info-sym-row high">
+            <span class="info-sym-icon"><img src="simboli/astronauta.png"></span>
+            <span class="info-sym-name">Astronauta</span>
+            <span class="info-sym-pay">0.34×</span>
+            <span class="info-sym-pay">2.37×</span>
+            <span class="info-sym-pay">16.42×</span>
+            <span class="info-sym-pay">97.86×</span>
+          </div>
+        </div>
+        <p class="info-note">I pagamenti sono espressi come moltiplicatore della puntata (es. 10× su puntata 5 = vincita 50).</p>
+      </div>
+
+      <!-- FUNZIONI BONUS -->
+      <div class="info-section">
+        <div class="info-section-title">🚀 Funzioni Bonus</div>
+
+        <div class="info-bonus-card">
+          <div class="info-bonus-head">
+            <img src="simboli/supernova.png" class="info-bonus-ico">
+            <div><b>Supernova</b><span class="info-bonus-cost">Costo: 11×</span></div>
+          </div>
+          <p>Elimina tutte le istanze di un simbolo dalla griglia e le sostituisce con Wild, generando nuove cascate.</p>
+        </div>
+
+        <div class="info-bonus-card">
+          <div class="info-bonus-head">
+            <img src="simboli/buco_nero.png" class="info-bonus-ico">
+            <div><b>Buco Nero</b><span class="info-bonus-cost">Costo: 15×</span></div>
+          </div>
+          <p>Scegli un tipo di simbolo: il buco nero lo risucchia e potenzia, trasformandolo in un simbolo superiore sulla griglia.</p>
+        </div>
+
+        <div class="info-bonus-card">
+          <div class="info-bonus-head">
+            <img src="simboli/antigravita.png" class="info-bonus-ico">
+            <div><b>Antigravità</b><span class="info-bonus-cost">Costo: 22×</span></div>
+          </div>
+          <p>Attrae simboli vicini formando un cluster forzato e piazza un Wild al centro dell'aggregazione.</p>
+        </div>
+
+        <div class="info-bonus-card">
+          <div class="info-bonus-head">
+            <img src="simboli/tesseract.png" class="info-bonus-ico">
+            <div><b>Tesseract</b><span class="info-bonus-cost">Costo: 50×</span></div>
+          </div>
+          <p>Apre una sub-griglia speciale con gettoni: monete istantanee, espansione e collect per vincite concentrate.</p>
+        </div>
+
+        <div class="info-bonus-card">
+          <div class="info-bonus-head">
+            <img src="simboli/freespin.png" class="info-bonus-ico">
+            <div><b>Free Spin</b><span class="info-bonus-cost">Costo: 100×</span></div>
+          </div>
+          <p>Attiva 10 giri gratuiti con moltiplicatore potenziato. Si attivano anche con 3+ Scatter sulla griglia.</p>
+        </div>
+      </div>
+
+      <!-- MECCANICHE -->
+      <div class="info-section">
+        <div class="info-section-title">⚙️ Meccaniche Speciali</div>
+        <div class="info-mech">
+          <b>Cascata:</b> Dopo ogni vincita i simboli esplodono e nuovi cadono dall'alto. Le cascate continuano finché ci sono cluster.
+        </div>
+        <div class="info-mech">
+          <b>Moltiplicatori:</b> Celle speciali con ×2, ×3 o ×4+ applicano un moltiplicatore extra alle vincite che le attraversano.
+        </div>
+        <div class="info-mech">
+          <b>Wild:</b> Sostituisce qualsiasi simbolo regolare per formare cluster vincenti.
+        </div>
+        <div class="info-mech">
+          <b>Spin Maggiorato (1.25×):</b> Aumenta la puntata del 25% per un drop rate bonus leggermente più alto.
+        </div>
+      </div>
+
+      <!-- DISCLAIMER -->
+      <div class="info-section info-disclaimer">
+        <div class="info-section-title">⚠️ Avviso</div>
+        <p>Questa slot è a <b>scopo dimostrativo</b>. I costi dei bonus e l'RTP non sono definitivi ma da tarare e calibrare.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- HINT LABELS PER I PANNELLI -->
+<div class="panel-hint hint-left" id="hintEditor">
+  <span class="hint-arrow">↓</span> <strong>❓ Guida</strong> &nbsp;·&nbsp; <strong>✎ Editor</strong> &nbsp;·&nbsp; <strong>🧪 Test</strong> — Clicca per aprire
+</div>
+<div class="panel-hint hint-right" id="hintCheat">
+  <strong>⚙ Cheat Mode</strong> — Test rapido, forza bonus e bilancio <span class="hint-arrow">↓</span>
+</div>
+
+<button class="info-toggle" id="infoToggle" onclick="document.getElementById('infoOverlay').classList.add('show')" title="Guida e Pagamenti">❓</button>
 <button class="dev-toggle" id="devToggle">⚙</button>
 <button class="design-toggle" id="designToggle">✎</button>
+<button class="design-toggle test-bonus-toggle" id="testBonusToggle" onclick="openTestBonus()" title="Test Bonus (headless)">🧪</button>
 <div class="design-panel" id="designPanel">
   <div class="design-panel-header">
     <h2>Editor Grafico</h2>
@@ -722,10 +840,45 @@
       </div>
     </div>
 
-    <button class="design-reset-btn" id="designResetAll">Reset Tutto</button>
+    <div class="design-footer-btns" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="design-reset-btn" id="designSavePreset" style="background:linear-gradient(135deg,rgba(0,180,80,0.3),rgba(0,120,60,0.2));border-color:rgba(0,200,120,0.4);color:#7fffbf" title="Salva i valori correnti come preimpostati: verranno riapplicati ad ogni apertura e dopo ogni Reset">📌 Salva Preset</button>
+      <button class="design-reset-btn" id="designResetAll">Reset Tutto</button>
+      <button class="design-reset-btn" id="designClearPreset" style="background:linear-gradient(135deg,rgba(180,60,60,0.25),rgba(120,30,30,0.15));border-color:rgba(220,80,80,0.35);color:#ff8888" title="Cancella il preset salvato e torna ai valori originali del codice">✕ Cancella Preset</button>
+    </div>
   </div>
 </div>
 <div class="dev-panel" id="devPanel">
+  <h3 style="color:#ff8a3d">🎮 Cheat Mode</h3>
+  <div class="dev-row"><span>Saldo:</span>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatAddBalance(1000)">+1k</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatAddBalance(10000)">+10k</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatAddBalance(100000)">+100k</button>
+  </div>
+  <div class="dev-row"><span>Prossimo spin:</span>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatForceWin()">Win</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatForceMaxWin()">MAX</button>
+  </div>
+  <div class="dev-row"><span>Scatter:</span>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatForceScatter(3)">3 (10FS)</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatForceScatter(5)">5 (15FS)</button>
+  </div>
+  <div class="dev-row" style="flex-wrap:wrap;gap:4px"><span style="width:100%">Forza Bonus:</span>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatForceExtra('buco_nero')">BH</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatForceExtra('supernova')">SN</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatForceExtra('antigravita')">AG</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatForceExtra('tesseract')">TS</button>
+  </div>
+  <div class="dev-row"><span>Polvere:</span>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatDust('fill')">100%</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatDust('half')">50%</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatDust('reset')">0</button>
+  </div>
+  <div class="dev-row" style="flex-wrap:wrap;gap:4px">
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatToggleTurbo()">Turbo</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatResetStats()">Reset Stats</button>
+    <button class="dev-btn" style="flex:0 0 auto;padding:2px 6px;font-size:10px" onclick="cheatClearBonusFlags()">Clear Flags</button>
+  </div>
+  <div class="dev-row" style="color:#ffb060;font-size:10px;font-style:italic" id="cheatStatus">Pronto.</div>
   <h3>Spin Speed</h3>
   <div class="dev-row"><label>×</label><input type="range" id="speedSlider" min="0.5" max="3" step="0.1" value="1"></div>
   <h3>Extra Drop Rate</h3>
@@ -773,9 +926,122 @@
   <div class="dev-log" id="devLog"></div>
 </div>
 
+<!-- TEST BONUS PANEL -->
+<div class="test-bonus-overlay" id="testBonusOverlay" onclick="if(event.target===this)closeTestBonus()">
+  <div class="test-bonus-modal">
+    <div class="test-bonus-header">
+      <span class="test-bonus-title">🧪 TEST BONUS (headless)</span>
+      <button class="test-bonus-close" onclick="closeTestBonus()">✕</button>
+    </div>
+    <div class="test-bonus-controls">
+      <div class="tb-row">
+        <label>Funzione</label>
+        <select id="tbBonusType">
+          <option value="supernova">Supernova (11×)</option>
+          <option value="buco_nero">Buco Nero (15×)</option>
+          <option value="antigravita">Antigravità (22×)</option>
+          <option value="tesseract">Tesseract (50×)</option>
+          <option value="freeSpin">Free Spin (100×, buyBoost attivo)</option>
+          <option value="superBonus">Super Bonus (200×)</option>
+          <option value="spaceSpin">Space Spin (1000×)</option>
+        </select>
+      </div>
+      <div class="tb-row">
+        <label>N° Spin</label>
+        <input type="number" id="tbNumSpins" value="100" min="10" max="10000" step="10">
+      </div>
+      <button class="tb-btn tb-btn-primary" id="tbRunBtn" onclick="runBonusTest()">▶ Avvia Test</button>
+      <button class="tb-btn" onclick="clearBonusTestLog()">🧹 Svuota Log</button>
+    </div>
+    <div class="test-bonus-stats" id="tbStats">
+      <div class="tb-stat"><span class="tb-stat-k">Spin eseguiti</span><span class="tb-stat-v" id="tbStatSpins">0</span></div>
+      <div class="tb-stat"><span class="tb-stat-k">Costo totale</span><span class="tb-stat-v" id="tbStatCost">0×</span></div>
+      <div class="tb-stat"><span class="tb-stat-k">Vincita totale</span><span class="tb-stat-v" id="tbStatWin">0×</span></div>
+      <div class="tb-stat"><span class="tb-stat-k">EV per spin</span><span class="tb-stat-v" id="tbStatEV">0×</span></div>
+      <div class="tb-stat"><span class="tb-stat-k">Max win</span><span class="tb-stat-v" id="tbStatMax">0×</span></div>
+      <div class="tb-stat"><span class="tb-stat-k">Hit rate</span><span class="tb-stat-v" id="tbStatHit">0%</span></div>
+      <div class="tb-stat tb-stat-rtp"><span class="tb-stat-k">RTP pagato</span><span class="tb-stat-v" id="tbStatRtp">—</span></div>
+    </div>
+    <div class="test-bonus-log" id="tbLog">
+      <div class="tb-log-placeholder">Clicca "Avvia Test" per iniziare.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DISCLAIMER POPUP -->
+<div id="disclaimerOverlay" style="
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,0.85);
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);
+  animation:disclaimerFadeIn 0.4s ease;
+">
+  <div style="
+    background:linear-gradient(135deg,#1a1a3e 0%,#0d0d2b 100%);
+    border:1px solid rgba(124,58,237,0.4);
+    border-radius:16px;
+    padding:32px 28px 24px;
+    max-width:460px;width:90%;
+    text-align:center;
+    box-shadow:0 0 40px rgba(124,58,237,0.25), 0 20px 60px rgba(0,0,0,0.5);
+    animation:disclaimerSlideUp 0.5s cubic-bezier(.175,.885,.32,1.275);
+  ">
+    <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+    <h2 style="
+      font-family:'Orbitron',sans-serif;
+      font-size:clamp(14px,2.5vw,18px);
+      color:#ffd700;
+      margin-bottom:14px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    ">Avviso Importante</h2>
+    <p style="
+      font-family:'Inter','Orbitron',sans-serif;
+      font-size:clamp(12px,1.8vw,14px);
+      color:rgba(255,255,255,0.8);
+      line-height:1.7;
+      margin-bottom:24px;
+    ">
+      Questa slot è a <strong style="color:#c084fc">scopo dimostrativo</strong> per mostrare le funzioni e i meccanismi di gioco.<br><br>
+      I <strong style="color:#ffd700">costi dei bonus</strong> e l'<strong style="color:#ffd700">RTP delle funzioni</strong> non sono affidabili ma da tarare.
+    </p>
+    <button onclick="document.getElementById('disclaimerOverlay').style.display='none'" style="
+      font-family:'Orbitron',sans-serif;
+      font-size:clamp(11px,1.5vw,14px);
+      padding:12px 36px;
+      border:none;border-radius:10px;
+      background:linear-gradient(135deg,#7c3aed,#4f46e5);
+      color:#fff;cursor:pointer;
+      font-weight:700;letter-spacing:1.5px;
+      text-transform:uppercase;
+      transition:all 0.3s ease;
+      box-shadow:0 4px 20px rgba(124,58,237,0.4);
+    " onmouseover="this.style.filter='brightness(1.2)';this.style.transform='scale(1.05)'"
+       onmouseout="this.style.filter='';this.style.transform=''">
+      Ho capito
+    </button>
+  </div>
+</div>
+<style>
+@keyframes disclaimerFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes disclaimerSlideUp{from{opacity:0;transform:translateY(30px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+</style>
+
 <script src="config.js"></script>
 <script src="state.js"></script>
 <script src="audio.js"></script>
 <script src="main.js"></script>
+<script>
+// Nascondi le hint quando si clicca sui toggle
+(function(){
+  var hints = document.querySelectorAll('.panel-hint');
+  ['devToggle','designToggle','testBonusToggle','infoToggle'].forEach(function(id){
+    var btn = document.getElementById(id);
+    if(btn) btn.addEventListener('click', function(){
+      hints.forEach(function(h){ h.style.display='none'; });
+    });
+  });
+})();
+</script>
 </body>
 </html>
